@@ -12,6 +12,9 @@ const ErrorCodes = Object.freeze({
   INTERACTION_INVALID: 'INTERACTION_INVALID',
   INTERACTION_EXPIRED: 'INTERACTION_EXPIRED',
   INTERACTION_RESPONSE_FAILED: 'INTERACTION_RESPONSE_FAILED',
+  INTERACTION_UNHANDLED: 'INTERACTION_UNHANDLED',
+  TASK_ERROR: 'TASK_ERROR',
+  UNHANDLED_REJECTION: 'UNHANDLED_REJECTION',
   UNKNOWN_ERROR: 'UNKNOWN_ERROR'
 });
 
@@ -71,6 +74,21 @@ const ErrorCodeRegistry = Object.freeze({
     retryable: false,
     remediation: 'Check interaction acknowledgement state and Discord response error codes.'
   },
+  [ErrorCodes.INTERACTION_UNHANDLED]: {
+    severity: 'high',
+    retryable: false,
+    remediation: 'Add a handler for this interaction type or register the missing button/modal/select handler.'
+  },
+  [ErrorCodes.TASK_ERROR]: {
+    severity: 'high',
+    retryable: true,
+    remediation: 'Inspect the named background task for thrown errors or unawaited promises.'
+  },
+  [ErrorCodes.UNHANDLED_REJECTION]: {
+    severity: 'high',
+    retryable: false,
+    remediation: 'Find the promise that rejected without a catch handler and route it through runSafeTask or an explicit catch.'
+  },
   [ErrorCodes.UNKNOWN_ERROR]: {
     severity: 'high',
     retryable: false,
@@ -124,6 +142,10 @@ export function resolveErrorCode({ error, errorType = 'unknown', context = {} } 
 
   const code = normalizeErrorCode(error?.code);
   if (code) {
+    if (/^\d+$/.test(code) && Number(code) >= 10000) {
+      return ErrorCodes.DISCORD_API_ERROR;
+    }
+
     return code;
   }
 

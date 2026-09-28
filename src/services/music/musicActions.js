@@ -1,6 +1,8 @@
-import { MessageFlags } from 'discord.js';
+import { once } from 'node:events';
+import { MessageFlags, PermissionFlagsBits } from 'discord.js';
 import { successEmbed } from '../../utils/embeds.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
+import { botHasPermission } from '../../utils/permissionGuard.js';
 import { TitanBotError, ErrorTypes } from '../../utils/errorHandler.js';
 import { getGuildMusicData, clearUpdateInterval } from './playerStore.js';
 import { canControlMusic, requireVoiceChannel, VOICE_CHANNEL_DENIAL } from './permissions.js';
@@ -13,6 +15,80 @@ import {
 import { refreshPlayerMessage } from './playerHandler.js';
 
 const YOUTUBE_URL_PATTERN = /(?:youtube\.com|youtu\.be)/i;
+const PLAYER_CONNECT_TIMEOUT_MS = 12_000;
+
+function getConnectedLavalinkNodes(client) {
+    if (!client.riffy?.nodeMap) {
+        return [];
+    }
+
+    return [...client.riffy.nodeMap.values()].filter((node) => node.connected);
+}
+
+export function assertLavalinkNodeAvailable(client) {
+    if (!getConnectedLavalinkNodes(client).length) {
+        throw new TitanBotError(
+            'Lavalink unavailable',
+            ErrorTypes.CONFIGURATION,
+            'Music is temporarily unavailable — no Lavalink nodes are connected. Try again shortly or configure your own Lavalink server.',
+        );
+    }
+}
+
+function assertBotVoicePermissions(channel) {
+    if (!channel) {
+        throw new TitanBotError(
+            'Voice channel unavailable',
+            ErrorTypes.CONFIGURATION,
+            'Could not access that voice channel.',
+        );
+    }
+
+    if (!botHasPermission(channel, [PermissionFlagsBits.Connect, PermissionFlagsBits.Speak])) {
+        throw new TitanBotError(
+            'Missing voice permissions',
+            ErrorTypes.PERMISSION,
+            'I need **Connect** and **Speak** permissions in your voice channel.',
+        );
+    }
+}
+
+async function waitForPlayerConnection(player) {
+    if (player.connected) {
+        return;
+    }
+
+    try {
+        await player.connection.resolve();
+    } catch {
+        // Fall through to event-based wait below.
+    }
+
+    if (player.connected) {
+        return;
+    }
+
+    try {
+        await once(player, 'connectionRestored', {
+            signal: AbortSignal.timeout(PLAYER_CONNECT_TIMEOUT_MS),
+        });
+    } catch {
+        // Timed out waiting for Lavalink to confirm the voice session.
+    }
+
+    if (!player.connected) {
+        throw new TitanBotError(
+            'Voice connection failed',
+            ErrorTypes.CONFIGURATION,
+            'Could not connect to the voice channel. Ensure Lavalink is online, the bot has Connect and Speak permissions, then try again.',
+        );
+    }
+}
+
+async function startPlayback(player) {
+    await waitForPlayerConnection(player);
+    await player.play();
+}
 
 export function getPlayer(client, guildId) {
     return client.riffy?.players?.get(guildId) || null;
@@ -50,6 +126,7 @@ export function assertCanControl(member, player) {
 
 export async function ensurePlayer(client, interaction) {
     assertRiffyAvailable(client);
+    assertLavalinkNodeAvailable(client);
     assertInVoice(interaction.member);
 
     const guildId = interaction.guild.id;
@@ -88,6 +165,7 @@ export async function joinVoiceChannel(client, interaction) {
     const guildId = interaction.guild.id;
     const guildData = getGuildMusicData(guildId);
     const channel = interaction.member.voice.channel;
+    assertBotVoicePermissions(channel);
     let player = getPlayer(client, guildId);
 
     if (player && player.voiceChannel !== channel.id) {
@@ -149,8 +227,8 @@ export async function playQuery(client, interaction, query) {
             added += 1;
         }
 
-        if (!player.playing && !player.paused && !player.current) {
-            player.play();
+        if (!player.playing && !player.paused) {
+            await startPlayback(player);
         }
 
         return {
@@ -181,16 +259,21 @@ export async function playQuery(client, interaction, query) {
         }
 
         track.info.requester = interaction.user;
-        player.queue.add(track);
 
-        if (!player.playing && !player.paused && !player.current) {
-            player.play();
+        const willPlayNow = !player.playing && !player.paused;
+        player.queue.add(track);
+        const queuePosition = player.queue.length;
+
+        if (willPlayNow) {
+            await startPlayback(player);
         }
 
         return {
             embed: successEmbed(
-                'Track Added',
-                `**${track.info.title}**\n${track.info.author}\nPosition: #${player.queue.length} in queue`,
+                willPlayNow ? 'Now Playing' : 'Track Added',
+                willPlayNow
+                    ? `**${track.info.title}**\n${track.info.author}`
+                    : `**${track.info.title}**\n${track.info.author}\nPosition: #${queuePosition} in queue`,
             ),
         };
     }
@@ -205,6 +288,11 @@ export async function skipTrack(client, interaction) {
     }
     assertCanControl(interaction.member, player);
     const title = player.current.info?.title || 'Unknown';
+    // Under track-loop, stop() would replay the same track. Clear it so the skip
+    // advances; trackStart re-applies the stored loop mode to the next track.
+    if (player.loop === 'track') {
+        player.setLoop('none');
+    }
     player.stop();
     return successEmbed('Skipped', `Skipped **${title}**.`);
 }
@@ -244,7 +332,6 @@ export async function applyPause(client, guildId) {
     }
 
     player.pause(true);
-    getGuildMusicData(guildId).wasPaused = true;
     await refreshPlayerMessage(client, guildId);
     return true;
 }
@@ -256,7 +343,6 @@ export async function applyResume(client, guildId) {
     }
 
     player.pause(false);
-    getGuildMusicData(guildId).wasPaused = false;
     await refreshPlayerMessage(client, guildId);
     return true;
 }
@@ -351,7 +437,24 @@ export async function seekTrack(client, interaction, seconds) {
     }
     assertCanControl(interaction.member, player);
 
+    const info = player.current.info || {};
+    if (info.isStream || info.isSeekable === false) {
+        throw new TitanBotError(
+            'Not seekable',
+            ErrorTypes.USER_INPUT,
+            'This track cannot be seeked (it may be a live stream).',
+        );
+    }
+
     const position = Math.max(0, seconds * 1000);
+    if (info.length && position > info.length) {
+        throw new TitanBotError(
+            'Seek out of range',
+            ErrorTypes.USER_INPUT,
+            `You can only seek up to ${Math.floor(info.length / 1000)}s for this track.`,
+        );
+    }
+
     player.seek(position);
     await refreshPlayerMessage(client, interaction.guild.id);
     return successEmbed('Seeked', `Seeked to **${seconds}s**.`);
@@ -371,6 +474,7 @@ export async function removeFromQueue(client, interaction, index) {
 
     const removed = player.queue[queueIndex];
     player.queue.remove(queueIndex);
+    await refreshPlayerMessage(client, interaction.guild.id);
     return successEmbed('Removed', `Removed **${removed.info?.title || 'track'}** from the queue.`);
 }
 
@@ -390,6 +494,7 @@ export async function moveInQueue(client, interaction, from, to) {
     const track = player.queue[fromIndex];
     player.queue.remove(fromIndex);
     player.queue.splice(toIndex, 0, track);
+    await refreshPlayerMessage(client, interaction.guild.id);
     return successEmbed('Moved', `Moved **${track.info?.title || 'track'}** to position #${to}.`);
 }
 
@@ -452,6 +557,8 @@ export async function destroyPlayerSession(client, guildId, player, guildData, {
 
     guildData.previousTracks = [];
     guildData.stopConfirmPending = null;
+    guildData.autoPaused = false;
+    guildData.queuePages?.clear();
 
     if (guildData.playerMessageId && guildData.playerChannelId) {
         try {
@@ -497,9 +604,9 @@ export async function leaveVoiceChannel(client, interaction) {
 }
 
 export async function replyMusicSuccess(interaction, embed) {
-    if (interaction.deferred || interaction.replied) {
-        await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
-    } else {
-        await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+    const options = { embeds: [embed] };
+    if (!interaction._isPrefixCommand) {
+        options.flags = MessageFlags.Ephemeral;
     }
+    await InteractionHelper.safeReply(interaction, options);
 }

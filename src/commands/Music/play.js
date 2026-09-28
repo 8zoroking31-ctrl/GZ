@@ -1,6 +1,5 @@
 import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
-import { handleInteractionError } from '../../utils/errorHandler.js';
 import { playQuery, replyMusicSuccess } from '../../services/music/musicActions.js';
 
 export default {
@@ -14,12 +13,12 @@ export default {
         ),
 
     async execute(interaction, config, client) {
-        try {
-            await InteractionHelper.safeDefer(interaction, { flags: MessageFlags.Ephemeral });
-            const result = await playQuery(client, interaction, interaction.options.getString('query'));
-            await replyMusicSuccess(interaction, result.embed);
-        } catch (error) {
-            await handleInteractionError(interaction, error, { command: 'play' });
+        const deferred = await InteractionHelper.safeDefer(interaction, { flags: MessageFlags.Ephemeral });
+        if (!deferred) {
+            return;
         }
+
+        const result = await playQuery(client, interaction, interaction.options.getString('query'));
+        await replyMusicSuccess(interaction, result.embed);
     },
 };
