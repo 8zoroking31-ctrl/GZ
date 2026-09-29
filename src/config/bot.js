@@ -11,7 +11,7 @@ export const botConfig = {
   // - "invisible" = appears offline
   presence: {
     // Current online state shown on Discord.
-    status: "online",
+    status: "idle",
 
     // Activity lines shown under the bot name.
     // `type` number mapping from Discord:
@@ -24,7 +24,7 @@ export const botConfig = {
     activities: [
       {
         name: "Custom Status", // required by Discord API, not shown in the client
-        state: "stalking",     // this is what people actually see
+        state: "Ballhog",     // this is what people actually see
         type: 4,               // Custom
       },
     ],
@@ -457,6 +457,7 @@ export const botConfig = {
 
     // Community engagement systems.
     tickets: true,
+    pvpMatchmaking: true,
     giveaways: true,
     birthday: true,
     counter: true,
@@ -544,6 +545,7 @@ const COMMAND_CATEGORY_FEATURE_MAP = {
   search: "search",
   serverstats: "counter",
   ticket: "tickets",
+  pvp: "pvpMatchmaking",
   tools: "tools",
   utility: "utility",
   verification: "verification",
