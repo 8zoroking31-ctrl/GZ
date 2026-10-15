@@ -2,7 +2,7 @@
   {
     "host": "lavalinkv4.serenetia.com",
     "port": 443,
-    "password": "https://seretia.link/discord",
+    "password": "https://discord.gg/eQCvFJbZfK",
     "secure": true,
     "name": "Serenetia"
   },
@@ -16,7 +16,7 @@
   {
     "host": "lava-v4.millohost.my.id",
     "port": 443,
-    "password": "https://discord.gg/mjS5J2K3ep",
+    "password": "https://discord.gg/eQCvFJbZfK",
     "secure": true,
     "name": "MilloHost"
   },
