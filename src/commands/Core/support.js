@@ -7,12 +7,12 @@ const SUPPORT_SERVER_URL = "https://discord.gg/qJKnyvV4V5";
 export default {
     data: new SlashCommandBuilder()
     .setName("support")
-    .setDescription("Get link to the support server"),
+    .setDescription("https://discord.gg/qJKnyvV4V5"),
 
   async execute(interaction) {
     try {
       const supportButton = new ButtonBuilder()
-        .setLabel("Join Support Server")
+        .setLabel("https://discord.gg/qJKnyvV4V5")
         .setStyle(ButtonStyle.Link)
         .setURL(SUPPORT_SERVER_URL);
 
