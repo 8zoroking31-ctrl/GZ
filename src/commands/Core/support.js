@@ -3,16 +3,16 @@ import { createEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
 
 import { InteractionHelper } from '../../utils/interactionHelper.js';
-const SUPPORT_SERVER_URL = "https://discord.gg/qJKnyvV4V5";
+const SUPPORT_SERVER_URL = "";
 export default {
     data: new SlashCommandBuilder()
     .setName("support")
-    .setDescription("https://discord.gg/qJKnyvV4V5"),
+    .setDescription(""),
 
   async execute(interaction) {
     try {
       const supportButton = new ButtonBuilder()
-        .setLabel("https://discord.gg/qJKnyvV4V5")
+        .setLabel("")
         .setStyle(ButtonStyle.Link)
         .setURL(SUPPORT_SERVER_URL);
 
