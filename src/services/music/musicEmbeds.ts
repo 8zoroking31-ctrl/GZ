@@ -1,6 +1,16 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import type { EmbedBuilder, User } from 'discord.js';
+import type { Player, Track } from 'riffy';
 import { createEmbed } from '../../utils/embeds.js';
 import { getPaginationRow } from '../../utils/components.js';
+import type { GuildMusicData } from './playerStore.js';
+
+/** Track info fields read here that riffy's typings do not declare (absent on most nodes). */
+export type MusicTrackInfo = Track['info'] & {
+    artworkUrl?: string | null;
+    isStream?: boolean;
+    isSeekable?: boolean;
+};
 
 const QUEUE_PAGE_SIZE = 10;
 
@@ -20,7 +30,7 @@ export const MUSIC_BUTTON_IDS = {
     QUEUE_LAST: 'music_queue_last',
 };
 
-export function formatDuration(ms) {
+export function formatDuration(ms: number): string {
     if (!ms || Number.isNaN(ms)) {
         return 'Live';
     }
@@ -34,11 +44,12 @@ export function formatDuration(ms) {
     return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
-function getTrackArtwork(track) {
-    return track?.info?.artworkUrl || track?.info?.thumbnail || null;
+function getTrackArtwork(track: Track | null | undefined): string | null {
+    const info = track?.info as MusicTrackInfo | undefined;
+    return info?.artworkUrl || info?.thumbnail || null;
 }
 
-function getLoopLabel(loop) {
+function getLoopLabel(loop: string | undefined): string {
     switch (loop) {
         case 'track':
             return 'Track';
@@ -49,8 +60,12 @@ function getLoopLabel(loop) {
     }
 }
 
-export function buildNowPlayingEmbed(track, player, guildData) {
-    const requester = track?.info?.requester;
+export function buildNowPlayingEmbed(
+    track: Track | null | undefined,
+    player: Player | null | undefined,
+    guildData: GuildMusicData | null | undefined,
+): EmbedBuilder {
+    const requester = track?.info?.requester as Partial<Pick<User, 'username' | 'tag'>> | null | undefined;
     const requesterLabel = requester
         ? (requester.username || requester.tag || 'Unknown')
         : 'Unknown';
@@ -75,7 +90,7 @@ export function buildNowPlayingEmbed(track, player, guildData) {
     });
 }
 
-export function buildQueueEmbed(queue, currentTrack, page = 0) {
+export function buildQueueEmbed(queue: Track[] | null | undefined, currentTrack: Track | null | undefined, page = 0): EmbedBuilder {
     const totalTracks = queue?.length || 0;
     const totalPages = Math.max(1, Math.ceil(totalTracks / QUEUE_PAGE_SIZE));
     const safePage = Math.min(Math.max(page, 0), totalPages - 1);
@@ -106,9 +121,9 @@ export function buildQueueEmbed(queue, currentTrack, page = 0) {
     });
 }
 
-export function buildPlayerButtonRows(player, guildData) {
+export function buildPlayerButtonRows(player: Player | null | undefined, guildData: GuildMusicData | null | undefined): ActionRowBuilder<ButtonBuilder>[] {
     const paused = player?.paused;
-    const row1 = new ActionRowBuilder().addComponents(
+    const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
             .setCustomId(MUSIC_BUTTON_IDS.PAUSE)
             .setLabel('Pause')
@@ -138,7 +153,7 @@ export function buildPlayerButtonRows(player, guildData) {
             .setEmoji('🔀'),
     );
 
-    const row2 = new ActionRowBuilder().addComponents(
+    const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
             .setCustomId(MUSIC_BUTTON_IDS.LOOP)
             .setLabel('Loop')
@@ -164,10 +179,10 @@ export function buildPlayerButtonRows(player, guildData) {
     return [row1, row2];
 }
 
-export function buildQueuePaginationRow(page, totalPages) {
+export function buildQueuePaginationRow(page: number, totalPages: number): ActionRowBuilder<ButtonBuilder> {
     return getPaginationRow('music_queue', page + 1, totalPages);
 }
 
-export function getQueuePageSize() {
+export function getQueuePageSize(): number {
     return QUEUE_PAGE_SIZE;
 }

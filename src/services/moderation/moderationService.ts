@@ -1,21 +1,37 @@
 // moderationService.js
 
 import { PermissionFlagsBits } from 'discord.js';
+import type { Guild, GuildMember, Role, User } from 'discord.js';
 import { logger } from '../../utils/logger.js';
 import { NexoBotError, ErrorTypes } from '../../utils/errorHandler.js';
 import { logModerationAction } from '../../utils/moderation.js';
 
-function getTargetLabel(target) {
+export type HierarchyCheck = { valid: true } | { valid: false; error: string };
+export type HierarchyActor = 'moderator' | 'bot';
+
+export interface ModerationActionResult {
+  caseId: number;
+  user: string;
+  reason: string;
+}
+
+function getTargetLabel(target: GuildMember): string {
   return target.user?.tag ?? target.displayName ?? 'this user';
 }
 
-function getHighestRole(member) {
+function getHighestRole(member: GuildMember | null | undefined): Role | null {
   return member?.roles?.highest ?? null;
 }
 
 export class ModerationService {
 
-  static buildHierarchyMessage({ actor, actorRole, targetRole, targetLabel, action }) {
+  static buildHierarchyMessage({ actor, actorRole, targetRole, targetLabel, action }: {
+    actor: HierarchyActor;
+    actorRole: Role;
+    targetRole: Role;
+    targetLabel: string;
+    action: string;
+  }): string {
     if (actor === 'moderator') {
       return (
         `You cannot ${action} **${targetLabel}** — their role **${targetRole.name}** is equal to or above yours (**${actorRole.name}**). ` +
@@ -29,7 +45,7 @@ export class ModerationService {
     );
   }
 
-  static buildHierarchySkipReason(moderator, target, action, actor = 'moderator') {
+  static buildHierarchySkipReason(moderator: GuildMember, target: GuildMember, action: string, actor: HierarchyActor = 'moderator'): string {
     const targetLabel = getTargetLabel(target);
     const targetRole = getHighestRole(target);
 
@@ -49,7 +65,7 @@ export class ModerationService {
     return `Your role **${modRole.name}** is too low for **${targetRole.name}** — move your role higher`;
   }
 
-  static validateHierarchy(moderator, target, action) {
+  static validateHierarchy(moderator: GuildMember, target: GuildMember, action: string): HierarchyCheck {
     if (!moderator || !target) {
       return { valid: false, error: 'Invalid moderator or target' };
     }
@@ -84,7 +100,7 @@ export class ModerationService {
     return { valid: true };
   }
 
-  static validateBotHierarchy(target, action) {
+  static validateBotHierarchy(target: GuildMember, action: string): HierarchyCheck {
     if (!target) {
       return { valid: false, error: 'Invalid target' };
     }
@@ -120,7 +136,7 @@ export class ModerationService {
     return { valid: true };
   }
 
-  static assertModerationHierarchy(moderator, target, action) {
+  static assertModerationHierarchy(moderator: GuildMember, target: GuildMember, action: string): void {
     const botCheck = this.validateBotHierarchy(target, action);
     if (!botCheck.valid) {
       throw new NexoBotError(botCheck.error, ErrorTypes.PERMISSION, botCheck.error);
@@ -138,7 +154,13 @@ export class ModerationService {
     moderator,
     reason = 'No reason provided',
     deleteDays = 0
-  }) {
+  }: {
+    guild: Guild;
+    user: User;
+    moderator: GuildMember;
+    reason?: string;
+    deleteDays?: number;
+  }): Promise<ModerationActionResult> {
     try {
       if (!guild || !user || !moderator) {
         throw new NexoBotError(
@@ -148,7 +170,7 @@ export class ModerationService {
         );
       }
 
-      let targetMember = null;
+      let targetMember: GuildMember | null = null;
       try {
         targetMember = await guild.members.fetch(user.id).catch(() => null);
       } catch (err) {
@@ -211,7 +233,12 @@ export class ModerationService {
     member,
     moderator,
     reason = 'No reason provided'
-  }) {
+  }: {
+    guild: Guild;
+    member: GuildMember;
+    moderator: GuildMember;
+    reason?: string;
+  }): Promise<ModerationActionResult> {
     try {
       if (!guild || !member || !moderator) {
         throw new NexoBotError(
@@ -269,7 +296,13 @@ export class ModerationService {
     moderator,
     durationMs,
     reason = 'No reason provided'
-  }) {
+  }: {
+    guild: Guild;
+    member: GuildMember;
+    moderator: GuildMember;
+    durationMs: number;
+    reason?: string;
+  }): Promise<{ caseId: number; user: string; duration: number; reason: string }> {
     try {
       if (!guild || !member || !moderator || !durationMs) {
         throw new NexoBotError(
@@ -330,7 +363,12 @@ export class ModerationService {
     member,
     moderator,
     reason = 'Timeout removed by moderator'
-  }) {
+  }: {
+    guild: Guild;
+    member: GuildMember;
+    moderator: GuildMember;
+    reason?: string;
+  }): Promise<{ user: string }> {
     try {
       if (!guild || !member || !moderator) {
         throw new NexoBotError(
@@ -393,7 +431,12 @@ export class ModerationService {
     user,
     moderator,
     reason = 'No reason provided'
-  }) {
+  }: {
+    guild: Guild;
+    user: User;
+    moderator: GuildMember;
+    reason?: string;
+  }): Promise<ModerationActionResult> {
     try {
       if (!guild || !user || !moderator) {
         throw new NexoBotError(

@@ -1,21 +1,23 @@
+import type { Guild, GuildMember } from 'discord.js';
+import type { NexoClient } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 import { getLevelingConfig, getUserLevelData, saveLevelingConfig } from './leveling.js';
 
 import { getUserLevelPrefix } from '../../utils/database/keys.js';
 
-async function listLevelUserIds(client, guildId) {
+async function listLevelUserIds(client: NexoClient, guildId: string): Promise<string[]> {
     if (!client.db?.list) return [];
 
     const prefixes = [getUserLevelPrefix(guildId), `${guildId}:leveling:users:`];
-    const userIds = new Set();
+    const userIds = new Set<string>();
 
     for (const prefix of prefixes) {
-        let keys = await client.db.list(prefix).catch(() => []);
+        let keys: unknown = await client.db.list(prefix).catch((): string[] => []);
         if (!Array.isArray(keys)) {
             keys = typeof keys === 'object' && keys !== null ? Object.keys(keys) : [];
         }
 
-        for (const key of keys) {
+        for (const key of keys as string[]) {
             if (!key.startsWith(prefix)) continue;
             const userId = key.slice(prefix.length);
             if (/^\d{17,19}$/.test(userId)) userIds.add(userId);
@@ -25,7 +27,7 @@ async function listLevelUserIds(client, guildId) {
     return [...userIds];
 }
 
-async function tryAwardRole(member, roleId, level) {
+async function tryAwardRole(member: GuildMember, roleId: string, level: number): Promise<boolean> {
     const role = member.guild.roles.cache.get(roleId) || (await member.guild.roles.fetch(roleId).catch(() => null));
     if (!role || member.roles.cache.has(roleId)) return false;
 
@@ -33,8 +35,15 @@ async function tryAwardRole(member, roleId, level) {
     return true;
 }
 
-export async function reconcileLevelRoles(client, guildId = null) {
-    const summary = {
+export interface LevelRoleSyncSummary {
+    scannedGuilds: number;
+    prunedRewardEntries: number;
+    rolesReAwarded: number;
+    errors: number;
+}
+
+export async function reconcileLevelRoles(client: NexoClient, guildId: string | null = null): Promise<LevelRoleSyncSummary> {
+    const summary: LevelRoleSyncSummary = {
         scannedGuilds: 0,
         prunedRewardEntries: 0,
         rolesReAwarded: 0,
@@ -42,7 +51,7 @@ export async function reconcileLevelRoles(client, guildId = null) {
     };
 
     const guilds = guildId
-        ? [client.guilds.cache.get(guildId)].filter(Boolean)
+        ? [client.guilds.cache.get(guildId)].filter((g): g is Guild => Boolean(g))
         : [...client.guilds.cache.values()];
 
     for (const guild of guilds) {
@@ -95,14 +104,14 @@ export async function reconcileLevelRoles(client, guildId = null) {
                         summary.errors += 1;
                         logger.warn(
                             `Could not re-award level ${requiredLevel} role to ${userId} in guild ${guild.id}:`,
-                            awardError.message,
+                            awardError instanceof Error ? awardError.message : String(awardError),
                         );
                     }
                 }
             }
         } catch (error) {
             summary.errors += 1;
-            logger.warn(`Level role sync failed for guild ${guild.id}:`, error.message);
+            logger.warn(`Level role sync failed for guild ${guild.id}:`, error instanceof Error ? error.message : String(error));
         }
     }
 

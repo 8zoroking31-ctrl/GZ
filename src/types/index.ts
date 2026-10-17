@@ -26,6 +26,7 @@ export type DatabaseWrapper = typeof db;
 export interface GuildConfigExtras {
   enabledCommands?: Record<string, boolean>;
   setupWizardCompleted?: boolean;
+  birthdayRoleId?: string | null;
   ticketPanelChannelId?: string | null;
   ticketPanelMessageId?: string | null;
   ticketPanelMessage?: string | null;
@@ -36,6 +37,7 @@ export interface GuildConfigExtras {
   ticketLogsChannelId?: string | null;
   ticketTranscriptChannelId?: string | null;
   maxTicketsPerUser?: number;
+  tickets?: { enablePriority?: boolean };
 }
 
 /** Stored per-guild configuration (passthrough: unknown keys are kept). */

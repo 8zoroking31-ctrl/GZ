@@ -3,6 +3,7 @@
 import { logger } from '../utils/logger.js';
 import { createError, ErrorTypes } from '../utils/errorHandler.js';
 import { PermissionFlagsBits } from 'discord.js';
+import type { GuildMember } from 'discord.js';
 import { sanitizeInput, sanitizeMarkdown } from '../utils/validation.js';
 import {
     getApplicationSettings,
@@ -15,17 +16,31 @@ import {
     getApplicationRoles,
     saveApplicationRoles
 } from '../utils/database.js';
+import type { ApplicationFilters, ApplicationInput, ApplicationSettings } from '../utils/database.js';
 import botConfig from '../config/bot.js';
+import type { NexoClient } from '../types/index.js';
 
-const applicationCooldowns = new Map();
+export interface ApplicationReviewData {
+    action: string;
+    reason?: string | null;
+    reviewerId: string;
+}
+
+export interface ApplicationRoleChange {
+    action: string;
+    roleId?: string | null;
+    name?: string | null;
+}
+
+const applicationCooldowns = new Map<string, number>();
 const APPLICATION_SUBMIT_COOLDOWN = (botConfig.applications?.applicationCooldown ?? 24) * 60 * 60 * 1000;
 
 class ApplicationService {
-    static sanitizeApplicationText(value, maxLength) {
+    static sanitizeApplicationText(value: unknown, maxLength: number): string {
         return sanitizeMarkdown(sanitizeInput(String(value ?? ''), maxLength));
     }
 
-    static validateApplicationSubmission(data) {
+    static validateApplicationSubmission(data: ApplicationInput): boolean {
         if (!data.guildId || !data.userId || !data.roleId) {
             throw createError(
                 'Missing required fields for application submission',
@@ -79,7 +94,7 @@ class ApplicationService {
         return true;
     }
 
-    static checkApplicationCooldown(userId) {
+    static checkApplicationCooldown(userId: string): boolean {
         const now = Date.now();
         const cooldownKey = `submit_${userId}`;
         const lastSubmit = applicationCooldowns.get(cooldownKey);
@@ -98,13 +113,13 @@ class ApplicationService {
         return true;
     }
 
-    static async checkManagerPermission(client, guildId, member) {
+    static async checkManagerPermission(client: NexoClient, guildId: string, member: GuildMember): Promise<boolean> {
         const settings = await getApplicationSettings(client, guildId);
         
         const isManager = 
             member.permissions.has(PermissionFlagsBits.ManageGuild) ||
-            (settings.managerRoles && 
-             settings.managerRoles.some(roleId => member.roles.cache.has(roleId)));
+            ((settings.managerRoles as string[] | undefined) && 
+             (settings.managerRoles as string[]).some(roleId => member.roles.cache.has(roleId)));
 
         if (!isManager) {
             throw createError(
@@ -118,7 +133,7 @@ class ApplicationService {
         return true;
     }
 
-    static async submitApplication(client, data) {
+    static async submitApplication(client: NexoClient, data: ApplicationInput) {
         try {
             
             this.validateApplicationSubmission(data);
@@ -149,7 +164,7 @@ class ApplicationService {
 
             const sanitizedData = {
                 ...data,
-                answers: data.answers.map(answer => ({
+                answers: data.answers!.map(answer => ({
                     question: this.sanitizeApplicationText(answer.question, 200),
                     answer: this.sanitizeApplicationText(answer.answer, 1000)
                 }))
@@ -168,16 +183,16 @@ class ApplicationService {
             return application;
         } catch (error) {
             logger.error('Error submitting application', {
-                error: error.message,
+                error: (error as Error).message,
                 userId: data.userId,
                 guildId: data.guildId,
-                stack: error.stack
+                stack: (error as Error).stack
             });
             throw error;
         }
     }
 
-    static async reviewApplication(client, guildId, applicationId, reviewData) {
+    static async reviewApplication(client: NexoClient, guildId: string, applicationId: string, reviewData: ApplicationReviewData) {
         try {
             const { action, reason, reviewerId } = reviewData;
 
@@ -230,16 +245,16 @@ class ApplicationService {
             return updatedApplication;
         } catch (error) {
             logger.error('Error reviewing application', {
-                error: error.message,
+                error: (error as Error).message,
                 applicationId,
                 guildId,
-                stack: error.stack
+                stack: (error as Error).stack
             });
             throw error;
         }
     }
 
-    static async getApplicationsList(client, guildId, filters = {}) {
+    static async getApplicationsList(client: NexoClient, guildId: string, filters: ApplicationFilters = {}) {
         try {
             const applications = await getApplications(client, guildId, filters);
 
@@ -252,10 +267,10 @@ class ApplicationService {
             return applications;
         } catch (error) {
             logger.error('Error getting applications list', {
-                error: error.message,
+                error: (error as Error).message,
                 guildId,
                 filters,
-                stack: error.stack
+                stack: (error as Error).stack
             });
             throw createError(
                 'Failed to retrieve applications',
@@ -266,7 +281,7 @@ class ApplicationService {
         }
     }
 
-    static async updateSettings(client, guildId, updates) {
+    static async updateSettings(client: NexoClient, guildId: string, updates: Partial<ApplicationSettings>) {
         try {
             
             if (updates.logChannelId && typeof updates.logChannelId !== 'string') {
@@ -313,16 +328,16 @@ class ApplicationService {
             return updatedSettings;
         } catch (error) {
             logger.error('Error updating application settings', {
-                error: error.message,
+                error: (error as Error).message,
                 guildId,
                 updates,
-                stack: error.stack
+                stack: (error as Error).stack
             });
             throw error;
         }
     }
 
-    static async manageApplicationRoles(client, guildId, data) {
+    static async manageApplicationRoles(client: NexoClient, guildId: string, data: ApplicationRoleChange) {
         try {
             const { action, roleId, name } = data;
 
@@ -391,16 +406,16 @@ class ApplicationService {
             return currentRoles;
         } catch (error) {
             logger.error('Error managing application roles', {
-                error: error.message,
+                error: (error as Error).message,
                 guildId,
                 data,
-                stack: error.stack
+                stack: (error as Error).stack
             });
             throw error;
         }
     }
 
-    static async getUserApplications(client, guildId, userId) {
+    static async getUserApplications(client: NexoClient, guildId: string, userId: string) {
         try {
             const applications = await getUserApplications(client, guildId, userId);
 
@@ -413,10 +428,10 @@ class ApplicationService {
             return applications;
         } catch (error) {
             logger.error('Error getting user applications', {
-                error: error.message,
+                error: (error as Error).message,
                 guildId,
                 userId,
-                stack: error.stack
+                stack: (error as Error).stack
             });
             throw createError(
                 'Failed to retrieve your applications',
@@ -427,7 +442,7 @@ class ApplicationService {
         }
     }
 
-    static async getSingleApplication(client, guildId, applicationId) {
+    static async getSingleApplication(client: NexoClient, guildId: string, applicationId: string) {
         try {
             const application = await getApplication(client, guildId, applicationId);
 
@@ -443,10 +458,10 @@ class ApplicationService {
             return application;
         } catch (error) {
             logger.error('Error getting application', {
-                error: error.message,
+                error: (error as Error).message,
                 applicationId,
                 guildId,
-                stack: error.stack
+                stack: (error as Error).stack
             });
             throw error;
         }

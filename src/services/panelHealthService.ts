@@ -7,25 +7,43 @@ import {
     getReactionRolePanelStatus,
 } from '../utils/panelStatus.js';
 import { getAllReactionRoleMessages } from './reactionRoleService.js';
+import type { GuildConfig, NexoClient } from '../types/index.js';
 
-async function persistVerificationMessageId(client, guildId, config, messageId) {
+/** Stored reaction-role panel fields this module reads/updates. */
+interface ReactionRolePanelRef {
+    channelId?: string | null;
+    messageId?: string | null;
+}
+
+export interface PanelHealthSummary {
+    scannedGuilds: number;
+    scannedPanels?: number;
+    healthyPanels: number;
+    deletedPanels: number;
+    missingChannels: number;
+    recoveredIds: number;
+    errors: number;
+}
+
+async function persistVerificationMessageId(client: NexoClient, guildId: string, config: GuildConfig, messageId: string): Promise<void> {
     if (!messageId || config.verification?.messageId === messageId) return;
     await patchGuildConfig(client, guildId, {
         verification: { ...config.verification, messageId },
     });
 }
 
-async function persistReactionRoleMessageId(client, guildId, panelData, messageId) {
+async function persistReactionRoleMessageId(client: NexoClient, guildId: string, panelData: ReactionRolePanelRef, messageId: string): Promise<void> {
     if (!messageId || panelData.messageId === messageId) return;
-    const oldKey = getReactionRoleKey(guildId, panelData.messageId);
+    // Callers only pass panels with a stored messageId.
+    const oldKey = getReactionRoleKey(guildId, panelData.messageId!);
     panelData.messageId = messageId;
     const newKey = getReactionRoleKey(guildId, messageId);
     await client.db.set(newKey, panelData);
     await client.db.delete(oldKey).catch(() => {});
 }
 
-export async function reconcileTicketPanels(client) {
-    const summary = {
+export async function reconcileTicketPanels(client: NexoClient): Promise<PanelHealthSummary> {
+    const summary: PanelHealthSummary = {
         scannedGuilds: 0,
         healthyPanels: 0,
         deletedPanels: 0,
@@ -62,15 +80,15 @@ export async function reconcileTicketPanels(client) {
             }
         } catch (error) {
             summary.errors += 1;
-            logger.warn(`Ticket panel health check failed for guild ${guild.id}:`, error.message);
+            logger.warn(`Ticket panel health check failed for guild ${guild.id}:`, (error as Error).message);
         }
     }
 
     return summary;
 }
 
-export async function reconcileVerificationPanels(client) {
-    const summary = {
+export async function reconcileVerificationPanels(client: NexoClient): Promise<PanelHealthSummary> {
+    const summary: PanelHealthSummary = {
         scannedGuilds: 0,
         healthyPanels: 0,
         deletedPanels: 0,
@@ -107,15 +125,15 @@ export async function reconcileVerificationPanels(client) {
             }
         } catch (error) {
             summary.errors += 1;
-            logger.warn(`Verification panel health check failed for guild ${guild.id}:`, error.message);
+            logger.warn(`Verification panel health check failed for guild ${guild.id}:`, (error as Error).message);
         }
     }
 
     return summary;
 }
 
-export async function reconcileReactionRolePanelHealth(client) {
-    const summary = {
+export async function reconcileReactionRolePanelHealth(client: NexoClient): Promise<Required<PanelHealthSummary>> {
+    const summary: Required<PanelHealthSummary> = {
         scannedGuilds: 0,
         scannedPanels: 0,
         healthyPanels: 0,
@@ -129,7 +147,7 @@ export async function reconcileReactionRolePanelHealth(client) {
         summary.scannedGuilds += 1;
 
         try {
-            const panels = await getAllReactionRoleMessages(client, guild.id);
+            const panels: ReactionRolePanelRef[] = await getAllReactionRoleMessages(client, guild.id);
             if (!panels?.length) continue;
 
             for (const panelData of panels) {
@@ -159,7 +177,7 @@ export async function reconcileReactionRolePanelHealth(client) {
             }
         } catch (error) {
             summary.errors += 1;
-            logger.warn(`Reaction role panel health check failed for guild ${guild.id}:`, error.message);
+            logger.warn(`Reaction role panel health check failed for guild ${guild.id}:`, (error as Error).message);
         }
     }
 

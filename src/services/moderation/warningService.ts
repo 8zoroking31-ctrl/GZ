@@ -4,6 +4,22 @@ import { db, getFromDb, setInDb, getWarningsKey, getWarningsPrefix } from '../..
 import { logger } from '../../utils/logger.js';
 import { createError, ErrorTypes, wrapServiceClassMethods } from '../../utils/errorHandler.js';
 
+/** Stored warning (`guild:{guildId}:warnings:{userId}` holds an array of these). */
+export interface Warning {
+  id: number;
+  guildId: string;
+  userId: string;
+  moderatorId: string;
+  reason: string;
+  timestamp: number;
+  status: 'active' | 'deleted';
+}
+
+export interface GuildWarningFilters {
+  moderatorId?: string;
+  limit?: number;
+}
+
 class WarningService {
 
   static async addWarning({
@@ -12,9 +28,15 @@ class WarningService {
     moderatorId,
     reason,
     timestamp = Date.now()
-  }) {
+  }: {
+    guildId: string;
+    userId: string;
+    moderatorId: string;
+    reason: string;
+    timestamp?: number;
+  }): Promise<{ id: number; totalCount: number }> {
     const key = getWarningsKey(guildId, userId);
-    const warnings = await getFromDb(key, []);
+    const warnings = await getFromDb<Warning[]>(key, []);
 
     if (!Array.isArray(warnings)) {
       logger.warn(`Warnings for ${userId} in ${guildId} corrupted, resetting`);
@@ -27,7 +49,7 @@ class WarningService {
       );
     }
 
-    const warning = {
+    const warning: Warning = {
       id: Date.now(),
       guildId,
       userId,
@@ -48,23 +70,23 @@ class WarningService {
     };
   }
 
-  static async getWarnings(guildId, userId) {
+  static async getWarnings(guildId: string, userId: string): Promise<Warning[]> {
     const key = getWarningsKey(guildId, userId);
-    const warnings = await getFromDb(key, []);
+    const warnings = await getFromDb<Warning[]>(key, []);
 
     return Array.isArray(warnings)
       ? warnings.filter(w => w && w.status !== 'deleted')
       : [];
   }
 
-  static async getWarningCount(guildId, userId) {
+  static async getWarningCount(guildId: string, userId: string): Promise<number> {
     const warnings = await this.getWarnings(guildId, userId);
     return warnings.length;
   }
 
-  static async removeWarning(guildId, userId, warningId) {
+  static async removeWarning(guildId: string, userId: string, warningId: number): Promise<{ removed: boolean }> {
     const key = getWarningsKey(guildId, userId);
-    const warnings = await getFromDb(key, []);
+    const warnings = await getFromDb<Warning[]>(key, []);
 
     const index = warnings.findIndex(w => w.id === warningId);
     if (index === -1) {
@@ -83,9 +105,9 @@ class WarningService {
     return { removed: true };
   }
 
-  static async clearWarnings(guildId, userId) {
+  static async clearWarnings(guildId: string, userId: string): Promise<{ count: number }> {
     const key = getWarningsKey(guildId, userId);
-    const warnings = await getFromDb(key, []);
+    const warnings = await getFromDb<Warning[]>(key, []);
     const count = warnings.length;
 
     await setInDb(key, []);
@@ -94,15 +116,15 @@ class WarningService {
     return { count };
   }
 
-  static async getGuildWarnings(guildId, filters = {}) {
+  static async getGuildWarnings(guildId: string, filters: GuildWarningFilters = {}): Promise<Warning[]> {
     const { moderatorId, limit = 100 } = filters;
     const prefix = getWarningsPrefix(guildId);
 
     const keys = await db.list(prefix);
-    const allWarnings = [];
+    const allWarnings: Warning[] = [];
 
     for (const key of Array.isArray(keys) ? keys : []) {
-      const warnings = await getFromDb(key, []);
+      const warnings = await getFromDb<Warning[]>(key, []);
       if (!Array.isArray(warnings)) continue;
 
       for (const warning of warnings) {

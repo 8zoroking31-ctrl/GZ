@@ -1,6 +1,8 @@
 // leveling.js
 
 import { EmbedBuilder } from 'discord.js';
+import type { Guild, GuildMember } from 'discord.js';
+import type { NexoClient } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 import { getGuildConfig, setGuildConfig } from '../config/guildConfig.js';
 import { NexoBotError, ErrorTypes } from '../../utils/errorHandler.js';
@@ -12,7 +14,40 @@ const XP_MULTIPLIER = 1.5;
 const MAX_LEVEL = 1000;
 const MIN_LEVEL = 0;
 
-export function getXpForLevel(level) {
+/** Leveling settings stored under `guildConfig.leveling`. */
+export interface GuildLevelingConfig {
+  enabled: boolean;
+  xpPerMessage: { min: number; max: number };
+  xpCooldown: number;
+  levelUpMessage: string;
+  levelUpChannel: string | null;
+  ignoredChannels: string[];
+  ignoredRoles: string[];
+  blacklistedUsers: string[];
+  roleRewards: Record<string, string>;
+  announceLevelUp: boolean;
+  xpMultiplier: number;
+  xpRange?: { min: number; max: number };
+  configured?: boolean;
+  [key: string]: unknown;
+}
+
+/** Stored per-user level record (`guild:{guildId}:leveling:users:{userId}`). */
+export interface LevelData {
+  xp: number;
+  level: number;
+  totalXp: number;
+  lastMessage: number;
+  rank: number;
+}
+
+export interface LeaderboardEntry extends LevelData {
+  userId: string;
+  username: string;
+  discriminator: string;
+}
+
+export function getXpForLevel(level: number): number {
   if (!Number.isInteger(level) || level < 0 || level > MAX_LEVEL) {
     throw new NexoBotError(
       `Invalid level: ${level}. Must be between ${MIN_LEVEL} and ${MAX_LEVEL}`,
@@ -23,7 +58,7 @@ export function getXpForLevel(level) {
   return 5 * Math.pow(level, 2) + 50 * level + 50;
 }
 
-export function getLevelFromXp(xp) {
+export function getLevelFromXp(xp: number): { level: number; currentXp: number; xpNeeded: number } {
   if (!Number.isInteger(xp) || xp < 0) {
     throw new NexoBotError(
       `Invalid XP: ${xp}`,
@@ -48,7 +83,7 @@ export function getLevelFromXp(xp) {
   };
 }
 
-export function calculateTotalXp(level, currentXp = 0) {
+export function calculateTotalXp(level: number, currentXp = 0): number {
   let total = currentXp;
   for (let i = 0; i < level; i++) {
     total += getXpForLevel(i);
@@ -56,7 +91,7 @@ export function calculateTotalXp(level, currentXp = 0) {
   return total;
 }
 
-export async function getLeaderboard(client, guildId, limit = 10) {
+export async function getLeaderboard(client: NexoClient, guildId: string, limit = 10): Promise<LeaderboardEntry[]> {
   try {
     
     if (!guildId || typeof guildId !== 'string') {
@@ -79,10 +114,10 @@ export async function getLeaderboard(client, guildId, limit = 10) {
     
     const members = await guild.members.fetch().catch(error => {
       logger.error(`Failed to fetch members for guild ${guildId}:`, error);
-      return new Map();
+      return new Map<string, GuildMember>();
     });
 
-    const leaderboard = [];
+    const leaderboard: LeaderboardEntry[] = [];
     
     for (const [userId, member] of members) {
       if (member.user.bot) continue;
@@ -110,14 +145,14 @@ export async function getLeaderboard(client, guildId, limit = 10) {
     logger.error('Error getting leaderboard:', error);
     if (error instanceof NexoBotError) throw error;
     throw new NexoBotError(
-      `Failed to fetch leaderboard: ${error.message}`,
+      `Failed to fetch leaderboard: ${error instanceof Error ? error.message : String(error)}`,
       ErrorTypes.DATABASE,
       'Could not fetch the leaderboard at this time.'
     );
   }
 }
 
-export function createLeaderboardEmbed(leaderboard, guild) {
+export function createLeaderboardEmbed(leaderboard: LeaderboardEntry[] | null | undefined, guild: Guild): EmbedBuilder {
   const embed = new EmbedBuilder()
     .setTitle(`🏆 ${guild.name} Leaderboard`)
     .setColor('#2ecc71')
@@ -147,10 +182,10 @@ export function createLeaderboardEmbed(leaderboard, guild) {
   return embed;
 }
 
-export async function getLevelingConfig(client, guildId) {
+export async function getLevelingConfig(client: NexoClient, guildId: string): Promise<GuildLevelingConfig> {
   try {
     const guildConfig = await getGuildConfig(client, guildId);
-    return guildConfig.leveling || {
+    return (guildConfig.leveling as GuildLevelingConfig | undefined) || {
       enabled: true,
       xpPerMessage: { min: 15, max: 25 },
       xpCooldown: 20,
@@ -181,7 +216,7 @@ export async function getLevelingConfig(client, guildId) {
   }
 }
 
-export async function getUserLevelData(client, guildId, userId) {
+export async function getUserLevelData(client: NexoClient, guildId: string, userId: string): Promise<LevelData> {
   try {
     if (!guildId || !userId) {
       throw new NexoBotError(
@@ -191,7 +226,7 @@ export async function getUserLevelData(client, guildId, userId) {
     }
 
     const key = getUserLevelKey(guildId, userId);
-    const data = await client.db.get(key);
+    const data = await client.db.get<Partial<LevelData>>(key);
     
     if (!data) {
       return {
@@ -214,14 +249,14 @@ export async function getUserLevelData(client, guildId, userId) {
     logger.error(`Error getting user level data for ${userId}:`, error);
     if (error instanceof NexoBotError) throw error;
     throw new NexoBotError(
-      `Failed to fetch user data: ${error.message}`,
+      `Failed to fetch user data: ${error instanceof Error ? error.message : String(error)}`,
       ErrorTypes.DATABASE,
       'Could not fetch level data at this time.'
     );
   }
 }
 
-export async function saveUserLevelData(client, guildId, userId, data) {
+export async function saveUserLevelData(client: NexoClient, guildId: string, userId: string, data: LevelData): Promise<void> {
   try {
     if (!guildId || !userId) {
       throw new NexoBotError(
@@ -251,14 +286,14 @@ export async function saveUserLevelData(client, guildId, userId, data) {
     logger.error(`Error saving user level data for ${userId}:`, error);
     if (error instanceof NexoBotError) throw error;
     throw new NexoBotError(
-      `Failed to save user data: ${error.message}`,
+      `Failed to save user data: ${error instanceof Error ? error.message : String(error)}`,
       ErrorTypes.DATABASE,
       'Could not save level data at this time.'
     );
   }
 }
 
-export async function saveLevelingConfig(client, guildId, config) {
+export async function saveLevelingConfig(client: NexoClient, guildId: string, config: GuildLevelingConfig): Promise<void> {
   try {
     if (!guildId || !config) {
       throw new NexoBotError(
@@ -293,14 +328,14 @@ export async function saveLevelingConfig(client, guildId, config) {
     logger.error(`Error saving leveling config for guild ${guildId}:`, error);
     if (error instanceof NexoBotError) throw error;
     throw new NexoBotError(
-      `Failed to save config: ${error.message}`,
+      `Failed to save config: ${error instanceof Error ? error.message : String(error)}`,
       ErrorTypes.DATABASE,
       'Could not save configuration at this time.'
     );
   }
 }
 
-export async function addLevels(client, guildId, userId, levels) {
+export async function addLevels(client: NexoClient, guildId: string, userId: string, levels: number): Promise<LevelData> {
   try {
     const levelingConfig = await getLevelingConfig(client, guildId);
     if (!levelingConfig?.enabled) {
@@ -345,14 +380,14 @@ export async function addLevels(client, guildId, userId, levels) {
     logger.error(`Error adding levels for user ${userId}:`, error);
     if (error instanceof NexoBotError) throw error;
     throw new NexoBotError(
-      `Failed to add levels: ${error.message}`,
+      `Failed to add levels: ${error instanceof Error ? error.message : String(error)}`,
       ErrorTypes.DATABASE,
       'Could not add levels at this time.'
     );
   }
 }
 
-export async function removeLevels(client, guildId, userId, levels) {
+export async function removeLevels(client: NexoClient, guildId: string, userId: string, levels: number): Promise<LevelData> {
   try {
     const levelingConfig = await getLevelingConfig(client, guildId);
     if (!levelingConfig?.enabled) {
@@ -389,14 +424,14 @@ export async function removeLevels(client, guildId, userId, levels) {
     logger.error(`Error removing levels for user ${userId}:`, error);
     if (error instanceof NexoBotError) throw error;
     throw new NexoBotError(
-      `Failed to remove levels: ${error.message}`,
+      `Failed to remove levels: ${error instanceof Error ? error.message : String(error)}`,
       ErrorTypes.DATABASE,
       'Could not remove levels at this time.'
     );
   }
 }
 
-export async function setUserLevel(client, guildId, userId, level) {
+export async function setUserLevel(client: NexoClient, guildId: string, userId: string, level: number): Promise<LevelData> {
   try {
     const levelingConfig = await getLevelingConfig(client, guildId);
     if (!levelingConfig?.enabled) {
@@ -432,14 +467,14 @@ export async function setUserLevel(client, guildId, userId, level) {
     logger.error(`Error setting level for user ${userId}:`, error);
     if (error instanceof NexoBotError) throw error;
     throw new NexoBotError(
-      `Failed to set level: ${error.message}`,
+      `Failed to set level: ${error instanceof Error ? error.message : String(error)}`,
       ErrorTypes.DATABASE,
       'Could not set level at this time.'
     );
   }
 }
 
-export async function deleteUserLevelData(client, guildId, userId) {
+export async function deleteUserLevelData(client: NexoClient, guildId: string, userId: string): Promise<void> {
   try {
     if (!guildId || !userId) {
       throw new NexoBotError(

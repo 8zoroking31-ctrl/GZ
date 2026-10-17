@@ -4,6 +4,9 @@ import { logger } from '../utils/logger.js';
 import { getEconomyData, setEconomyData, getMaxBankCapacity } from '../utils/economy.js';
 import { createError, ErrorTypes } from '../utils/errorHandler.js';
 import { wrapServiceClassMethods } from '../utils/serviceErrorBoundary.js';
+import type { ErrorContext } from '../utils/errorHandler.js';
+import type { EconomyData } from '../utils/economy.js';
+import type { NexoClient } from '../types/index.js';
 
 class EconomyService {
 
@@ -19,7 +22,7 @@ class EconomyService {
   static DAILY_AMOUNT = 1000;
   static MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER;
 
-  static assertSafeBalance(value, context = {}) {
+  static assertSafeBalance(value: number, context: ErrorContext = {}): void {
     if (!Number.isSafeInteger(value) || value < 0 || value > this.MAX_SAFE_INTEGER) {
       throw createError(
         "Invalid balance state",
@@ -30,7 +33,7 @@ class EconomyService {
     }
   }
 
-  static async claimDaily(client, guildId, userId) {
+  static async claimDaily(client: NexoClient, guildId: string, userId: string) {
     logger.debug(`[ECONOMY_SERVICE] claimDaily requested`, { userId, guildId });
     
     const userData = await getEconomyData(client, guildId, userId);
@@ -99,7 +102,7 @@ class EconomyService {
     }
   }
 
-  static async transferMoney(client, guildId, senderId, receiverId, amount) {
+  static async transferMoney(client: NexoClient, guildId: string, senderId: string, receiverId: string, amount: number) {
     logger.debug(`[ECONOMY_SERVICE] transferMoney requested`, {
       senderId,
       receiverId,
@@ -226,7 +229,7 @@ class EconomyService {
     }
   }
 
-  static async addMoney(client, guildId, userId, amount, source = 'unknown') {
+  static async addMoney(client: NexoClient, guildId: string, userId: string, amount: number, source = 'unknown'): Promise<EconomyData> {
     if (amount <= 0) {
       throw createError(
         "Invalid amount",
@@ -260,7 +263,7 @@ class EconomyService {
     return userData;
   }
 
-  static async removeMoney(client, guildId, userId, amount, reason = 'unknown') {
+  static async removeMoney(client: NexoClient, guildId: string, userId: string, amount: number, reason = 'unknown'): Promise<EconomyData> {
     if (amount <= 0) {
       throw createError(
         "Invalid amount",
@@ -302,7 +305,7 @@ class EconomyService {
     return userData;
   }
 
-  static async depositToBank(client, guildId, userId, amount) {
+  static async depositToBank(client: NexoClient, guildId: string, userId: string, amount: number): Promise<EconomyData> {
     this.validateAmount(amount, { operation: 'deposit', userId });
 
     const userData = await getEconomyData(client, guildId, userId);
@@ -350,7 +353,7 @@ class EconomyService {
     return userData;
   }
 
-  static async withdrawFromBank(client, guildId, userId, amount) {
+  static async withdrawFromBank(client: NexoClient, guildId: string, userId: string, amount: number): Promise<EconomyData> {
     this.validateAmount(amount, { operation: 'withdraw', userId });
 
     const userData = await getEconomyData(client, guildId, userId);
@@ -388,9 +391,9 @@ class EconomyService {
     return userData;
   }
 
-  static checkCooldown(userData, action, cooldownMs) {
+  static checkCooldown(userData: EconomyData, action: string, cooldownMs: number) {
     const lastActionField = `last${action.charAt(0).toUpperCase() + action.slice(1)}`;
-    const lastTime = userData[lastActionField] || 0;
+    const lastTime = (userData[lastActionField] as number | undefined) || 0;
     const now = Date.now();
     const remaining = Math.max(0, lastTime + cooldownMs - now);
 
@@ -402,7 +405,7 @@ class EconomyService {
     };
   }
 
-  static validateAmount(amount, context = {}) {
+  static validateAmount(amount: number, context: ErrorContext = {}): void {
     if (!Number.isInteger(amount)) {
       throw createError(
         "Invalid amount - not an integer",
@@ -432,7 +435,7 @@ class EconomyService {
     }
   }
 
-  static formatDuration(ms) {
+  static formatDuration(ms: number): string {
     const totalSeconds = Math.floor(ms / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -447,7 +450,7 @@ class EconomyService {
     return `${seconds}s`;
   }
 
-  static formatCooldownDisplay(ms) {
+  static formatCooldownDisplay(ms: number): string {
     const duration = this.formatDuration(ms);
     return `**${duration}**`;
   }

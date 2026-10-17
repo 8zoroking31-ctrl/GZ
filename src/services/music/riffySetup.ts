@@ -1,13 +1,16 @@
 import { createRequire } from 'module';
+import type { EventEmitter } from 'node:events';
 import { GatewayDispatchEvents } from 'discord.js';
+import type { Client, GatewayDispatchPayload } from 'discord.js';
+import type { Player } from 'riffy';
 import { logger } from '../../utils/logger.js';
 import lavalinkConfig from '../../config/music/lavalink.js';
 import { setupPlayerHandler } from './playerHandler.js';
 
 const require = createRequire(import.meta.url);
-const { Riffy } = require('riffy');
+const { Riffy } = require('riffy') as typeof import('riffy');
 
-export function initializeMusic(client) {
+export function initializeMusic(client: Client): void {
     if (!lavalinkConfig.nodes?.length) {
         logger.error('No Lavalink nodes configured. Add lavalink/nodes.json, set LAVALINK_NODES, or set LAVALINK_HOST in your environment.');
         return;
@@ -39,26 +42,27 @@ export function initializeMusic(client) {
 
     setupPlayerHandler(client);
 
-    client.on('raw', (packet) => {
+    client.on('raw', (packet: GatewayDispatchPayload) => {
         if (
-            ![
+            !([
                 GatewayDispatchEvents.VoiceStateUpdate,
                 GatewayDispatchEvents.VoiceServerUpdate,
-            ].includes(packet.t)
+            ] as GatewayDispatchEvents[]).includes(packet.t)
         ) {
             return;
         }
-        client.riffy.updateVoiceState(packet);
+        client.riffy!.updateVoiceState(packet);
     });
 
-    client.riffy.on('playerError', (player, error) => {
+    // 'playerError' is not in riffy's typed event map; listen through the base EventEmitter signature.
+    (client.riffy as EventEmitter).on('playerError', (player: Player, error: unknown) => {
         logger.error(`Music player error in guild ${player.guildId}:`, error);
     });
 
     logger.info(`Music initialized with ${lavalinkConfig.nodes.length} Lavalink node(s).`);
 }
 
-export function initRiffyAfterReady(client) {
+export function initRiffyAfterReady(client: Client): void {
     if (client.riffy && client.user?.id) {
         client.riffy.init(client.user.id);
         logger.info('Riffy voice connection manager initialized.');

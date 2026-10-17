@@ -1,6 +1,8 @@
 // loggingService.js
 
 import { ChannelType } from 'discord.js';
+import type { ColorResolvable, Guild, Message, MessageCreateOptions } from 'discord.js';
+import type { GuildConfig, NexoClient } from '../types/index.js';
 import { getGuildConfig, updateGuildConfig } from './config/guildConfig.js';
 import { logger } from '../utils/logger.js';
 import {
@@ -10,8 +12,46 @@ import {
   fieldsToLines,
   splitComparisonFields,
 } from '../utils/logging/logEmbeds.js';
+import type { LogField, LogMetaEntry, StandardLogEmbedOptions } from '../utils/logging/logEmbeds.js';
 
-const LOG_DESTINATIONS = ['audit', 'applications', 'reports'];
+/** Payload for logEvent; extra keys are allowed and ignored by the embed builder. */
+export interface LogEventData {
+  userId?: string;
+  channelId?: string;
+  color?: ColorResolvable | null;
+  title?: string | null;
+  description?: string | null;
+  headline?: string | null;
+  lines?: string[];
+  quoted?: boolean;
+  meta?: LogMetaEntry[];
+  fields?: LogField[];
+  section?: { title?: string | null; body?: string | null } | null;
+  inlineFields?: LogField[];
+  blockFields?: LogField[];
+  thumbnail?: string | null;
+  author?: StandardLogEmbedOptions['author'];
+  footer?: StandardLogEmbedOptions['footer'];
+  [key: string]: unknown;
+}
+
+export interface LogEventOptions {
+  client: NexoClient;
+  guildId: string;
+  eventType: string;
+  data?: LogEventData;
+  attachments?: NonNullable<MessageCreateOptions['files']>;
+  content?: string | null;
+  channelId?: string | null;
+}
+
+interface ApplicationLogSettings {
+  logChannelId?: string | null;
+}
+
+type LoggingSettings = NonNullable<GuildConfig['logging']>;
+
+const LOG_DESTINATIONS: string[] = ['audit', 'applications', 'reports'];
 
 const EVENT_TYPES = {
   MODERATION_BAN: 'moderation.ban',
@@ -62,7 +102,7 @@ const EVENT_TYPES = {
   REPORT_FILE: 'report.file',
 };
 
-const EVENT_COLORS = {
+const EVENT_COLORS: Record<string, number> = {
   'moderation.ban': 0x721919,
   'moderation.kick': 0xFFA500,
   'moderation.mute': 0xF1C40F,
@@ -102,7 +142,7 @@ const EVENT_COLORS = {
   'report.file': 0xED4245,
 };
 
-const EVENT_ICONS = {
+const EVENT_ICONS: Record<string, string> = {
   'moderation.ban': '🔨',
   'moderation.kick': '👢',
   'moderation.mute': '🔇',
@@ -142,13 +182,13 @@ const EVENT_ICONS = {
   'report.file': '🚨',
 };
 
-const CATEGORY_DESTINATION = {
+const CATEGORY_DESTINATION: Record<string, string> = {
   application: 'applications',
   report: 'reports',
 };
 
-export function resolveLogChannel(config, destination) {
-  const channels = config?.logging?.channels || {};
+export function resolveLogChannel(config: GuildConfig | null | undefined, destination: string): string | null {
+  const channels: Record<string, string | null | undefined> = config?.logging?.channels || {};
   if (destination && channels[destination]) {
     return channels[destination];
   }
@@ -158,11 +198,11 @@ export function resolveLogChannel(config, destination) {
   return channels[destination] ?? null;
 }
 
-export function getIgnoreList(config) {
+export function getIgnoreList(config: GuildConfig | null | undefined): { users: string[]; channels: string[] } {
   return config?.logging?.ignore ?? config?.logIgnore ?? { users: [], channels: [] };
 }
 
-export function isEventEnabled(config, eventType) {
+export function isEventEnabled(config: GuildConfig | null | undefined, eventType: string | null | undefined): boolean {
   if (!config?.logging?.enabled) {
     return false;
   }
@@ -185,7 +225,7 @@ export function isEventEnabled(config, eventType) {
   return true;
 }
 
-function getLogChannelForEvent(config, eventType, overrideChannelId = null) {
+function getLogChannelForEvent(config: GuildConfig | null | undefined, eventType: string, overrideChannelId: string | null = null): string | null {
   if (overrideChannelId) {
     return overrideChannelId;
   }
@@ -203,7 +243,7 @@ export async function logEvent({
   attachments = [],
   content = null,
   channelId: overrideChannelId = null,
-}) {
+}: LogEventOptions): Promise<Message<true> | null> {
   try {
     const guild = client.guilds.cache.get(guildId) ||
       await client.guilds.fetch(guildId).catch(() => null);
@@ -240,7 +280,7 @@ export async function logEvent({
       return null;
     }
 
-    const permissions = channel.permissionsFor(guild.members.me);
+    const permissions = channel.permissionsFor(guild.members.me!);
     if (!permissions || !permissions.has(['SendMessages', 'EmbedLinks'])) {
       logger.warn(`logEvent: Missing permissions in channel ${logChannelId}`);
       return null;
@@ -248,7 +288,7 @@ export async function logEvent({
 
     const embed = createLogEmbed(guild, eventType, data);
 
-    const messageOptions = { embeds: [embed] };
+    const messageOptions: MessageCreateOptions = { embeds: [embed] };
     if (content) {
       messageOptions.content = content;
     }
@@ -265,12 +305,12 @@ export async function logEvent({
   }
 }
 
-function createLogEmbed(guild, eventType, data) {
+function createLogEmbed(guild: Guild, eventType: string, data: LogEventData) {
   const color = data.color ?? EVENT_COLORS[eventType] ?? 0x0099ff;
   const icon = EVENT_ICONS[eventType] || '📌';
   const title = data.title || `${icon} ${formatEventType(eventType)}`;
 
-  const inlineFields = [];
+  const inlineFields: LogField[] = [];
   let description = data.description || '';
 
   if (data.lines?.length) {
@@ -334,11 +374,11 @@ function createLogEmbed(guild, eventType, data) {
     fields: data.blockFields || [],
     author: data.author || null,
     timestamp: true,
-    footer: data.footer || { text: guild.name, iconURL: guild.iconURL({ dynamic: true }) || undefined },
+    footer: data.footer || { text: guild.name, iconURL: guild.iconURL() || undefined },
   });
 }
 
-function formatEventType(eventType) {
+function formatEventType(eventType: string): string {
   if (!eventType || typeof eventType !== 'string') {
     return 'Unknown Event';
   }
@@ -349,9 +389,9 @@ function formatEventType(eventType) {
     .join(' ');
 }
 
-export async function getLoggingStatus(client, guildId) {
+export async function getLoggingStatus(client: NexoClient, guildId: string) {
   const config = await getGuildConfig(client, guildId);
-  const logging = config.logging || {};
+  const logging: Partial<LoggingSettings> = config.logging || {};
 
   return {
     enabled: logging.enabled || false,
@@ -363,7 +403,7 @@ export async function getLoggingStatus(client, guildId) {
   };
 }
 
-export async function toggleEventLogging(client, guildId, eventTypes, enabled) {
+export async function toggleEventLogging(client: NexoClient, guildId: string, eventTypes: string | string[], enabled: boolean): Promise<boolean> {
   try {
     const config = await getGuildConfig(client, guildId);
     const logging = { ...config.logging, enabledEvents: { ...(config.logging?.enabledEvents || {}) } };
@@ -392,7 +432,7 @@ export async function toggleEventLogging(client, guildId, eventTypes, enabled) {
   }
 }
 
-export async function setLogChannel(client, guildId, destination, channelId) {
+export async function setLogChannel(client: NexoClient, guildId: string, destination: string, channelId: string | null): Promise<boolean> {
   if (!LOG_DESTINATIONS.includes(destination)) {
     throw new Error(`Invalid log destination: ${destination}`);
   }
@@ -417,11 +457,11 @@ export async function setLogChannel(client, guildId, destination, channelId) {
 }
 
 /** @deprecated Use setLogChannel(client, guildId, 'audit', channelId) */
-export async function setLoggingChannel(client, guildId, channelId) {
+export async function setLoggingChannel(client: NexoClient, guildId: string, channelId: string | null): Promise<boolean> {
   return setLogChannel(client, guildId, 'audit', channelId);
 }
 
-export async function setLoggingEnabled(client, guildId, enabled) {
+export async function setLoggingEnabled(client: NexoClient, guildId: string, enabled: boolean): Promise<boolean> {
   try {
     const config = await getGuildConfig(client, guildId);
     const logging = { ...config.logging, enabled };
@@ -433,7 +473,11 @@ export async function setLoggingEnabled(client, guildId, enabled) {
   }
 }
 
-export async function updateIgnoreList(client, guildId, { action, type, id }) {
+export async function updateIgnoreList(
+  client: NexoClient,
+  guildId: string,
+  { action, type, id }: { action: string; type: string; id: string },
+): Promise<boolean> {
   try {
     const config = await getGuildConfig(client, guildId);
     const ignore = { ...getIgnoreList(config) };
@@ -460,7 +504,11 @@ export async function updateIgnoreList(client, guildId, { action, type, id }) {
   }
 }
 
-export function resolveApplicationLogChannel(config, roleSettings = {}, appSettings = {}) {
+export function resolveApplicationLogChannel(
+  config: GuildConfig | null | undefined,
+  roleSettings: ApplicationLogSettings = {},
+  appSettings: ApplicationLogSettings = {},
+): string | null {
   return roleSettings.logChannelId
     || config?.logging?.channels?.applications
     || appSettings.logChannelId

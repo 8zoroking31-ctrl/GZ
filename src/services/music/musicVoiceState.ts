@@ -1,8 +1,10 @@
+import type { GuildTextBasedChannel, VoiceBasedChannel, VoiceState } from 'discord.js';
+import type { NexoClient } from '../../types/index.js';
 import { successEmbed } from '../../utils/embeds.js';
 import { getGuildMusicData } from './playerStore.js';
 import { applyPause, applyResume, getPlayer } from './musicActions.js';
 
-export async function handleMusicVoiceState(client, oldState, newState) {
+export async function handleMusicVoiceState(client: NexoClient, oldState: VoiceState, newState: VoiceState): Promise<void> {
     if (!client.riffy) {
         return;
     }
@@ -17,7 +19,7 @@ export async function handleMusicVoiceState(client, oldState, newState) {
         return;
     }
 
-    const voiceChannel = client.channels.cache.get(player.voiceChannel);
+    const voiceChannel = client.channels.cache.get(player.voiceChannel) as VoiceBasedChannel | undefined;
     if (!voiceChannel) {
         return;
     }
@@ -30,7 +32,7 @@ export async function handleMusicVoiceState(client, oldState, newState) {
         guildData.autoPaused = true;
         await applyPause(client, guildId);
         if (guildData.playerChannelId) {
-            const channel = client.channels.cache.get(guildData.playerChannelId);
+            const channel = client.channels.cache.get(guildData.playerChannelId) as GuildTextBasedChannel | undefined;
             if (channel) {
                 channel.send({ embeds: [successEmbed('Paused', 'Voice channel is empty. Music paused until someone joins.')] }).catch(() => null);
             }
@@ -42,7 +44,7 @@ export async function handleMusicVoiceState(client, oldState, newState) {
         await applyResume(client, guildId);
         guildData.autoPaused = false;
         if (guildData.playerChannelId) {
-            const channel = client.channels.cache.get(guildData.playerChannelId);
+            const channel = client.channels.cache.get(guildData.playerChannelId) as GuildTextBasedChannel | undefined;
             if (channel) {
                 channel.send({ embeds: [successEmbed('Resumed', 'Someone joined the voice channel. Playback resumed.')] }).catch(() => null);
             }

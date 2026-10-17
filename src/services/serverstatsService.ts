@@ -5,8 +5,38 @@ import { logEvent, EVENT_TYPES } from './loggingService.js';
 import { formatLogLine } from '../utils/logging/logEmbeds.js';
 import { getServerCountersKey } from '../utils/database/keys.js';
 import botConfig from '../config/bot.js';
+import type { Guild, GuildBasedChannel } from 'discord.js';
+import type { NexoClient } from '../types/index.js';
 
-export const COUNTER_TYPE_CONFIG = {
+export interface CounterTypeConfig {
+  label: string;
+  baseName: string;
+  emoji: string;
+}
+
+/** Stored server counter (`guild:{guildId}:...` counters key). */
+export interface ServerCounter {
+  id: string;
+  type: string;
+  channelId: string;
+  guildId: string;
+  createdAt: string;
+  enabled: boolean;
+  updatedAt?: string;
+}
+
+/** A counter as passed in or read back before normalization. */
+export interface ServerCounterInput {
+  id: string;
+  type: string;
+  channelId: string;
+  guildId?: string;
+  createdAt?: string;
+  enabled?: boolean;
+  updatedAt?: string;
+}
+
+export const COUNTER_TYPE_CONFIG: Record<string, CounterTypeConfig> = {
   members: {
     label: 'Members + Bots',
     baseName: 'Members & Bots',
@@ -24,7 +54,7 @@ export const COUNTER_TYPE_CONFIG = {
   }
 };
 
-function getCounterConfig(type) {
+function getCounterConfig(type: string): CounterTypeConfig {
   return COUNTER_TYPE_CONFIG[type] || {
     label: 'Unknown',
     baseName: 'Counter',
@@ -32,19 +62,19 @@ function getCounterConfig(type) {
   };
 }
 
-export function getCounterTypeLabel(type) {
+export function getCounterTypeLabel(type: string): string {
   return getCounterConfig(type).label;
 }
 
-export function getCounterBaseName(type) {
+export function getCounterBaseName(type: string): string {
   return getCounterConfig(type).baseName;
 }
 
-export function getCounterEmoji(type) {
+export function getCounterEmoji(type: string): string {
   return getCounterConfig(type).emoji;
 }
 
-export function formatCounterChannelName(type, count) {
+export function formatCounterChannelName(type: string, count: number | string): string {
   const template = botConfig.counters?.defaults?.channelName || '{name}-{count}';
   const baseName = getCounterBaseName(type);
   return template
@@ -52,8 +82,9 @@ export function formatCounterChannelName(type, count) {
     .replaceAll('{count}', String(count));
 }
 
-export function getCounterActionMessage(action, values = {}) {
-  const template = botConfig.counters?.messages?.[action];
+export function getCounterActionMessage(action: string, values: Record<string, unknown> = {}): string | null {
+  const messages: Record<string, string | undefined> | undefined = botConfig.counters?.messages;
+  const template = messages?.[action];
   if (!template) {
     return null;
   }
@@ -64,7 +95,7 @@ export function getCounterActionMessage(action, values = {}) {
   );
 }
 
-export async function getGuildCounterStats(guild) {
+export async function getGuildCounterStats(guild: Guild): Promise<{ totalCount: number; botCount: number; humanCount: number }> {
   let memberCollection = guild.members.cache;
 
   try {
@@ -86,7 +117,7 @@ export async function getGuildCounterStats(guild) {
   };
 }
 
-export async function getCounterCount(guild, type) {
+export async function getCounterCount(guild: Guild, type: string): Promise<number | null> {
   const stats = await getGuildCounterStats(guild);
 
   switch (type) {
@@ -101,7 +132,8 @@ export async function getCounterCount(guild, type) {
   }
 }
 
-function isValidCounterShape(counter) {
+function isValidCounterShape(value: unknown): value is ServerCounterInput {
+  const counter = value as Partial<Record<keyof ServerCounterInput, unknown>> | null | undefined;
   return Boolean(
     counter &&
     typeof counter === 'object' &&
@@ -113,8 +145,8 @@ function isValidCounterShape(counter) {
   );
 }
 
-function normalizeCounter(counter, guildId) {
-  const normalized = {
+function normalizeCounter(counter: ServerCounterInput, guildId: string): ServerCounter {
+  const normalized: ServerCounter = {
     id: String(counter.id),
     type: String(counter.type),
     channelId: String(counter.channelId),
@@ -130,7 +162,7 @@ function normalizeCounter(counter, guildId) {
   return normalized;
 }
 
-function sanitizeCounters(counters, guildId) {
+function sanitizeCounters(counters: unknown, guildId: string): ServerCounter[] {
   if (!Array.isArray(counters)) {
     return [];
   }
@@ -140,7 +172,7 @@ function sanitizeCounters(counters, guildId) {
     .map(counter => normalizeCounter(counter, guildId));
 }
 
-export async function updateCounter(client, guild, counter) {
+export async function updateCounter(client: NexoClient, guild: Guild, counter: ServerCounterInput | null | undefined): Promise<boolean> {
   try {
     if (!counter || !counter.type || !counter.channelId) {
       logger.warn('Skipping invalid counter in updateCounter:', counter);
@@ -148,7 +180,7 @@ export async function updateCounter(client, guild, counter) {
     }
     
     const { type, channelId } = counter;
-    let channel = guild.channels.cache.get(channelId);
+    let channel: GuildBasedChannel | null | undefined = guild.channels.cache.get(channelId);
     if (!channel) {
       try {
         channel = await guild.channels.fetch(channelId);
@@ -219,16 +251,16 @@ export async function updateCounter(client, guild, counter) {
   }
 }
 
-export async function getServerCounters(client, guildId) {
+export async function getServerCounters(client: NexoClient, guildId: string): Promise<ServerCounter[]> {
   try {
     if (!client || !client.db) {
       logger.warn('Database not available for getServerCounters');
       return [];
     }
     
-    const data = await client.db.get(getServerCountersKey(guildId));
+    const data = await client.db.get<{ ok?: unknown; value?: unknown }>(getServerCountersKey(guildId));
     
-    let counters = [];
+    let counters: unknown[] = [];
     
     if (data && typeof data === 'object' && data.ok && Array.isArray(data.value)) {
       counters = data.value;
@@ -257,7 +289,7 @@ export async function getServerCounters(client, guildId) {
   }
 }
 
-export async function saveServerCounters(client, guildId, counters) {
+export async function saveServerCounters(client: NexoClient, guildId: string, counters: ServerCounterInput[]): Promise<boolean> {
   try {
     if (!client || !client.db) {
       logger.warn('Database not available for saveServerCounters');

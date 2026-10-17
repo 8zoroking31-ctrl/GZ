@@ -8,24 +8,43 @@ import {
   PermissionFlagsBits,
   AttachmentBuilder,
 } from 'discord.js';
+import type {
+  ActionRow,
+  Collection,
+  Guild,
+  GuildMember,
+  Message,
+  MessageActionRowComponent,
+  TextChannel,
+  User,
+} from 'discord.js';
 import { buildStandardLogEmbed, formatLogLine } from '../utils/logging/logEmbeds.js';
 import { getGuildConfig } from './config/guildConfig.js';
 import { getTicketData, saveTicketData, deleteTicketData, getOpenTicketCountForUser, incrementTicketCounter } from '../utils/database.js';
+import type { TicketData } from '../utils/database/tickets.js';
 import { logger } from '../utils/logger.js';
 import { createEmbed, errorEmbed } from '../utils/embeds.js';
 import { logTicketEvent } from '../utils/ticket/ticketLogging.js';
 import { createError, ErrorTypes } from '../utils/errorHandler.js';
+import type { ErrorContext, ErrorLike, ErrorType } from '../utils/errorHandler.js';
 import { ensureTypedServiceError, wrapServiceBoundary } from '../utils/serviceErrorBoundary.js';
 import { PRIORITY_MAP } from '../utils/helpers.js';
 const TICKET_DELETE_DELAY_MS = 3000;
 const TICKET_DELETE_DELAY_SECONDS = Math.floor(TICKET_DELETE_DELAY_MS / 1000);
 const TICKET_SERVICE = 'ticketService';
 
-function ticketUserError(message, userMessage, type = ErrorTypes.VALIDATION, context = {}) {
+/** Who deleted a ticket: a GuildMember in practice; `username` is only present on a User. */
+interface TicketDeleter {
+  id: string;
+  username?: string;
+  displayAvatarURL?(): string;
+}
+
+function ticketUserError(message: string, userMessage: string, type: ErrorType = ErrorTypes.VALIDATION, context: ErrorContext = {}): never {
   throw createError(message, type, userMessage, { service: TICKET_SERVICE, ...context });
 }
 
-function requireTicket(ticketData, channel) {
+function requireTicket(ticketData: TicketData | null, channel: TextChannel | null | undefined): TicketData {
   if (!ticketData) {
     ticketUserError(
       'Not a ticket channel',
@@ -37,7 +56,7 @@ function requireTicket(ticketData, channel) {
   return ticketData;
 }
 
-function rethrowTicketError(error, operation, userMessage, context = {}) {
+function rethrowTicketError(error: unknown, operation: string, userMessage: string, context: ErrorContext = {}): never {
   throw ensureTypedServiceError(error, {
     service: TICKET_SERVICE,
     operation,
@@ -49,8 +68,8 @@ function rethrowTicketError(error, operation, userMessage, context = {}) {
 
 
 
-function buildTicketControlRow({ claimedBy = null } = {}) {
-  return new ActionRowBuilder().addComponents(
+function buildTicketControlRow({ claimedBy = null }: { claimedBy?: string | null } = {}): ActionRowBuilder<ButtonBuilder> {
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId('ticket_claim')
       .setLabel(claimedBy ? 'Claimed' : 'Claim')
@@ -70,7 +89,7 @@ function buildTicketControlRow({ claimedBy = null } = {}) {
   );
 }
 
-export const getUserTicketCount = wrapServiceBoundary(async function getUserTicketCount(guildId, userId) {
+export const getUserTicketCount = wrapServiceBoundary(async function getUserTicketCount(guildId: string, userId: string): Promise<number> {
   return await getOpenTicketCountForUser(guildId, userId);
 }, {
   service: TICKET_SERVICE,
@@ -79,7 +98,13 @@ export const getUserTicketCount = wrapServiceBoundary(async function getUserTick
   context: {},
 });
 
-export async function createTicket(guild, member, categoryId, reason = 'No reason provided', priority = 'none') {
+export async function createTicket(
+  guild: Guild,
+  member: GuildMember,
+  categoryId: string | null | undefined,
+  reason: string = 'No reason provided',
+  priority: string = 'none',
+): Promise<{ channel: TextChannel; ticketData: TicketData }> {
   try {
     const config = await getGuildConfig(guild.client, guild.id);
     const ticketConfig = config.tickets || {};
@@ -157,7 +182,7 @@ export async function createTicket(guild, member, categoryId, reason = 'No reaso
       ],
     });
     
-    const ticketData = {
+    const ticketData: TicketData = {
       id: channel.id,
       userId: member.id,
       guildId: guild.id,
@@ -236,7 +261,7 @@ export async function createTicket(guild, member, categoryId, reason = 'No reaso
   }
 }
 
-export async function closeTicket(channel, closer, reason = 'No reason provided') {
+export async function closeTicket(channel: TextChannel, closer: User, reason: string = 'No reason provided'): Promise<TicketData> {
   try {
     const ticketData = requireTicket(await getTicketData(channel.guild.id, channel.id), channel);
     
@@ -261,7 +286,7 @@ export async function closeTicket(channel, closer, reason = 'No reason provided'
           await channel.setParent(closedCategoryId, { lockPermissions: false });
           movedToClosedCategory = true;
         } catch (moveError) {
-            logger.warn(`Could not move ticket ${channel.id} to closed category ${closedCategoryId}: ${moveError.message}`);
+            logger.warn(`Could not move ticket ${channel.id} to closed category ${closedCategoryId}: ${(moveError as Error).message}`);
         }
       } else {
         logger.warn(`Configured closed category is invalid for guild ${channel.guild.id}: ${closedCategoryId}`);
@@ -290,14 +315,14 @@ export async function closeTicket(channel, closer, reason = 'No reason provided'
             });
 
             const base = `ticket_feedback:${channel.guild.id}:${channel.id}`;
-            const starsRow = new ActionRowBuilder().addComponents(
+            const starsRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
               new ButtonBuilder().setCustomId(`${base}:1`).setLabel('⭐ 1').setStyle(ButtonStyle.Secondary),
               new ButtonBuilder().setCustomId(`${base}:2`).setLabel('⭐ 2').setStyle(ButtonStyle.Secondary),
               new ButtonBuilder().setCustomId(`${base}:3`).setLabel('⭐ 3').setStyle(ButtonStyle.Secondary),
               new ButtonBuilder().setCustomId(`${base}:4`).setLabel('⭐ 4').setStyle(ButtonStyle.Secondary),
               new ButtonBuilder().setCustomId(`${base}:5`).setLabel('⭐ 5').setStyle(ButtonStyle.Primary),
             );
-            const declineRow = new ActionRowBuilder().addComponents(
+            const declineRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
               new ButtonBuilder()
                 .setCustomId(`ticket_feedback_comment:${channel.guild.id}:${channel.id}`)
                 .setLabel('✍️ Add Comment')
@@ -313,11 +338,11 @@ export async function closeTicket(channel, closer, reason = 'No reason provided'
               components: [starsRow, declineRow],
             });
           } catch (feedbackError) {
-            logger.warn(`Could not send feedback survey to ticket creator ${ticketData.userId}: ${feedbackError.message}`);
+            logger.warn(`Could not send feedback survey to ticket creator ${ticketData.userId}: ${(feedbackError as Error).message}`);
           }
         }
       } catch (dmError) {
-          logger.warn(`Could not send DM to ticket creator ${ticketData.userId}: ${dmError.message}`);
+          logger.warn(`Could not send DM to ticket creator ${ticketData.userId}: ${(dmError as Error).message}`);
       }
     }
     
@@ -340,7 +365,7 @@ export async function closeTicket(channel, closer, reason = 'No reason provided'
         }
       }
     } catch (permError) {
-        logger.warn(`Could not update user permissions for closed ticket: ${permError.message}`);
+        logger.warn(`Could not update user permissions for closed ticket: ${(permError as Error).message}`);
     }
     
     const messages = await channel.messages.fetch();
@@ -378,7 +403,7 @@ components: []
       footer: { text: `Ticket ID: ${ticketData.id}` }
     });
     
-    const controlRow = new ActionRowBuilder().addComponents(
+    const controlRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
         .setCustomId('ticket_reopen')
         .setLabel('Reopen Ticket')
@@ -418,7 +443,7 @@ components: []
   }
 }
 
-export async function claimTicket(channel, claimer) {
+export async function claimTicket(channel: TextChannel, claimer: User): Promise<TicketData> {
   try {
     const ticketData = requireTicket(await getTicketData(channel.guild.id, channel.id), channel);
     
@@ -464,7 +489,7 @@ export async function claimTicket(channel, claimer) {
       color: '#2ecc71'
     });
     
-    const unclaimRow = new ActionRowBuilder().addComponents(
+    const unclaimRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
         .setCustomId('ticket_unclaim')
         .setLabel('Unclaim')
@@ -505,7 +530,10 @@ export async function claimTicket(channel, claimer) {
   }
 }
 
-export async function reopenTicket(channel, reopener) {
+export async function reopenTicket(
+  channel: TextChannel,
+  reopener: GuildMember | User,
+): Promise<{ ticketData: TicketData; movedToOpenCategory: boolean; openCategoryMoveFailed: boolean }> {
   try {
     const ticketData = requireTicket(await getTicketData(channel.guild.id, channel.id), channel);
     
@@ -540,7 +568,7 @@ export async function reopenTicket(channel, reopener) {
           movedToOpenCategory = true;
         } catch (moveError) {
           openCategoryMoveFailed = true;
-          logger.warn(`Could not move reopened ticket ${channel.id} to open category ${openCategoryId}: ${moveError.message}`);
+          logger.warn(`Could not move reopened ticket ${channel.id} to open category ${openCategoryId}: ${(moveError as Error).message}`);
         }
       } else {
         openCategoryMoveFailed = true;
@@ -559,7 +587,7 @@ export async function reopenTicket(channel, reopener) {
         });
       }
     } catch (error) {
-      logger.warn(`Could not restore access for user ${ticketData.userId}:`, error.message);
+      logger.warn(`Could not restore access for user ${ticketData.userId}:`, (error as Error).message);
     }
     
     const messages = await channel.messages.fetch();
@@ -594,7 +622,8 @@ export async function reopenTicket(channel, reopener) {
       m.embeds.length > 0 &&
       m.embeds[0].title === 'Ticket Closed' &&
       m.components.length > 0 &&
-      m.components[0].components.some(c => c.customId === 'ticket_reopen')
+      // Ticket messages only carry classic action rows.
+      (m.components[0] as ActionRow<MessageActionRowComponent>).components.some(c => c.customId === 'ticket_reopen')
     );
 
     if (closeStatusMessage) {
@@ -610,7 +639,7 @@ export async function reopenTicket(channel, reopener) {
   }
 }
 
-function escapeHtml(text) {
+function escapeHtml(text: unknown): string {
   if (!text) return '';
   return String(text)
     .replace(/&/g, '&amp;')
@@ -620,16 +649,16 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
-async function generateTranscript(channel) {
+async function generateTranscript(channel: TextChannel): Promise<AttachmentBuilder | null> {
   try {
     logger.debug('Generating transcript for channel', {
       channelId: channel.id,
       channelName: channel.name
     });
 
-    const messages = [];
-    let before = undefined;
-    let batch;
+    const messages: Message[] = [];
+    let before: string | undefined = undefined;
+    let batch: Collection<string, Message<true>>;
     do {
       batch = await channel.messages.fetch({ limit: 100, ...(before ? { before } : {}) });
       if (batch.size === 0) break;
@@ -639,7 +668,7 @@ async function generateTranscript(channel) {
 
     messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
-    const escape = (str) =>
+    const escape = (str: unknown): string =>
       String(str ?? '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -697,15 +726,15 @@ ${rows}
     logger.error('❌ Failed to generate transcript:', {
       channelId: channel.id,
       channelName: channel.name,
-      errorMessage: error.message,
-      errorName: error.name,
-      errorStack: error.stack
+      errorMessage: (error as Error).message,
+      errorName: (error as Error).name,
+      errorStack: (error as Error).stack
     });
     return null;
   }
 }
 
-export async function deleteTicket(channel, deleter) {
+export async function deleteTicket(channel: TextChannel, deleter: TicketDeleter): Promise<TicketData> {
   try {
     const ticketData = requireTicket(await getTicketData(channel.guild.id, channel.id), channel);
     
@@ -740,7 +769,7 @@ export async function deleteTicket(channel, deleter) {
           ticketId: ticketData.id
         });
 
-        let attachment = null;
+        let attachment: AttachmentBuilder | null = null;
         try {
           attachment = await generateTranscript(channel);
           if (attachment) {
@@ -758,7 +787,7 @@ export async function deleteTicket(channel, deleter) {
           logger.error('Error during transcript generation', {
             channelId: channel.id,
             ticketNumber: ticketData.id,
-            error: transcriptError.message
+            error: (transcriptError as Error).message
           });
         }
 
@@ -815,7 +844,7 @@ export async function deleteTicket(channel, deleter) {
             logger.error('Failed to send transcript to channel:', {
               channelId: channel.id,
               ticketNumber: ticketData.id,
-              error: sendError.message
+              error: (sendError as Error).message
             });
           }
         }
@@ -832,9 +861,9 @@ export async function deleteTicket(channel, deleter) {
             channelId: channel.id,
             channelName: channel.name,
             ticketNumber: ticketData.id,
-            errorMessage: deleteError.message,
-            errorCode: deleteError.code,
-            errorName: deleteError.name
+            errorMessage: (deleteError as Error).message,
+            errorCode: (deleteError as ErrorLike).code,
+            errorName: (deleteError as Error).name
           });
         }
       } catch (error) {
@@ -842,9 +871,9 @@ export async function deleteTicket(channel, deleter) {
           channelId: channel.id,
           channelName: channel?.name,
           ticketNumber: ticketData?.id,
-          errorMessage: error.message,
-          errorName: error.name,
-          errorStack: error.stack
+          errorMessage: (error as Error).message,
+          errorName: (error as Error).name,
+          errorStack: (error as Error).stack
         });
       }
     }, TICKET_DELETE_DELAY_MS);
@@ -856,7 +885,7 @@ export async function deleteTicket(channel, deleter) {
   }
 }
 
-export async function unclaimTicket(channel, unclaimer) {
+export async function unclaimTicket(channel: TextChannel, unclaimer: GuildMember): Promise<TicketData> {
   try {
     const ticketData = requireTicket(await getTicketData(channel.guild.id, channel.id), channel);
     
@@ -954,11 +983,11 @@ export async function unclaimTicket(channel, unclaimer) {
   }
 }
 
-async function getNextTicketNumber(guildId) {
+async function getNextTicketNumber(guildId: string): Promise<string> {
   return await incrementTicketCounter(guildId);
 }
 
-export async function updateTicketPriority(channel, priority, updater) {
+export async function updateTicketPriority(channel: TextChannel, priority: string, updater: User): Promise<TicketData> {
   try {
     const ticketData = requireTicket(await getTicketData(channel.guild.id, channel.id), channel);
     
@@ -990,7 +1019,7 @@ export async function updateTicketPriority(channel, priority, updater) {
       try {
         await channel.setName(newName);
       } catch (nameError) {
-        logger.warn(`Could not update channel name for priority: ${nameError.message}`);
+        logger.warn(`Could not update channel name for priority: ${(nameError as Error).message}`);
       }
     }
     

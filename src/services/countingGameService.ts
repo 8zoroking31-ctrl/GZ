@@ -1,8 +1,30 @@
 import { logger } from '../utils/logger.js';
+import type { Guild } from 'discord.js';
+import type { NexoClient } from '../types/index.js';
+
+interface CountingSystem {
+  label: string;
+  description: string;
+  alphabet?: string;
+  toString: (n: number) => string;
+  parse: (value: string) => number | null;
+}
+
+/** Stored counting game state (`countingGame:{guildId}`). */
+export interface CountingGameState {
+  enabled: boolean;
+  channelId: string | null;
+  system: string;
+  nextNumber: number;
+  lastUserId: string | null;
+  currentStreak: number;
+  bestStreak: number;
+  leaderboard: Record<string, number>;
+}
 
 const COUNTING_GAME_KEY_PREFIX = 'countingGame:';
 
-const COUNTING_SYSTEMS = {
+const COUNTING_SYSTEMS: Record<string, CountingSystem> = {
   decimal: {
     label: 'Decimal',
     description: 'Standard 10-number system using 0-9',
@@ -45,7 +67,7 @@ const COUNTING_SYSTEMS = {
     alphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
     toString: (n) => {
       if (n === 0) return 'A';
-      const alphabet = COUNTING_SYSTEMS.base64.alphabet;
+      const alphabet = COUNTING_SYSTEMS.base64.alphabet!;
       let value = n;
       let result = '';
       while (value > 0) {
@@ -56,7 +78,7 @@ const COUNTING_SYSTEMS = {
       return result;
     },
     parse: (value) => {
-      const alphabet = COUNTING_SYSTEMS.base64.alphabet;
+      const alphabet = COUNTING_SYSTEMS.base64.alphabet!;
       const normalized = value.replace(/=+$/, '');
       if (!/^[A-Za-z0-9+/]+$/.test(normalized)) {
         return null;
@@ -74,7 +96,7 @@ const COUNTING_SYSTEMS = {
     label: 'Roman',
     description: 'Roman numerals like I, II, III, IV, V',
     toString: (n) => {
-      const romanNumerals = [
+      const romanNumerals: Array<[string, number]> = [
         ['M', 1000], ['CM', 900], ['D', 500], ['CD', 400],
         ['C', 100], ['XC', 90], ['L', 50], ['XL', 40],
         ['X', 10], ['IX', 9], ['V', 5], ['IV', 4], ['I', 1],
@@ -92,7 +114,7 @@ const COUNTING_SYSTEMS = {
     parse: (value) => {
       const roman = value.toUpperCase();
       if (!/^[IVXLCDM]+$/.test(roman)) return null;
-      const romanValues = {
+      const romanValues: Record<string, number> = {
         I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000,
       };
       let total = 0;
@@ -121,7 +143,7 @@ const COUNTING_SYSTEMS = {
       if (!/^[0-9+\-*/().=**]+$/.test(sanitized)) return null;
       const parts = sanitized.split('=');
       try {
-        const evaluate = (expr) => {
+        const evaluate = (expr: string): unknown => {
           if (!expr || /[^0-9+\-*/().]/.test(expr)) return null;
           // eslint-disable-next-line no-new-func
           return Function(`"use strict"; return (${expr});`)();
@@ -169,7 +191,7 @@ const COUNTING_SYSTEMS = {
   },
 };
 
-const DEFAULT_COUNTING_GAME = {
+const DEFAULT_COUNTING_GAME: CountingGameState = {
   enabled: false,
   channelId: null,
   system: 'decimal',
@@ -180,8 +202,8 @@ const DEFAULT_COUNTING_GAME = {
   leaderboard: {},
 };
 
-function normalizeCountingGame(state) {
-  const normalized = {
+function normalizeCountingGame(state?: Partial<CountingGameState> | null): CountingGameState {
+  const normalized: CountingGameState = {
     ...DEFAULT_COUNTING_GAME,
     ...(state || {}),
   };
@@ -194,13 +216,13 @@ function normalizeCountingGame(state) {
   return normalized;
 }
 
-function getStorageKey(guildId) {
+function getStorageKey(guildId: string): string {
   return `${COUNTING_GAME_KEY_PREFIX}${guildId}`;
 }
 
-export async function getCountingGameConfig(client, guildId) {
+export async function getCountingGameConfig(client: NexoClient, guildId: string): Promise<CountingGameState> {
   try {
-    const rawState = await client.db.get(getStorageKey(guildId));
+    const rawState = await client.db.get<Partial<CountingGameState>>(getStorageKey(guildId));
     return normalizeCountingGame(rawState);
   } catch (error) {
     logger.error('Failed to load counting game config:', { guildId, error });
@@ -208,18 +230,18 @@ export async function getCountingGameConfig(client, guildId) {
   }
 }
 
-export async function saveCountingGameConfig(client, guildId, state) {
+export async function saveCountingGameConfig(client: NexoClient, guildId: string, state: Partial<CountingGameState> | null | undefined): Promise<CountingGameState> {
   const normalized = normalizeCountingGame(state);
   await client.db.set(getStorageKey(guildId), normalized);
   return normalized;
 }
 
-export async function disableCountingGame(client, guildId) {
+export async function disableCountingGame(client: NexoClient, guildId: string): Promise<CountingGameState> {
   const config = await getCountingGameConfig(client, guildId);
   return saveCountingGameConfig(client, guildId, { ...config, enabled: false });
 }
 
-export async function resetCountingGame(client, guildId, startNumber = 1) {
+export async function resetCountingGame(client: NexoClient, guildId: string, startNumber = 1): Promise<CountingGameState> {
   const config = await getCountingGameConfig(client, guildId);
   return saveCountingGameConfig(client, guildId, {
     ...config,
@@ -229,7 +251,7 @@ export async function resetCountingGame(client, guildId, startNumber = 1) {
   });
 }
 
-export async function recordCorrectCount(client, guildId, userId) {
+export async function recordCorrectCount(client: NexoClient, guildId: string, userId: string): Promise<CountingGameState> {
   const config = await getCountingGameConfig(client, guildId);
   const leaderboard = { ...config.leaderboard };
   leaderboard[userId] = (leaderboard[userId] || 0) + 1;
@@ -253,16 +275,16 @@ export function getCountingSystemChoices() {
   }));
 }
 
-export function getCountingSystemLabel(systemKey) {
+export function getCountingSystemLabel(systemKey: string): string {
   return COUNTING_SYSTEMS[systemKey]?.label || COUNTING_SYSTEMS.decimal.label;
 }
 
-export function getExpectedCountValue(config) {
+export function getExpectedCountValue(config: CountingGameState): string {
   const system = COUNTING_SYSTEMS[config.system] ? config.system : 'decimal';
   return COUNTING_SYSTEMS[system].toString(config.nextNumber || 1);
 }
 
-export function isValidCountingMessage(content, config) {
+export function isValidCountingMessage(content: string, config: CountingGameState): boolean {
   const trimmed = content.trim();
   const system = COUNTING_SYSTEMS[config.system] ? config.system : 'decimal';
   const current = COUNTING_SYSTEMS[system];
@@ -278,7 +300,7 @@ export function isValidCountingMessage(content, config) {
   return trimmed === expected;
 }
 
-export async function activateCountingGame(client, guildId, channelId, system = 'decimal') {
+export async function activateCountingGame(client: NexoClient, guildId: string, channelId: string, system = 'decimal'): Promise<CountingGameState> {
   const normalizedSystem = COUNTING_SYSTEMS[system] ? system : 'decimal';
   const config = normalizeCountingGame({
     enabled: true,
@@ -294,7 +316,7 @@ export async function activateCountingGame(client, guildId, channelId, system = 
   return saveCountingGameConfig(client, guildId, config);
 }
 
-export function buildCountingLeaderboard(config, guild) {
+export function buildCountingLeaderboard(config: CountingGameState, guild: Guild | null | undefined): string[] {
   const entries = Object.entries(config.leaderboard || {});
   if (entries.length === 0) {
     return [];

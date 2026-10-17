@@ -4,8 +4,12 @@ import { getGuildConfig } from './config/guildConfig.js';
 import { getGuildBirthdays, setBirthday as dbSetBirthday, deleteBirthday as dbDeleteBirthday, getMonthName, getBirthdayTrackingKey } from '../utils/database.js';
 import { logger } from '../utils/logger.js';
 import { NexoBotError, ErrorTypes } from '../utils/errorHandler.js';
+import type { GuildMember, GuildTextBasedChannel } from 'discord.js';
+import type { NexoClient } from '../types/index.js';
 
-export function validateBirthday(month, day) {
+export type BirthdayValidation = { isValid: true } | { isValid: false; error: string };
+
+export function validateBirthday(month: unknown, day: unknown): BirthdayValidation {
   
   if (typeof month !== 'number' || typeof day !== 'number') {
     return {
@@ -41,7 +45,7 @@ export function validateBirthday(month, day) {
   return { isValid: true };
 }
 
-export async function setBirthday(client, guildId, userId, month, day) {
+export async function setBirthday(client: NexoClient, guildId: string, userId: string, month: number, day: number) {
   try {
     
     const validation = validateBirthday(month, day);
@@ -90,8 +94,8 @@ export async function setBirthday(client, guildId, userId, month, day) {
     };
   } catch (error) {
     logger.error('Error in setBirthday service', {
-      error: error.message,
-      stack: error.stack,
+      error: (error as Error).message,
+      stack: (error as Error).stack,
       userId,
       guildId,
       month,
@@ -102,7 +106,7 @@ export async function setBirthday(client, guildId, userId, month, day) {
   }
 }
 
-export async function getUserBirthday(client, guildId, userId) {
+export async function getUserBirthday(client: NexoClient, guildId: string, userId: string) {
   try {
     const birthdays = await getGuildBirthdays(client, guildId);
     const birthdayData = birthdays[userId];
@@ -118,7 +122,7 @@ export async function getUserBirthday(client, guildId, userId) {
     };
   } catch (error) {
     logger.error('Error in getUserBirthday service', {
-      error: error.message,
+      error: (error as Error).message,
       userId,
       guildId
     });
@@ -126,7 +130,7 @@ export async function getUserBirthday(client, guildId, userId) {
   }
 }
 
-export async function getAllBirthdays(client, guildId) {
+export async function getAllBirthdays(client: NexoClient, guildId: string) {
   try {
     const birthdays = await getGuildBirthdays(client, guildId);
     
@@ -149,14 +153,14 @@ export async function getAllBirthdays(client, guildId) {
     return sortedBirthdays;
   } catch (error) {
     logger.error('Error in getAllBirthdays service', {
-      error: error.message,
+      error: (error as Error).message,
       guildId
     });
     throw error;
   }
 }
 
-export async function deleteBirthday(client, guildId, userId) {
+export async function deleteBirthday(client: NexoClient, guildId: string, userId: string) {
   try {
     
     const birthday = await getUserBirthday(client, guildId, userId);
@@ -188,7 +192,7 @@ export async function deleteBirthday(client, guildId, userId) {
     };
   } catch (error) {
     logger.error('Error in deleteBirthday service', {
-      error: error.message,
+      error: (error as Error).message,
       userId,
       guildId
     });
@@ -196,7 +200,7 @@ export async function deleteBirthday(client, guildId, userId) {
   }
 }
 
-export async function getUpcomingBirthdays(client, guildId, limit = 5) {
+export async function getUpcomingBirthdays(client: NexoClient, guildId: string, limit = 5) {
   try {
     const birthdays = await getGuildBirthdays(client, guildId);
     
@@ -207,7 +211,14 @@ export async function getUpcomingBirthdays(client, guildId, limit = 5) {
     const today = new Date();
     const currentYear = today.getFullYear();
     
-    const upcomingBirthdays = [];
+    const upcomingBirthdays: Array<{
+      userId: string;
+      month: number;
+      day: number;
+      monthName: string;
+      date: Date;
+      daysUntil: number;
+    }> = [];
     
     for (const [userId, userData] of Object.entries(birthdays)) {
       let nextBirthday = new Date(currentYear, userData.month - 1, userData.day);
@@ -216,7 +227,7 @@ export async function getUpcomingBirthdays(client, guildId, limit = 5) {
         nextBirthday = new Date(currentYear + 1, userData.month - 1, userData.day);
       }
       
-      const daysUntil = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+      const daysUntil = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       
       upcomingBirthdays.push({
         userId,
@@ -233,7 +244,7 @@ export async function getUpcomingBirthdays(client, guildId, limit = 5) {
     return upcomingBirthdays.slice(0, limit);
   } catch (error) {
     logger.error('Error in getUpcomingBirthdays service', {
-      error: error.message,
+      error: (error as Error).message,
       guildId,
       limit
     });
@@ -241,14 +252,14 @@ export async function getUpcomingBirthdays(client, guildId, limit = 5) {
   }
 }
 
-export async function getTodaysBirthdays(client, guildId) {
+export async function getTodaysBirthdays(client: NexoClient, guildId: string) {
   try {
     const birthdays = await getGuildBirthdays(client, guildId);
     const today = new Date();
     const currentMonth = today.getUTCMonth() + 1;
     const currentDay = today.getUTCDate();
 
-    const todaysBirthdays = [];
+    const todaysBirthdays: Array<{ userId: string; month: number; day: number; monthName: string }> = [];
 
     for (const [userId, userData] of Object.entries(birthdays)) {
       if (userData.month === currentMonth && userData.day === currentDay) {
@@ -264,14 +275,14 @@ export async function getTodaysBirthdays(client, guildId) {
     return todaysBirthdays;
   } catch (error) {
     logger.error('Error in getTodaysBirthdays service', {
-      error: error.message,
+      error: (error as Error).message,
       guildId
     });
     throw error;
   }
 }
 
-export async function checkBirthdays(client) {
+export async function checkBirthdays(client: NexoClient): Promise<void> {
   const today = new Date();
   const currentMonth = today.getUTCMonth() + 1;
   const currentDay = today.getUTCDate();
@@ -293,11 +304,12 @@ export async function checkBirthdays(client) {
         continue;
       }
 
-      const channel = await guild.channels.fetch(birthdayChannelId).catch(() => null);
+      // Not narrowed in the original: a non-text channel throws on send and is logged below.
+      const channel = await guild.channels.fetch(birthdayChannelId).catch(() => null) as GuildTextBasedChannel | null;
       if (!channel) continue;
 
       const trackingKey = getBirthdayTrackingKey(guildId);
-      const trackingData = (await client.db.get(trackingKey)) || {};
+      const trackingData = (await client.db.get<Record<string, boolean>>(trackingKey)) || {};
       const updatedTrackingData = { ...trackingData };
       
       for (const userId of Object.keys(trackingData)) {
@@ -320,7 +332,7 @@ export async function checkBirthdays(client) {
 
       // Use the canonical birthday storage (guild:<id>:birthdays) that set/remove commands write to.
       const birthdays = (await getGuildBirthdays(client, guildId)) || {};
-      const birthdayMembers = [];
+      const birthdayMembers: GuildMember[] = [];
       for (const [userId, userData] of Object.entries(birthdays)) {
         if (userData.month === currentMonth && userData.day === currentDay) {
           const member = await guild.members.fetch(userId).catch(() => null);
@@ -348,7 +360,7 @@ export async function checkBirthdays(client) {
             description: `A very happy birthday to ${mentionList}! Wishing you an amazing day! 🎈`,
             color: 0xff69b4,
             footer: { text: 'Birthday Bot' },
-            timestamp: new Date()
+            timestamp: new Date().toISOString()
           }]
         });
       }

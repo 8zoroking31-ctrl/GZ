@@ -1,19 +1,30 @@
 // xpSystem.js
 
+import type { Guild, GuildMember } from 'discord.js';
+import type { NexoClient } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 import { getLevelingConfig, getXpForLevel, getUserLevelData, saveUserLevelData } from './leveling.js';
+import type { GuildLevelingConfig, LevelData } from './leveling.js';
 import { logEvent, EVENT_TYPES } from '../loggingService.js';
 import { formatLogLine } from '../../utils/logging/logEmbeds.js';
 import { Mutex } from '../../utils/mutex.js';
 import { wrapServiceBoundary } from '../../utils/errorHandler.js';
 
+export interface AddXpResult {
+  level: number;
+  xp: number;
+  totalXp: number;
+  xpNeeded: number;
+  leveledUp: boolean;
+}
+
 /**
  * Award XP to a member. Returns null when XP is skipped (disabled/invalid amount).
  * Throws on storage or unexpected failures.
  */
-export const addXp = wrapServiceBoundary(async function addXp(client, guild, member, xpToAdd) {
+export const addXp = wrapServiceBoundary(async function addXp(client: NexoClient, guild: Guild, member: GuildMember, xpToAdd: number): Promise<AddXpResult | null> {
   const lockKey = `leveling:${guild.id}:${member.user.id}`;
-  return await Mutex.runExclusive(lockKey, async () => {
+  return await Mutex.runExclusive(lockKey, async (): Promise<AddXpResult | null> => {
     if (!xpToAdd || xpToAdd <= 0) {
       return null;
     }
@@ -69,7 +80,7 @@ export const addXp = wrapServiceBoundary(async function addXp(client, guild, mem
           },
         });
       } catch (logError) {
-        logger.debug('Failed to log leveling event:', logError.message);
+        logger.debug('Failed to log leveling event:', logError instanceof Error ? logError.message : String(logError));
       }
     }
 
@@ -89,7 +100,7 @@ export const addXp = wrapServiceBoundary(async function addXp(client, guild, mem
   userMessage: 'Failed to award XP. Please try again.',
 });
 
-async function awardRoleReward(guild, member, roleId, level) {
+async function awardRoleReward(guild: Guild, member: GuildMember, roleId: string, level: number): Promise<void> {
   try {
     const role = guild.roles.cache.get(roleId);
 
@@ -109,7 +120,7 @@ async function awardRoleReward(guild, member, roleId, level) {
   }
 }
 
-async function sendLevelUpAnnouncement(guild, member, levelData, config) {
+async function sendLevelUpAnnouncement(guild: Guild, member: GuildMember, levelData: LevelData, config: GuildLevelingConfig): Promise<void> {
   try {
     const levelUpChannel = config.levelUpChannel
       ? guild.channels.cache.get(config.levelUpChannel)
@@ -119,7 +130,7 @@ async function sendLevelUpAnnouncement(guild, member, levelData, config) {
       return;
     }
 
-    const permissions = levelUpChannel.permissionsFor(guild.members.me);
+    const permissions = levelUpChannel.permissionsFor(guild.members.me!);
     if (!permissions || !permissions.has(['SendMessages', 'EmbedLinks'])) {
       logger.warn(`Missing permissions to send levelup message in ${levelUpChannel.id}`);
       return;
@@ -127,9 +138,9 @@ async function sendLevelUpAnnouncement(guild, member, levelData, config) {
 
     const message = config.levelUpMessage
       .replace(/{user}/g, member.toString())
-      .replace(/{level}/g, levelData.level)
-      .replace(/{xp}/g, levelData.xp)
-      .replace(/{xpNeeded}/g, getXpForLevel(levelData.level + 1));
+      .replace(/{level}/g, String(levelData.level))
+      .replace(/{xp}/g, String(levelData.xp))
+      .replace(/{xpNeeded}/g, String(getXpForLevel(levelData.level + 1)));
 
     await levelUpChannel.send(message).catch(error => {
       logger.error(`Failed to send level up message in channel ${levelUpChannel.id}:`, error);

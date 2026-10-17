@@ -14,7 +14,7 @@ export interface TicketData {
     claimedBy: string | null;
     priority: string;
     reason?: string;
-    claimedAt?: string;
+    claimedAt?: string | null;
     closedBy?: string | null;
     closedAt?: string | null;
     closeReason?: string | null;

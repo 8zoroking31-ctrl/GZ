@@ -3,15 +3,44 @@
 import { logger } from '../../utils/logger.js';
 import { getGuildConfig, setGuildConfig } from './guildConfig.js';
 import { PermissionFlagsBits } from 'discord.js';
+import type { Guild, GuildMember } from 'discord.js';
 import { createError, ErrorTypes } from '../../utils/errorHandler.js';
 import { wrapServiceClassMethods } from '../../utils/serviceErrorBoundary.js';
 import { z } from 'zod';
 import { LogIgnoreSchema, LoggingConfigSchema } from '../../utils/schemas.js';
+import type { ErrorLike } from '../../utils/errorHandler.js';
+import type { NexoClient } from '../../types/index.js';
 
-const configChangeHistory = new Map();
+interface ConfigValidationRule {
+    type: 'channel' | 'role' | 'string' | 'boolean' | 'number' | 'object';
+    required: boolean;
+    maxLength?: number;
+    minLength?: number;
+    min?: number;
+    max?: number;
+}
+
+/** Loose view of a stored guild config for the legacy logging-key migration. */
+type ConfigRecord = {
+    logging?: { channels?: Record<string, unknown>; enabled?: boolean; [key: string]: unknown };
+    [key: string]: unknown;
+};
+
+export interface ConfigChangeRecord {
+    key: string;
+    oldValue: unknown;
+    newValue: unknown;
+    changedBy: string;
+    timestamp: string;
+    conflicts?: string[];
+    isBulkUpdate?: boolean;
+    isReset?: boolean;
+}
+
+const configChangeHistory = new Map<string, ConfigChangeRecord[]>();
 const CONFIG_HISTORY_LIMIT = 100;
 
-const CONFIG_VALIDATION_RULES = {
+const CONFIG_VALIDATION_RULES: Record<string, ConfigValidationRule> = {
     logChannelId: { type: 'channel', required: false },
     reportChannelId: { type: 'channel', required: false },
     premiumRoleId: { type: 'role', required: false },
@@ -26,17 +55,17 @@ const CONFIG_VALIDATION_RULES = {
     logging: { type: 'object', required: false }
 };
 
-const SETTING_CONFLICTS = {
+const SETTING_CONFLICTS: Record<string, string[]> = {
     'birthdayChannelId': [],
     'logging': [],
 };
 
-const LEGACY_LOGGING_KEY_MAP = {
+const LEGACY_LOGGING_KEY_MAP: Record<string, string> = {
     logChannelId: 'audit',
     reportChannelId: 'reports',
 };
 
-const ConfigValueSchemas = Object.freeze({
+const ConfigValueSchemas: Readonly<Record<string, z.ZodType<unknown>>> = Object.freeze({
     logChannelId: z.union([z.string().min(1), z.object({ id: z.string().min(1) }), z.null()]),
     reportChannelId: z.union([z.string().min(1), z.object({ id: z.string().min(1) }), z.null()]),
     premiumRoleId: z.union([z.string().min(1), z.object({ id: z.string().min(1) })]),
@@ -56,16 +85,16 @@ class ConfigService {
     static MAX_CHANNEL_IDS = 10;
     static MAX_ROLE_IDS = 20;
     static MAX_PREFIX_LENGTH = 10;
-    static PROTECTED_SETTINGS = ['_id', 'guildId', 'createdAt']; 
-    static UNSAFE_KEYS = ['__proto__', 'prototype', 'constructor'];
+    static PROTECTED_SETTINGS: string[] = ['_id', 'guildId', 'createdAt']; 
+    static UNSAFE_KEYS: string[] = ['__proto__', 'prototype', 'constructor'];
 
-    static applyLoggingLegacyKey(config, key, value, previousConfig = {}) {
+    static applyLoggingLegacyKey(config: ConfigRecord, key: string, value: unknown, previousConfig: ConfigRecord = {}): ConfigRecord {
         if (key === 'logIgnore') {
             const logging = {
                 ...(previousConfig.logging || config.logging || {}),
                 ignore: value,
             };
-            const next = { ...config, logging };
+            const next: ConfigRecord = { ...config, logging };
             delete next.logIgnore;
             return next;
         }
@@ -75,7 +104,7 @@ class ConfigService {
             return config;
         }
 
-        const channelId = value && typeof value === 'object' ? value.id : value;
+        const channelId = value && typeof value === 'object' ? (value as { id?: unknown }).id : value;
         const logging = {
             ...(previousConfig.logging || config.logging || {}),
             channels: {
@@ -85,7 +114,7 @@ class ConfigService {
             enabled: channelId ? true : (previousConfig.logging?.enabled ?? config.logging?.enabled ?? false),
         };
 
-        const next = { ...config, logging };
+        const next: ConfigRecord = { ...config, logging };
         delete next[key];
         if (key === 'logChannelId') {
             delete next.enableLogging;
@@ -96,7 +125,7 @@ class ConfigService {
         return next;
     }
 
-    static validateConfigKeySafety(key) {
+    static validateConfigKeySafety(key: string): void {
         if (typeof key !== 'string' || key.trim().length === 0) {
             throw createError(
                 'Invalid setting key',
@@ -116,7 +145,7 @@ class ConfigService {
         }
     }
 
-    static async validateConfigValue(key, value, guild) {
+    static async validateConfigValue(key: string, value: unknown, guild: Guild): Promise<boolean> {
         logger.debug(`[CONFIG_SERVICE] Validating config value`, { key, type: typeof value });
 
         const rule = CONFIG_VALIDATION_RULES[key];
@@ -161,7 +190,7 @@ class ConfigService {
                 );
             }
 
-            const channelId = typeof value === 'string' ? value : value.id;
+            const channelId = typeof value === 'string' ? value : (value as { id: string }).id;
             const channel = guild.channels.cache.get(channelId);
 
             if (!channel) {
@@ -195,7 +224,7 @@ class ConfigService {
                 );
             }
 
-            const roleId = typeof value === 'string' ? value : value.id;
+            const roleId = typeof value === 'string' ? value : (value as { id: string }).id;
             const role = guild.roles.cache.get(roleId);
 
             if (!role) {
@@ -208,7 +237,7 @@ class ConfigService {
             }
 
             const botHighestRole = guild.members.me?.roles.highest;
-            if (role.position >= botHighestRole?.position) {
+            if (botHighestRole !== undefined && role.position >= botHighestRole.position) {
                 throw createError(
                     'Role too high',
                     ErrorTypes.VALIDATION,
@@ -312,10 +341,10 @@ class ConfigService {
         return true;
     }
 
-    static detectConflicts(currentConfig, key, value) {
+    static detectConflicts(currentConfig: ConfigRecord, key: string, value: unknown): string[] {
         logger.debug(`[CONFIG_SERVICE] Checking for config conflicts`, { key });
 
-        const conflicts = [];
+        const conflicts: string[] = [];
         const relatedSettings = SETTING_CONFLICTS[key] || [];
 
         for (const related of relatedSettings) {
@@ -332,7 +361,7 @@ class ConfigService {
         return conflicts;
     }
 
-    static async updateSetting(client, guildId, key, value, adminId) {
+    static async updateSetting(client: NexoClient, guildId: string, key: string, value: unknown, adminId: string) {
         logger.info(`[CONFIG_SERVICE] Updating setting`, {
             guildId,
             key,
@@ -382,7 +411,7 @@ class ConfigService {
 
         const oldValue = currentConfig[key];
 
-        let updatedConfig = { ...currentConfig, [key]: value };
+        let updatedConfig: ConfigRecord = { ...currentConfig, [key]: value };
         updatedConfig = this.applyLoggingLegacyKey(updatedConfig, key, value, currentConfig);
 
         await setGuildConfig(client, guildId, updatedConfig);
@@ -414,7 +443,7 @@ class ConfigService {
         };
     }
 
-    static async bulkUpdate(client, guildId, updates, adminId) {
+    static async bulkUpdate(client: NexoClient, guildId: string, updates: Record<string, unknown>, adminId: string) {
         logger.info(`[CONFIG_SERVICE] Bulk updating settings`, {
             guildId,
             updateCount: Object.keys(updates).length,
@@ -431,8 +460,8 @@ class ConfigService {
             );
         }
 
-        const validatedUpdates = {};
-        const validationErrors = [];
+        const validatedUpdates: Record<string, unknown> = {};
+        const validationErrors: string[] = [];
 
         for (const [key, value] of Object.entries(updates)) {
             try {
@@ -446,7 +475,8 @@ class ConfigService {
                 await this.validateConfigValue(key, value, guild);
                 validatedUpdates[key] = value;
             } catch (error) {
-                validationErrors.push(`${key}: ${error.details?.message || error.message}`);
+                const err = error as ErrorLike & { details?: { message?: string } };
+                validationErrors.push(`${key}: ${err.details?.message || err.message}`);
             }
         }
 
@@ -495,12 +525,12 @@ class ConfigService {
         };
     }
 
-    static recordChange(guildId, changeData) {
+    static recordChange(guildId: string, changeData: ConfigChangeRecord): void {
         if (!configChangeHistory.has(guildId)) {
             configChangeHistory.set(guildId, []);
         }
 
-        const history = configChangeHistory.get(guildId);
+        const history = configChangeHistory.get(guildId)!;
         history.push(changeData);
 
         if (history.length > CONFIG_HISTORY_LIMIT) {
@@ -514,12 +544,12 @@ class ConfigService {
         });
     }
 
-    static getChangeHistory(guildId, limit = 20) {
+    static getChangeHistory(guildId: string, limit = 20): ConfigChangeRecord[] {
         const history = configChangeHistory.get(guildId) || [];
         return history.slice(-limit).reverse();
     }
 
-    static async resetSetting(client, guildId, key, adminId) {
+    static async resetSetting(client: NexoClient, guildId: string, key: string, adminId: string) {
         logger.info(`[CONFIG_SERVICE] Resetting setting`, {
             guildId,
             key,
@@ -558,7 +588,7 @@ class ConfigService {
         };
     }
 
-    static async getConfigSummary(client, guildId) {
+    static async getConfigSummary(client: NexoClient, guildId: string) {
         logger.debug(`[CONFIG_SERVICE] Fetching config summary`, { guildId });
 
         const config = await getGuildConfig(client, guildId);
@@ -573,7 +603,7 @@ class ConfigService {
             );
         }
 
-        const summary = {};
+        const summary: Record<string, unknown> = {};
 
         for (const [key, value] of Object.entries(config)) {
             if (this.PROTECTED_SETTINGS.includes(key)) continue;
@@ -582,14 +612,14 @@ class ConfigService {
             if (!rule) continue;
 
             if (rule.type === 'channel' && value) {
-                const channel = guild.channels.cache.get(value);
+                const channel = guild.channels.cache.get(value as string);
                 summary[key] = {
                     id: value,
                     name: channel?.name || 'Unknown',
                     status: channel ? 'Valid' : 'Missing'
                 };
             } else if (rule.type === 'role' && value) {
-                const role = guild.roles.cache.get(value);
+                const role = guild.roles.cache.get(value as string);
                 summary[key] = {
                     id: value,
                     name: role?.name || 'Unknown',
@@ -607,7 +637,7 @@ class ConfigService {
         };
     }
 
-    static verifyPermission(member) {
+    static verifyPermission(member: GuildMember): boolean {
         return member.permissions.has([
             PermissionFlagsBits.Administrator,
             PermissionFlagsBits.ManageGuild

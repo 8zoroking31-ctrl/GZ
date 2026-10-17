@@ -1,6 +1,8 @@
 // verificationService.js
 
 import { PermissionFlagsBits } from 'discord.js';
+import type { Guild, GuildMember, PermissionsString, Role } from 'discord.js';
+import type { GuildConfig, NexoClient } from '../types/index.js';
 import { botConfig } from '../config/bot.js';
 import { logger } from '../utils/logger.js';
 import { getGuildConfig, setGuildConfig } from './config/guildConfig.js';
@@ -8,8 +10,29 @@ import { createError, ErrorTypes } from '../utils/errorHandler.js';
 import { insertVerificationAudit } from '../utils/database.js';
 import { ensureTypedServiceError } from '../utils/serviceErrorBoundary.js';
 
-const verificationCooldowns = new Map();
-const attemptTracker = new Map();
+export type VerificationConfig = NonNullable<GuildConfig['verification']>;
+export type AutoVerifyConfig = NonNullable<VerificationConfig['autoVerify']>;
+
+export interface VerifyUserOptions {
+    source?: string;
+    moderatorId?: string | null;
+}
+
+export interface RemoveVerificationOptions {
+    moderatorId?: string | null;
+    reason?: string;
+}
+
+/** Audit metadata; moderatorId/removedBy/source are lifted into the audit record. */
+interface VerificationActionMetadata {
+    source?: string;
+    moderatorId?: string | null;
+    removedBy?: string | null;
+    [key: string]: unknown;
+}
+
+const verificationCooldowns = new Map<string, number>();
+const attemptTracker = new Map<string, number[]>();
 
 const verificationDefaults = botConfig?.verification || {};
 const autoVerifyDefaults = verificationDefaults.autoVerify || {};
@@ -28,7 +51,7 @@ const shouldLogVerifications = verificationDefaults.logAllVerifications ?? true;
 const shouldKeepAuditTrail = verificationDefaults.keepAuditTrail ?? false;
 let lastCleanupAt = 0;
 
-export async function verifyUser(client, guildId, userId, options = {}) {
+export async function verifyUser(client: NexoClient, guildId: string, userId: string, options: VerifyUserOptions = {}) {
     const { source = 'manual', moderatorId = null } = options;
     
     try {
@@ -43,7 +66,7 @@ export async function verifyUser(client, guildId, userId, options = {}) {
             );
         }
 
-        let member;
+        let member: GuildMember;
         try {
             member = await guild.members.fetch(userId);
         } catch (error) {
@@ -68,7 +91,8 @@ export async function verifyUser(client, guildId, userId, options = {}) {
 
         await validateVerificationSetup(guild, guildConfig.verification);
 
-        const verifiedRole = guild.roles.cache.get(guildConfig.verification.roleId);
+        // validateVerificationSetup above guarantees the role exists.
+        const verifiedRole = guild.roles.cache.get(guildConfig.verification.roleId!)!;
         const canAssignRole = await validateBotCanAssignRole(guild, verifiedRole.id);
         if (!canAssignRole) {
             throw createError(
@@ -135,7 +159,7 @@ export async function verifyUser(client, guildId, userId, options = {}) {
     }
 }
 
-function pruneVerificationTrackers(now = Date.now()) {
+function pruneVerificationTrackers(now = Date.now()): void {
     if (now - lastCleanupAt < cooldownCleanupIntervalMs) {
         return;
     }
@@ -174,7 +198,7 @@ function pruneVerificationTrackers(now = Date.now()) {
     }
 }
 
-export async function autoVerifyOnJoin(client, guild, member, verificationConfig) {
+export async function autoVerifyOnJoin(client: NexoClient, guild: Guild, member: GuildMember, verificationConfig: VerificationConfig) {
     try {
         
         if (!verificationConfig.autoVerify?.enabled) {
@@ -212,7 +236,8 @@ export async function autoVerifyOnJoin(client, guild, member, verificationConfig
             };
         }
 
-        const verifiedRole = guild.roles.cache.get(autoVerifyRoleId);
+        // validateVerificationSetup above guarantees the role exists.
+        const verifiedRole = guild.roles.cache.get(autoVerifyRoleId)!;
 
         const canAssign = await validateBotCanAssignRole(guild, verifiedRole.id);
         if (!canAssign) {
@@ -289,7 +314,7 @@ export async function autoVerifyOnJoin(client, guild, member, verificationConfig
     }
 }
 
-export async function removeVerification(client, guildId, userId, options = {}) {
+export async function removeVerification(client: NexoClient, guildId: string, userId: string, options: RemoveVerificationOptions = {}) {
     const { moderatorId = null, reason = 'admin_removal' } = options;
     
     try {
@@ -303,7 +328,7 @@ export async function removeVerification(client, guildId, userId, options = {}) 
             );
         }
 
-        let member;
+        let member: GuildMember;
         try {
             member = await guild.members.fetch(userId);
         } catch (error) {
@@ -326,7 +351,7 @@ export async function removeVerification(client, guildId, userId, options = {}) 
             );
         }
 
-        const verifiedRole = guild.roles.cache.get(guildConfig.verification.roleId);
+        const verifiedRole = guild.roles.cache.get(guildConfig.verification.roleId!);
         if (!verifiedRole) {
             throw createError(
                 "Verified role not found",
@@ -397,7 +422,7 @@ export async function removeVerification(client, guildId, userId, options = {}) 
     }
 }
 
-export async function validateVerificationSetup(guild, verificationConfig) {
+export async function validateVerificationSetup(guild: Guild, verificationConfig: VerificationConfig): Promise<boolean> {
     const botMember = guild.members.me;
     if (!botMember) {
         throw createError(
@@ -408,7 +433,7 @@ export async function validateVerificationSetup(guild, verificationConfig) {
         );
     }
 
-    const verifiedRole = guild.roles.cache.get(verificationConfig.roleId);
+    const verifiedRole = guild.roles.cache.get(verificationConfig.roleId!);
     if (!verifiedRole) {
         throw createError(
             "Verified role not found",
@@ -430,7 +455,7 @@ export async function validateVerificationSetup(guild, verificationConfig) {
         }
 
         const botPerms = channel.permissionsFor(botMember);
-        const requiredPerms = ['ViewChannel', 'SendMessages', 'EmbedLinks'];
+        const requiredPerms: PermissionsString[] = ['ViewChannel', 'SendMessages', 'EmbedLinks'];
         const missingPerms = requiredPerms.filter(perm => !botPerms.has(perm));
 
         if (missingPerms.length > 0) {
@@ -446,7 +471,7 @@ export async function validateVerificationSetup(guild, verificationConfig) {
     return true;
 }
 
-export async function validateBotCanAssignRole(guild, roleId) {
+export async function validateBotCanAssignRole(guild: Guild, roleId: string): Promise<boolean> {
     const role = guild.roles.cache.get(roleId);
     
     if (!role) {
@@ -488,13 +513,13 @@ export async function validateBotCanAssignRole(guild, roleId) {
     return true;
 }
 
-function evaluateAutoVerifyCriteria(member, autoVerifyConfig) {
+function evaluateAutoVerifyCriteria(member: GuildMember, autoVerifyConfig: AutoVerifyConfig): boolean {
     const { criteria, accountAgeDays } = autoVerifyConfig;
 
     switch (criteria) {
         case 'account_age': {
             const accountAge = Date.now() - member.user.createdTimestamp;
-            const requiredAge = accountAgeDays * 24 * 60 * 60 * 1000;
+            const requiredAge = accountAgeDays! * 24 * 60 * 60 * 1000;
             return accountAge >= requiredAge;
         }
 
@@ -510,7 +535,7 @@ function evaluateAutoVerifyCriteria(member, autoVerifyConfig) {
     }
 }
 
-export async function checkVerificationCooldown(userId, guildId, cooldownMs = defaultCooldownMs) {
+export async function checkVerificationCooldown(userId: string, guildId: string, cooldownMs: number = defaultCooldownMs): Promise<void> {
     pruneVerificationTrackers();
 
     const key = `${guildId}:${userId}`;
@@ -530,11 +555,11 @@ export async function checkVerificationCooldown(userId, guildId, cooldownMs = de
 }
 
 export async function trackVerificationAttempt(
-    userId,
-    guildId,
-    maxAttempts = defaultMaxAttempts,
-    windowMs = defaultAttemptWindowMs
-) {
+    userId: string,
+    guildId: string,
+    maxAttempts: number = defaultMaxAttempts,
+    windowMs: number = defaultAttemptWindowMs
+): Promise<void> {
     pruneVerificationTrackers();
 
     const key = `${guildId}:${userId}`;
@@ -556,7 +581,7 @@ export async function trackVerificationAttempt(
     attemptTracker.set(key, recentAttempts);
 }
 
-async function sendAutoVerifyNotification(member, role, guild) {
+async function sendAutoVerifyNotification(member: GuildMember, role: Role, guild: Guild): Promise<void> {
     try {
         const { createEmbed } = await import('../utils/embeds.js');
         
@@ -583,13 +608,13 @@ async function sendAutoVerifyNotification(member, role, guild) {
         logger.debug('Could not send auto-verify DM notification', {
             userId: member.id,
             guildId: guild.id,
-            reason: error.message
+            reason: error instanceof Error ? error.message : String(error)
         });
         
     }
 }
 
-function logVerificationAction(client, guildId, userId, action, metadata = {}) {
+function logVerificationAction(client: NexoClient, guildId: string, userId: string, action: string, metadata: VerificationActionMetadata = {}): void {
     if (!shouldLogVerifications) {
         return;
     }
@@ -622,9 +647,9 @@ function logVerificationAction(client, guildId, userId, action, metadata = {}) {
     });
 }
 
-function sanitizeAuditMetadata(metadata = {}) {
+function sanitizeAuditMetadata(metadata: unknown = {}): Record<string, unknown> {
     try {
-        const payload = metadata && typeof metadata === 'object' ? metadata : { value: metadata };
+        const payload = metadata && typeof metadata === 'object' ? (metadata as Record<string, unknown>) : { value: metadata };
         const json = JSON.stringify(payload);
 
         if (!json) {
@@ -648,7 +673,7 @@ function sanitizeAuditMetadata(metadata = {}) {
     }
 }
 
-export function validateAutoVerifyCriteria(criteria, accountAgeDays) {
+export function validateAutoVerifyCriteria(criteria: string, accountAgeDays: number | null | undefined): { criteria: string; accountAgeDays: number | null | undefined } {
     const validCriteria = ['account_age', 'server_size', 'none'];
     
     if (!validCriteria.includes(criteria)) {

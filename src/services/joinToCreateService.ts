@@ -12,6 +12,30 @@ import { NexoBotError, ErrorTypes } from '../utils/errorHandler.js';
 import { logEvent, EVENT_TYPES } from './loggingService.js';
 import { formatLogLine } from '../utils/logging/logEmbeds.js';
 import { ChannelType, PermissionFlagsBits } from 'discord.js';
+import type { Guild, GuildMember } from 'discord.js';
+import type { NexoClient } from '../types/index.js';
+import type { ChannelNameVariables, JoinToCreateChannelOptions, JoinToCreateConfig } from '../utils/database.js';
+
+export interface JoinToCreateInitOptions {
+    nameTemplate?: string;
+    userLimit?: number;
+    bitrate?: number;
+    categoryId?: string | null;
+}
+
+export interface TemporaryChannelOptions {
+    nameTemplate?: string;
+    userLimit?: number;
+    bitrate?: number;
+    parentId?: string | null;
+}
+
+/** Per-trigger options as actually stored (JoinToCreateChannelOptions plus bookkeeping fields). */
+type StoredChannelOptions = JoinToCreateChannelOptions & {
+    categoryId?: string | null;
+    createdAt?: number;
+    updatedAt?: number;
+};
 
 const CHANNEL_NAME_MAX_LENGTH = 100;
 const CHANNEL_VARIABLE_MAX_LENGTH = 32;
@@ -27,7 +51,7 @@ const ALLOWED_TEMPLATE_PLACEHOLDERS = new Set([
     '{channel_name}'
 ]);
 
-export function validateChannelNameTemplate(template) {
+export function validateChannelNameTemplate(template: unknown): boolean {
     if (!template || typeof template !== 'string') {
         throw new NexoBotError(
             'Invalid channel template: must be a non-empty string',
@@ -68,8 +92,8 @@ export function validateChannelNameTemplate(template) {
     return true;
 }
 
-export function validateBitrate(bitrate) {
-    const bitrateNum = parseInt(bitrate);
+export function validateBitrate(bitrate: string | number): boolean {
+    const bitrateNum = parseInt(String(bitrate));
 
     if (isNaN(bitrateNum)) {
         throw new NexoBotError(
@@ -90,8 +114,8 @@ export function validateBitrate(bitrate) {
     return true;
 }
 
-export function validateUserLimit(limit) {
-    const limitNum = parseInt(limit);
+export function validateUserLimit(limit: string | number): boolean {
+    const limitNum = parseInt(String(limit));
 
     if (isNaN(limitNum)) {
         throw new NexoBotError(
@@ -112,7 +136,7 @@ export function validateUserLimit(limit) {
     return true;
 }
 
-export function formatChannelName(template, variables) {
+export function formatChannelName(template: string, variables: ChannelNameVariables | null | undefined): string {
     try {
         const safeTemplate = template.normalize('NFKC').replace(CONTROL_AND_INVISIBLE_CHARS_REGEX, '').trim();
         validateChannelNameTemplate(safeTemplate);
@@ -124,8 +148,9 @@ export function formatChannelName(template, variables) {
             );
         }
 
-        const sanitized = {};
-        for (const [key, value] of Object.entries(variables)) {
+        const sanitized: Record<string, string> = {};
+        const entries: [string, unknown][] = Object.entries(variables);
+        for (const [key, value] of entries) {
             if (value === null || value === undefined) {
                 sanitized[key] = 'Unknown';
             } else {
@@ -177,7 +202,12 @@ export function formatChannelName(template, variables) {
     }
 }
 
-export async function initializeJoinToCreate(client, guildId, channelId, options = {}) {
+export async function initializeJoinToCreate(
+    client: NexoClient,
+    guildId: string,
+    channelId: string,
+    options: JoinToCreateInitOptions = {},
+): Promise<JoinToCreateConfig> {
     try {
         if (!client || !client.db) {
             throw new NexoBotError(
@@ -236,13 +266,14 @@ export async function initializeJoinToCreate(client, guildId, channelId, options
             if (!config.channelOptions) {
                 config.channelOptions = {};
             }
-            config.channelOptions[channelId] = {
+            const channelOptions: StoredChannelOptions = {
                 nameTemplate: options.nameTemplate || config.channelNameTemplate,
                 userLimit: options.userLimit !== undefined ? options.userLimit : config.userLimit,
                 bitrate: options.bitrate || config.bitrate,
                 categoryId: options.categoryId || null,
                 createdAt: Date.now()
             };
+            config.channelOptions[channelId] = channelOptions;
         }
 
         const saveResult = await saveJoinToCreateConfig(client, guildId, config);
@@ -263,14 +294,19 @@ export async function initializeJoinToCreate(client, guildId, channelId, options
             throw error;
         }
         throw new NexoBotError(
-            `Failed to initialize Join to Create: ${error.message}`,
+            `Failed to initialize Join to Create: ${(error as Error).message}`,
             ErrorTypes.DATABASE,
             'Failed to set up Join to Create system.'
         );
     }
 }
 
-export async function updateChannelConfig(client, guildId, channelId, updates) {
+export async function updateChannelConfig(
+    client: NexoClient,
+    guildId: string,
+    channelId: string,
+    updates: Partial<JoinToCreateChannelOptions>,
+): Promise<JoinToCreateChannelOptions> {
     try {
         if (!client || !client.db) {
             throw new NexoBotError(
@@ -304,11 +340,12 @@ export async function updateChannelConfig(client, guildId, channelId, updates) {
             config.channelOptions = {};
         }
 
-        config.channelOptions[channelId] = {
+        const channelOptions: StoredChannelOptions = {
             ...config.channelOptions[channelId],
             ...updates,
             updatedAt: Date.now()
         };
+        config.channelOptions[channelId] = channelOptions;
 
         await saveJoinToCreateConfig(client, guildId, config);
 
@@ -323,14 +360,14 @@ export async function updateChannelConfig(client, guildId, channelId, updates) {
             throw error;
         }
         throw new NexoBotError(
-            `Failed to update channel config: ${error.message}`,
+            `Failed to update channel config: ${(error as Error).message}`,
             ErrorTypes.DATABASE,
             'Failed to update configuration.'
         );
     }
 }
 
-export async function removeTriggerChannel(client, guildId, channelId) {
+export async function removeTriggerChannel(client: NexoClient, guildId: string, channelId: string): Promise<boolean> {
     try {
         if (!client || !client.db) {
             throw new NexoBotError(
@@ -377,14 +414,14 @@ export async function removeTriggerChannel(client, guildId, channelId) {
             throw error;
         }
         throw new NexoBotError(
-            `Failed to remove trigger channel: ${error.message}`,
+            `Failed to remove trigger channel: ${(error as Error).message}`,
             ErrorTypes.DATABASE,
             'Failed to remove trigger channel.'
         );
     }
 }
 
-export async function getConfiguration(client, guildId) {
+export async function getConfiguration(client: NexoClient, guildId: string): Promise<JoinToCreateConfig> {
     try {
         if (!client || !client.db) {
             throw new NexoBotError(
@@ -401,24 +438,24 @@ export async function getConfiguration(client, guildId) {
             throw error;
         }
         throw new NexoBotError(
-            `Failed to retrieve configuration: ${error.message}`,
+            `Failed to retrieve configuration: ${(error as Error).message}`,
             ErrorTypes.DATABASE,
             'Failed to retrieve settings.'
         );
     }
 }
 
-export async function isTriggerChannel(client, guildId, channelId) {
+export async function isTriggerChannel(client: NexoClient, guildId: string, channelId: string): Promise<boolean> {
     try {
         const config = await getConfiguration(client, guildId);
         return config.triggerChannels.includes(channelId);
     } catch (error) {
-        logger.error(`Error checking if channel is trigger: ${error.message}`);
+        logger.error(`Error checking if channel is trigger: ${(error as Error).message}`);
         return false;
     }
 }
 
-export async function getChannelConfiguration(client, guildId, channelId) {
+export async function getChannelConfiguration(client: NexoClient, guildId: string, channelId: string) {
     try {
         const config = await getConfiguration(client, guildId);
 
@@ -440,14 +477,14 @@ export async function getChannelConfiguration(client, guildId, channelId) {
             throw error;
         }
         throw new NexoBotError(
-            `Failed to get channel configuration: ${error.message}`,
+            `Failed to get channel configuration: ${(error as Error).message}`,
             ErrorTypes.DATABASE,
             'Failed to retrieve channel configuration. Please try again.'
         );
     }
 }
 
-export function hasManageGuildPermission(member) {
+export function hasManageGuildPermission(member: GuildMember | null | undefined): boolean {
     try {
         if (!member || !member.permissions) {
             return false;
@@ -459,7 +496,7 @@ export function hasManageGuildPermission(member) {
     }
 }
 
-export async function logConfigurationChange(client, guildId, userId, action, details) {
+export async function logConfigurationChange(client: NexoClient, guildId: string, userId: string, action: string, details: unknown): Promise<void> {
     try {
         await logEvent({
             client,
@@ -475,11 +512,15 @@ export async function logConfigurationChange(client, guildId, userId, action, de
             },
         });
     } catch (error) {
-        logger.warn(`Failed to log Join to Create configuration change: ${error.message}`);
+        logger.warn(`Failed to log Join to Create configuration change: ${(error as Error).message}`);
     }
 }
 
-export async function createTemporaryChannel(guild, member, options = {}) {
+export async function createTemporaryChannel(
+    guild: Guild,
+    member: GuildMember,
+    options: TemporaryChannelOptions = {},
+): Promise<{ id: string; name: string; ownerId: string }> {
     try {
         if (!guild || !member) {
             throw new NexoBotError(
@@ -543,7 +584,7 @@ export async function createTemporaryChannel(guild, member, options = {}) {
             throw error;
         }
         throw new NexoBotError(
-            `Failed to create temporary channel: ${error.message}`,
+            `Failed to create temporary channel: ${(error as Error).message}`,
             ErrorTypes.DISCORD_API,
             'Failed to create your temporary voice channel. Please contact an administrator.'
         );

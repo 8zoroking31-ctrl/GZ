@@ -1,12 +1,36 @@
 // reactionRoleService.js
 
+import type { PermissionsString, Role } from 'discord.js';
+import type { NexoClient } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 import { createError, ErrorTypes } from '../utils/errorHandler.js';
 import { getReactionRoleKey, getReactionRolesPrefix } from '../utils/database/keys.js';
 
 const MAX_ROLES_PER_MESSAGE = 25;
 
-const DANGEROUS_PERMISSIONS = [
+/** Stored reaction role panel (`guild:{guildId}:reaction_roles:{messageId}` style key from getReactionRoleKey). */
+export interface ReactionRoleMessage {
+    guildId: string;
+    channelId: string;
+    messageId: string;
+    /** Role ids (select-menu panels), or emoji -> role id (legacy reaction mapping). */
+    roles: string[] | Record<string, string>;
+    createdAt?: string;
+}
+
+export interface ReactionRoleReconcileSummary {
+    scannedGuilds: number;
+    scannedMessages: number;
+    removedMessages: number;
+    errors: number;
+}
+
+/** Replit-era list/get results wrapped as `{ ok, value }`. */
+interface WrappedListResult {
+    value?: string[];
+}
+
+const DANGEROUS_PERMISSIONS: PermissionsString[] = [
     'Administrator',
     'ManageGuild',
     'ManageRoles',
@@ -16,7 +40,7 @@ const DANGEROUS_PERMISSIONS = [
     'KickMembers'
 ];
 
-function validateGuildId(guildId) {
+function validateGuildId(guildId: string): void {
     if (!guildId || typeof guildId !== 'string' || !/^\d{17,19}$/.test(guildId)) {
         throw createError(
             `Invalid guild ID: ${guildId}`,
@@ -27,7 +51,7 @@ function validateGuildId(guildId) {
     }
 }
 
-function validateMessageId(messageId) {
+function validateMessageId(messageId: string): void {
     if (!messageId || typeof messageId !== 'string' || !/^\d{17,19}$/.test(messageId)) {
         throw createError(
             `Invalid message ID: ${messageId}`,
@@ -38,7 +62,7 @@ function validateMessageId(messageId) {
     }
 }
 
-function validateRoleId(roleId) {
+function validateRoleId(roleId: string): void {
     if (!roleId || typeof roleId !== 'string' || !/^\d{17,19}$/.test(roleId)) {
         throw createError(
             `Invalid role ID: ${roleId}`,
@@ -49,7 +73,7 @@ function validateRoleId(roleId) {
     }
 }
 
-export function hasDangerousPermissions(role) {
+export function hasDangerousPermissions(role: Role | null | undefined): boolean {
     if (!role || !role.permissions) return false;
     
     for (const permission of DANGEROUS_PERMISSIONS) {
@@ -60,7 +84,7 @@ export function hasDangerousPermissions(role) {
     return false;
 }
 
-async function validateRoleSafety(client, guildId, roleId) {
+async function validateRoleSafety(client: NexoClient, guildId: string, roleId: string): Promise<void> {
     const guild = client.guilds?.cache?.get(guildId) || await client.guilds?.fetch?.(guildId).catch(() => null);
     if (!guild) {
         throw createError(
@@ -101,16 +125,16 @@ async function validateRoleSafety(client, guildId, roleId) {
     }
 }
 
-export async function getReactionRoleMessage(client, guildId, messageId) {
+export async function getReactionRoleMessage(client: NexoClient, guildId: string, messageId: string): Promise<ReactionRoleMessage | null> {
     try {
         validateGuildId(guildId);
         validateMessageId(messageId);
         
         const key = getReactionRoleKey(guildId, messageId);
-        const data = await client.db.get(key);
+        const data = await client.db.get<ReactionRoleMessage>(key);
         return data || null;
     } catch (error) {
-        if (error.name === 'NexoBotError') {
+        if ((error as Error).name === 'NexoBotError') {
             throw error;
         }
         logger.error(`Error getting reaction role message ${messageId} in guild ${guildId}:`, error);
@@ -118,12 +142,18 @@ export async function getReactionRoleMessage(client, guildId, messageId) {
             `Database error retrieving reaction role message`,
             ErrorTypes.DATABASE,
             'Failed to retrieve reaction role data. Please try again.',
-            { guildId, messageId, originalError: error.message }
+            { guildId, messageId, originalError: (error as Error).message }
         );
     }
 }
 
-export async function createReactionRoleMessage(client, guildId, channelId, messageId, roleIds) {
+export async function createReactionRoleMessage(
+    client: NexoClient,
+    guildId: string,
+    channelId: string,
+    messageId: string,
+    roleIds: string[],
+): Promise<ReactionRoleMessage> {
     try {
         validateGuildId(guildId);
         validateMessageId(messageId);
@@ -160,7 +190,7 @@ export async function createReactionRoleMessage(client, guildId, channelId, mess
             await validateRoleSafety(client, guildId, roleId);
         }
         
-        const reactionRoleData = {
+        const reactionRoleData: ReactionRoleMessage = {
             guildId,
             channelId,
             messageId,
@@ -174,7 +204,7 @@ export async function createReactionRoleMessage(client, guildId, channelId, mess
         logger.info(`Created reaction role message ${messageId} in guild ${guildId} with ${roleIds.length} roles`);
         return reactionRoleData;
     } catch (error) {
-        if (error.name === 'NexoBotError') {
+        if ((error as Error).name === 'NexoBotError') {
             throw error;
         }
         logger.error(`Error creating reaction role message in guild ${guildId}:`, error);
@@ -182,12 +212,12 @@ export async function createReactionRoleMessage(client, guildId, channelId, mess
             `Database error creating reaction role message`,
             ErrorTypes.DATABASE,
             'Failed to save reaction role data. Please try again.',
-            { guildId, messageId, originalError: error.message }
+            { guildId, messageId, originalError: (error as Error).message }
         );
     }
 }
 
-export async function addReactionRole(client, guildId, messageId, emoji, roleId) {
+export async function addReactionRole(client: NexoClient, guildId: string, messageId: string, emoji: string, roleId: string): Promise<boolean> {
     try {
         validateGuildId(guildId);
         validateMessageId(messageId);
@@ -195,20 +225,20 @@ export async function addReactionRole(client, guildId, messageId, emoji, roleId)
         await validateRoleSafety(client, guildId, roleId);
         
         const key = getReactionRoleKey(guildId, messageId);
-        const data = await getReactionRoleMessage(client, guildId, messageId) || {
+        const data: ReactionRoleMessage = await getReactionRoleMessage(client, guildId, messageId) || {
             messageId,
             guildId,
             channelId: '',
             roles: {}
         };
 
-        data.roles[emoji] = roleId;
+        (data.roles as Record<string, string>)[emoji] = roleId;
         
         await client.db.set(key, data);
         logger.info(`Added reaction role for emoji ${emoji} to message ${messageId} in guild ${guildId}`);
         return true;
     } catch (error) {
-        if (error.name === 'NexoBotError') {
+        if ((error as Error).name === 'NexoBotError') {
             throw error;
         }
         logger.error(`Error adding reaction role in guild ${guildId}:`, error);
@@ -216,12 +246,12 @@ export async function addReactionRole(client, guildId, messageId, emoji, roleId)
             `Database error adding reaction role`,
             ErrorTypes.DATABASE,
             'Failed to add reaction role. Please try again.',
-            { guildId, messageId, originalError: error.message }
+            { guildId, messageId, originalError: (error as Error).message }
         );
     }
 }
 
-export async function deleteReactionRoleMessage(client, guildId, messageId) {
+export async function deleteReactionRoleMessage(client: NexoClient, guildId: string, messageId: string): Promise<boolean> {
     try {
         validateGuildId(guildId);
         validateMessageId(messageId);
@@ -239,7 +269,7 @@ export async function deleteReactionRoleMessage(client, guildId, messageId) {
         logger.info(`Deleted reaction role message ${messageId} in guild ${guildId}`);
         return true;
     } catch (error) {
-        if (error.name === 'NexoBotError') {
+        if ((error as Error).name === 'NexoBotError') {
             throw error;
         }
         logger.error(`Error deleting reaction role message in guild ${guildId}:`, error);
@@ -247,12 +277,12 @@ export async function deleteReactionRoleMessage(client, guildId, messageId) {
             `Database error deleting reaction role message`,
             ErrorTypes.DATABASE,
             'Failed to delete reaction role message. Please try again.',
-            { guildId, messageId, originalError: error.message }
+            { guildId, messageId, originalError: (error as Error).message }
         );
     }
 }
 
-export async function removeReactionRole(client, guildId, messageId, emoji) {
+export async function removeReactionRole(client: NexoClient, guildId: string, messageId: string, emoji: string): Promise<boolean> {
     try {
         validateGuildId(guildId);
         validateMessageId(messageId);
@@ -260,11 +290,11 @@ export async function removeReactionRole(client, guildId, messageId, emoji) {
         const key = getReactionRoleKey(guildId, messageId);
         const data = await getReactionRoleMessage(client, guildId, messageId);
         
-        if (!data || !data.roles[emoji]) {
+        if (!data || !(data.roles as Record<string, string>)[emoji]) {
             return false;
         }
 
-        delete data.roles[emoji];
+        delete (data.roles as Record<string, string>)[emoji];
 
         if (Object.keys(data.roles).length === 0) {
             await client.db.delete(key);
@@ -276,7 +306,7 @@ export async function removeReactionRole(client, guildId, messageId, emoji) {
         
         return true;
     } catch (error) {
-        if (error.name === 'NexoBotError') {
+        if ((error as Error).name === 'NexoBotError') {
             throw error;
         }
         logger.error(`Error removing reaction role in guild ${guildId}:`, error);
@@ -284,33 +314,34 @@ export async function removeReactionRole(client, guildId, messageId, emoji) {
             `Database error removing reaction role`,
             ErrorTypes.DATABASE,
             'Failed to remove reaction role. Please try again.',
-            { guildId, messageId, originalError: error.message }
+            { guildId, messageId, originalError: (error as Error).message }
         );
     }
 }
 
-export async function getAllReactionRoleMessages(client, guildId) {
+export async function getAllReactionRoleMessages(client: NexoClient, guildId: string): Promise<ReactionRoleMessage[]> {
     try {
         validateGuildId(guildId);
         
         const prefix = getReactionRolesPrefix(guildId);
         
-        let keys;
+        let keys: unknown;
         try {
             keys = await client.db.list(prefix);
             
             if (keys && typeof keys === 'object') {
                 if (Array.isArray(keys)) {
                     
-                } else if (keys.value && Array.isArray(keys.value)) {
-                    keys = keys.value;
+                } else if ((keys as WrappedListResult).value && Array.isArray((keys as WrappedListResult).value)) {
+                    keys = (keys as WrappedListResult).value;
                 } else {
-                    const allKeys = await client.db.list();
+                    // list() without a prefix is outside the typed store contract; legacy fallback kept as is.
+                    const allKeys: unknown = await (client.db.list as (prefix?: string) => Promise<unknown>)();
                     
                     if (Array.isArray(allKeys)) {
-                        keys = allKeys.filter(key => key.startsWith(prefix));
-                    } else if (allKeys.value && Array.isArray(allKeys.value)) {
-                        keys = allKeys.value.filter(key => key.startsWith(prefix));
+                        keys = (allKeys as string[]).filter(key => key.startsWith(prefix));
+                    } else if ((allKeys as WrappedListResult).value && Array.isArray((allKeys as WrappedListResult).value)) {
+                        keys = (allKeys as WrappedListResult).value!.filter(key => key.startsWith(prefix));
                     } else {
                         return [];
                     }
@@ -324,22 +355,22 @@ export async function getAllReactionRoleMessages(client, guildId) {
                 'Database error listing reaction roles',
                 ErrorTypes.DATABASE,
                 'Failed to retrieve reaction role list. Please try again.',
-                { guildId, originalError: listError.message }
+                { guildId, originalError: (listError as Error).message }
             );
         }
         
-        if (!keys || keys.length === 0) {
+        if (!keys || (keys as string[]).length === 0) {
             return [];
         }
 
-        const messages = [];
+        const messages: ReactionRoleMessage[] = [];
         
-        for (const key of keys) {
+        for (const key of keys as string[]) {
             try {
-                const data = await client.db.get(key);
+                const data = await client.db.get<ReactionRoleMessage & { ok?: unknown; value?: ReactionRoleMessage }>(key);
                 
                 if (data) {
-                    let actualData;
+                    let actualData: ReactionRoleMessage | undefined;
                     if (data && data.ok && data.value) {
                         actualData = data.value;
                     } else if (data && data.value) {
@@ -362,7 +393,7 @@ export async function getAllReactionRoleMessages(client, guildId) {
 
         return messages;
     } catch (error) {
-        if (error.name === 'NexoBotError') {
+        if ((error as Error).name === 'NexoBotError') {
             throw error;
         }
         logger.error(`Error getting all reaction role messages for guild ${guildId}:`, error);
@@ -370,12 +401,12 @@ export async function getAllReactionRoleMessages(client, guildId) {
             'Database error retrieving reaction roles',
             ErrorTypes.DATABASE,
             'Failed to retrieve reaction role messages. Please try again.',
-            { guildId, originalError: error.message }
+            { guildId, originalError: (error as Error).message }
         );
     }
 }
 
-export async function setReactionRoleChannel(client, guildId, messageId, channelId) {
+export async function setReactionRoleChannel(client: NexoClient, guildId: string, messageId: string, channelId: string): Promise<boolean> {
     try {
         validateGuildId(guildId);
         validateMessageId(messageId);
@@ -390,7 +421,7 @@ export async function setReactionRoleChannel(client, guildId, messageId, channel
         }
         
         const key = getReactionRoleKey(guildId, messageId);
-        const data = await getReactionRoleMessage(client, guildId, messageId) || {
+        const data: ReactionRoleMessage = await getReactionRoleMessage(client, guildId, messageId) || {
             messageId,
             guildId,
             channelId: '',
@@ -402,7 +433,7 @@ export async function setReactionRoleChannel(client, guildId, messageId, channel
         logger.info(`Set channel ${channelId} for reaction role message ${messageId}`);
         return true;
     } catch (error) {
-        if (error.name === 'NexoBotError') {
+        if ((error as Error).name === 'NexoBotError') {
             throw error;
         }
         logger.error(`Error setting channel for reaction role message ${messageId}:`, error);
@@ -410,13 +441,13 @@ export async function setReactionRoleChannel(client, guildId, messageId, channel
             `Database error setting reaction role channel`,
             ErrorTypes.DATABASE,
             'Failed to update reaction role channel. Please try again.',
-            { guildId, messageId, channelId, originalError: error.message }
+            { guildId, messageId, channelId, originalError: (error as Error).message }
         );
     }
 }
 
-export async function reconcileReactionRoleMessages(client, guildId = null) {
-    const summary = {
+export async function reconcileReactionRoleMessages(client: NexoClient, guildId: string | null = null): Promise<ReactionRoleReconcileSummary> {
+    const summary: ReactionRoleReconcileSummary = {
         scannedGuilds: 0,
         scannedMessages: 0,
         removedMessages: 0,
@@ -431,7 +462,7 @@ export async function reconcileReactionRoleMessages(client, guildId = null) {
         for (const targetGuildId of targetGuildIds) {
             summary.scannedGuilds += 1;
 
-            let reactionRoleMessages = [];
+            let reactionRoleMessages: ReactionRoleMessage[] = [];
             try {
                 reactionRoleMessages = await getAllReactionRoleMessages(client, targetGuildId);
             } catch (error) {

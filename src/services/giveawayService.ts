@@ -1,6 +1,9 @@
 // giveawayService.js
 
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import type { GuildTextBasedChannel } from 'discord.js';
+import type { NexoClient } from '../types/index.js';
+import type { Giveaway } from '../utils/giveaways.js';
 import { logger } from '../utils/logger.js';
 import { NexoBotError, ErrorTypes } from '../utils/errorHandler.js';
 import { getColor, botConfig } from '../config/bot.js';
@@ -11,11 +14,11 @@ import { logEvent, EVENT_TYPES } from './loggingService.js';
 const GIVEAWAY_CONFIG = botConfig.giveaways || {};
 const GIVEAWAY_INTERACTION_COOLDOWN = 1000;
 
-function getGiveawayInteractionKey(userId, giveawayId) {
+function getGiveawayInteractionKey(userId: string, giveawayId: string): string {
     return `giveaway:${userId}:${giveawayId}`;
 }
 
-export function parseDuration(durationString) {
+export function parseDuration(durationString: unknown): number {
     if (!durationString || typeof durationString !== 'string') {
         throw new NexoBotError(
             'Invalid duration format provided',
@@ -95,7 +98,7 @@ export function parseDuration(durationString) {
     return ms;
 }
 
-export function validatePrize(prize) {
+export function validatePrize(prize: unknown): string {
     if (!prize || typeof prize !== 'string') {
         throw new NexoBotError(
             'Prize must be a non-empty string',
@@ -118,7 +121,7 @@ export function validatePrize(prize) {
     return trimmed;
 }
 
-export function validateWinnerCount(winnerCount) {
+export function validateWinnerCount(winnerCount: number): void {
     const minimumWinners = GIVEAWAY_CONFIG.minimumWinners ?? 1;
     const maximumWinners = GIVEAWAY_CONFIG.maximumWinners ?? 10;
 
@@ -132,7 +135,7 @@ export function validateWinnerCount(winnerCount) {
     }
 }
 
-export function createGiveawayEmbed(giveaway, status, winners = []) {
+export function createGiveawayEmbed(giveaway: Giveaway, status: string, winners: string[] = []): EmbedBuilder {
     try {
         const statusEmoji = status === 'ended' ? '🎉' : status === 'reroll' ? '🔄' : '🎉';
         const isEnded = status === 'ended' || status === 'reroll';
@@ -144,7 +147,7 @@ export function createGiveawayEmbed(giveaway, status, winners = []) {
             .setColor(color)
             .addFields(
                 { name: '👤 Hosted by', value: `<@${giveaway.hostId}>`, inline: true },
-                { name: '🏆 Winners', value: giveaway.winnerCount.toString(), inline: true },
+                { name: '🏆 Winners', value: giveaway.winnerCount!.toString(), inline: true },
                 { name: '👥 Entries', value: giveaway.participants?.length?.toString() || '0', inline: true }
             );
 
@@ -155,7 +158,7 @@ export function createGiveawayEmbed(giveaway, status, winners = []) {
             embed.addFields({ name: '🎯 Winners', value: winnerDisplay, inline: false });
         } else {
             const endTime = giveaway.endsAt || giveaway.endTime;
-            embed.addFields({ name: '⏰ Ends', value: `<t:${Math.floor(endTime / 1000)}:R>`, inline: false });
+            embed.addFields({ name: '⏰ Ends', value: `<t:${Math.floor(endTime! / 1000)}:R>`, inline: false });
         }
 
         embed.setTimestamp();
@@ -167,14 +170,14 @@ export function createGiveawayEmbed(giveaway, status, winners = []) {
             'Failed to create giveaway embed',
             ErrorTypes.UNKNOWN,
             'An internal error occurred while formatting the giveaway.',
-            { error: error.message }
+            { error: (error as Error).message }
         );
     }
 }
 
-export function createGiveawayButtons(ended = false) {
+export function createGiveawayButtons(ended: boolean = false): ActionRowBuilder<ButtonBuilder> {
     try {
-        const row = new ActionRowBuilder();
+        const row = new ActionRowBuilder<ButtonBuilder>();
 
         if (ended) {
             row.addComponents(
@@ -211,12 +214,12 @@ export function createGiveawayButtons(ended = false) {
             'Failed to create giveaway buttons',
             ErrorTypes.UNKNOWN,
             'An internal error occurred while creating interactive buttons.',
-            { error: error.message }
+            { error: (error as Error).message }
         );
     }
 }
 
-export function selectWinners(participants, winnerCount) {
+export function selectWinners(participants: string[], winnerCount: number): string[] {
     if (!Array.isArray(participants) || participants.length === 0) {
         return [];
     }
@@ -248,20 +251,20 @@ export function selectWinners(participants, winnerCount) {
             'Failed to select winners',
             ErrorTypes.UNKNOWN,
             'An error occurred while selecting winners.',
-            { error: error.message, participantCount: participants.length }
+            { error: (error as Error).message, participantCount: participants.length }
         );
     }
 }
 
-export function isUserRateLimited(userId, giveawayId) {
+export function isUserRateLimited(userId: string, giveawayId: string): boolean {
     const status = getRateLimitStatus(
         getGiveawayInteractionKey(userId, giveawayId),
         GIVEAWAY_INTERACTION_COOLDOWN,
     );
-    return status.attempts >= 1 && status.remaining > 0;
+    return (status.attempts ?? 0) >= 1 && status.remaining > 0;
 }
 
-export async function recordUserInteraction(userId, giveawayId) {
+export async function recordUserInteraction(userId: string, giveawayId: string): Promise<void> {
     await checkRateLimit(
         getGiveawayInteractionKey(userId, giveawayId),
         1,
@@ -269,7 +272,12 @@ export async function recordUserInteraction(userId, giveawayId) {
     );
 }
 
-export async function endGiveaway(client, giveaway, guildId, endedBy) {
+export async function endGiveaway(
+    client: NexoClient,
+    giveaway: Giveaway | null | undefined,
+    guildId: string | null,
+    endedBy: string,
+): Promise<{ giveaway: Giveaway; winners: string[]; participantCount: number }> {
     try {
         if (!giveaway) {
             throw new NexoBotError(
@@ -319,12 +327,12 @@ export async function endGiveaway(client, giveaway, guildId, endedBy) {
             'Failed to end giveaway',
             ErrorTypes.UNKNOWN,
             'An error occurred while ending the giveaway.',
-            { error: error.message, giveawayId: giveaway?.messageId }
+            { error: (error as Error).message, giveawayId: giveaway?.messageId }
         );
     }
 }
 
-export async function checkGiveaways(client) {
+export async function checkGiveaways(client: NexoClient): Promise<void> {
   try {
     if (!client.db) {
       logger.warn('Database not available for giveaway check');
@@ -342,7 +350,7 @@ export async function checkGiveaways(client) {
     for (const giveawayRecord of endedGiveaways) {
       try {
         const { id: giveawayId, guild_id: guildId, message_id: messageId, data: giveawayData } = giveawayRecord;
-        const giveaway = typeof giveawayData === 'string' ? JSON.parse(giveawayData) : giveawayData;
+        const giveaway: Giveaway = typeof giveawayData === 'string' ? JSON.parse(giveawayData) : giveawayData;
 
         const guild = client.guilds.cache.get(guildId);
         if (!guild) {
@@ -350,7 +358,8 @@ export async function checkGiveaways(client) {
           continue;
         }
 
-        const channel = await guild.channels.fetch(giveaway.channelId).catch(() => null);
+        // Giveaways are only posted in text-based channels.
+        const channel = await guild.channels.fetch(giveaway.channelId!).catch(() => null) as GuildTextBasedChannel | null;
         if (!channel) {
           logger.debug(`Channel ${giveaway.channelId} not found for giveaway ${messageId}`);
           continue;

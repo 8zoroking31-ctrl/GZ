@@ -1,10 +1,23 @@
 import { once } from 'node:events';
 import { MessageFlags, PermissionFlagsBits } from 'discord.js';
+import type {
+    ActionRowBuilder,
+    ButtonBuilder,
+    EmbedBuilder,
+    GuildMember,
+    GuildTextBasedChannel,
+    InteractionReplyOptions,
+    VoiceBasedChannel,
+} from 'discord.js';
+import type { LoopOption, Node, Player, Riffy, Track } from 'riffy';
+import type { NexoClient } from '../../types/index.js';
 import { successEmbed } from '../../utils/embeds.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
+import type { NexoInteraction } from '../../utils/interactionHelper.js';
 import { botHasPermission } from '../../utils/permissionGuard.js';
 import { NexoBotError, ErrorTypes } from '../../utils/errorHandler.js';
 import { getGuildMusicData, clearUpdateInterval } from './playerStore.js';
+import type { GuildMusicData } from './playerStore.js';
 import { canControlMusic, requireVoiceChannel, VOICE_CHANNEL_DENIAL } from './permissions.js';
 import {
     buildNowPlayingEmbed,
@@ -12,12 +25,13 @@ import {
     buildQueuePaginationRow,
     getQueuePageSize,
 } from './musicEmbeds.js';
+import type { MusicTrackInfo } from './musicEmbeds.js';
 import { refreshPlayerMessage } from './playerHandler.js';
 
 const YOUTUBE_URL_PATTERN = /(?:youtube\.com|youtu\.be)/i;
 const PLAYER_CONNECT_TIMEOUT_MS = 12_000;
 
-function getConnectedLavalinkNodes(client) {
+function getConnectedLavalinkNodes(client: NexoClient): Node[] {
     if (!client.riffy?.nodeMap) {
         return [];
     }
@@ -25,7 +39,7 @@ function getConnectedLavalinkNodes(client) {
     return [...client.riffy.nodeMap.values()].filter((node) => node.connected);
 }
 
-export function assertLavalinkNodeAvailable(client) {
+export function assertLavalinkNodeAvailable(client: NexoClient): void {
     if (!getConnectedLavalinkNodes(client).length) {
         throw new NexoBotError(
             'Lavalink unavailable',
@@ -35,7 +49,7 @@ export function assertLavalinkNodeAvailable(client) {
     }
 }
 
-function assertBotVoicePermissions(channel) {
+function assertBotVoicePermissions(channel: VoiceBasedChannel | null | undefined): asserts channel is VoiceBasedChannel {
     if (!channel) {
         throw new NexoBotError(
             'Voice channel unavailable',
@@ -53,7 +67,7 @@ function assertBotVoicePermissions(channel) {
     }
 }
 
-async function waitForPlayerConnection(player) {
+async function waitForPlayerConnection(player: Player): Promise<void> {
     if (player.connected) {
         return;
     }
@@ -85,16 +99,16 @@ async function waitForPlayerConnection(player) {
     }
 }
 
-async function startPlayback(player) {
+async function startPlayback(player: Player): Promise<void> {
     await waitForPlayerConnection(player);
     await player.play();
 }
 
-export function getPlayer(client, guildId) {
+export function getPlayer(client: NexoClient, guildId: string): Player | null {
     return client.riffy?.players?.get(guildId) || null;
 }
 
-export function assertRiffyAvailable(client) {
+export function assertRiffyAvailable(client: NexoClient): asserts client is NexoClient & { riffy: Riffy } {
     if (!client.riffy) {
         throw new NexoBotError(
             'Lavalink not configured',
@@ -104,7 +118,7 @@ export function assertRiffyAvailable(client) {
     }
 }
 
-export function assertInVoice(member) {
+export function assertInVoice(member: GuildMember | null | undefined): void {
     if (!requireVoiceChannel(member)) {
         throw new NexoBotError(
             'Not in voice channel',
@@ -114,7 +128,7 @@ export function assertInVoice(member) {
     }
 }
 
-export function assertCanControl(member, player) {
+export function assertCanControl(member: GuildMember | null | undefined, player: Player | null | undefined): void {
     if (!canControlMusic(member, player)) {
         throw new NexoBotError(
             'Wrong voice channel',
@@ -124,30 +138,30 @@ export function assertCanControl(member, player) {
     }
 }
 
-export async function ensurePlayer(client, interaction) {
+export async function ensurePlayer(client: NexoClient, interaction: NexoInteraction): Promise<{ player: Player; guildData: GuildMusicData }> {
     assertRiffyAvailable(client);
     assertLavalinkNodeAvailable(client);
-    assertInVoice(interaction.member);
+    assertInVoice(interaction.member as GuildMember);
 
-    const guildId = interaction.guild.id;
+    const guildId = interaction.guild!.id;
     const guildData = getGuildMusicData(guildId);
     let player = getPlayer(client, guildId);
 
     if (!player) {
         player = client.riffy.createConnection({
             guildId,
-            voiceChannel: interaction.member.voice.channel.id,
-            textChannel: interaction.channel.id,
+            voiceChannel: (interaction.member as GuildMember).voice.channel!.id,
+            textChannel: interaction.channel!.id,
             deaf: true,
         });
-        guildData.playerChannelId = interaction.channel.id;
+        guildData.playerChannelId = interaction.channel!.id;
     }
 
     player.setVolume(guildData.volume);
     return { player, guildData };
 }
 
-function isDuplicateTrack(player, track) {
+function isDuplicateTrack(player: Player, track: Track | null | undefined): boolean {
     const uri = track?.info?.uri;
     if (!uri) {
         return false;
@@ -158,13 +172,13 @@ function isDuplicateTrack(player, track) {
     return player.queue.some((existing) => existing.info?.uri === uri);
 }
 
-export async function joinVoiceChannel(client, interaction) {
+export async function joinVoiceChannel(client: NexoClient, interaction: NexoInteraction): Promise<EmbedBuilder> {
     assertRiffyAvailable(client);
-    assertInVoice(interaction.member);
+    assertInVoice(interaction.member as GuildMember);
 
-    const guildId = interaction.guild.id;
+    const guildId = interaction.guild!.id;
     const guildData = getGuildMusicData(guildId);
-    const channel = interaction.member.voice.channel;
+    const channel = (interaction.member as GuildMember).voice.channel;
     assertBotVoicePermissions(channel);
     let player = getPlayer(client, guildId);
 
@@ -181,10 +195,10 @@ export async function joinVoiceChannel(client, interaction) {
         player = client.riffy.createConnection({
             guildId,
             voiceChannel: channel.id,
-            textChannel: interaction.channel.id,
+            textChannel: interaction.channel!.id,
             deaf: true,
         });
-        guildData.playerChannelId = interaction.channel.id;
+        guildData.playerChannelId = interaction.channel!.id;
     }
 
     player.setVolume(guildData.volume);
@@ -195,7 +209,7 @@ export async function joinVoiceChannel(client, interaction) {
     );
 }
 
-export async function playQuery(client, interaction, query) {
+export async function playQuery(client: NexoClient, interaction: NexoInteraction, query: string): Promise<{ embed: EmbedBuilder }> {
     if (YOUTUBE_URL_PATTERN.test(query)) {
         throw new NexoBotError(
             'YouTube URL blocked',
@@ -206,7 +220,7 @@ export async function playQuery(client, interaction, query) {
 
     const { player, guildData } = await ensurePlayer(client, interaction);
 
-    const result = await client.riffy.resolve({
+    const result = await client.riffy!.resolve({
         query,
         requester: interaction.user,
     });
@@ -281,12 +295,12 @@ export async function playQuery(client, interaction, query) {
     throw new NexoBotError('No results', ErrorTypes.USER_INPUT, `No results found. (loadType: ${loadType})`);
 }
 
-export async function skipTrack(client, interaction) {
-    const player = getPlayer(client, interaction.guild.id);
+export async function skipTrack(client: NexoClient, interaction: NexoInteraction): Promise<EmbedBuilder> {
+    const player = getPlayer(client, interaction.guild!.id);
     if (!player?.current) {
         throw new NexoBotError('No player', ErrorTypes.USER_INPUT, 'Nothing is playing right now.');
     }
-    assertCanControl(interaction.member, player);
+    assertCanControl(interaction.member as GuildMember, player);
     const title = player.current.info?.title || 'Unknown';
     // Under track-loop, stop() would replay the same track. Clear it so the skip
     // advances; trackStart re-applies the stored loop mode to the next track.
@@ -297,14 +311,14 @@ export async function skipTrack(client, interaction) {
     return successEmbed('Skipped', `Skipped **${title}**.`);
 }
 
-export async function stopPlayback(client, interaction) {
-    const player = getPlayer(client, interaction.guild.id);
+export async function stopPlayback(client: NexoClient, interaction: NexoInteraction): Promise<EmbedBuilder> {
+    const player = getPlayer(client, interaction.guild!.id);
     if (!player) {
         throw new NexoBotError('No player', ErrorTypes.USER_INPUT, 'No active music player.');
     }
-    assertCanControl(interaction.member, player);
+    assertCanControl(interaction.member as GuildMember, player);
 
-    const guildData = getGuildMusicData(interaction.guild.id);
+    const guildData = getGuildMusicData(interaction.guild!.id);
     const queueLength = player.queue?.length || 0;
 
     if (queueLength >= 5 && guildData.stopConfirmPending !== interaction.user.id) {
@@ -321,11 +335,11 @@ export async function stopPlayback(client, interaction) {
     }
 
     guildData.stopConfirmPending = null;
-    await destroyPlayerSession(client, interaction.guild.id, player, guildData);
+    await destroyPlayerSession(client, interaction.guild!.id, player, guildData);
     return successEmbed('Stopped', 'Playback stopped and the queue was cleared.');
 }
 
-export async function applyPause(client, guildId) {
+export async function applyPause(client: NexoClient, guildId: string): Promise<boolean> {
     const player = getPlayer(client, guildId);
     if (!player?.current || player.paused) {
         return false;
@@ -336,7 +350,7 @@ export async function applyPause(client, guildId) {
     return true;
 }
 
-export async function applyResume(client, guildId) {
+export async function applyResume(client: NexoClient, guildId: string): Promise<boolean> {
     const player = getPlayer(client, guildId);
     if (!player?.current || !player.paused) {
         return false;
@@ -347,97 +361,97 @@ export async function applyResume(client, guildId) {
     return true;
 }
 
-export async function pausePlayback(client, interaction) {
-    const player = getPlayer(client, interaction.guild.id);
+export async function pausePlayback(client: NexoClient, interaction: NexoInteraction): Promise<EmbedBuilder> {
+    const player = getPlayer(client, interaction.guild!.id);
     if (!player?.current) {
         throw new NexoBotError('No player', ErrorTypes.USER_INPUT, 'Nothing is playing right now.');
     }
-    assertCanControl(interaction.member, player);
+    assertCanControl(interaction.member as GuildMember, player);
 
     if (player.paused) {
         throw new NexoBotError('Already paused', ErrorTypes.USER_INPUT, 'Playback is already paused.');
     }
 
-    await applyPause(client, interaction.guild.id);
+    await applyPause(client, interaction.guild!.id);
     return successEmbed('Paused', 'Playback paused.');
 }
 
-export async function resumePlayback(client, interaction) {
-    const player = getPlayer(client, interaction.guild.id);
+export async function resumePlayback(client: NexoClient, interaction: NexoInteraction): Promise<EmbedBuilder> {
+    const player = getPlayer(client, interaction.guild!.id);
     if (!player?.current) {
         throw new NexoBotError('No player', ErrorTypes.USER_INPUT, 'Nothing is playing right now.');
     }
-    assertCanControl(interaction.member, player);
+    assertCanControl(interaction.member as GuildMember, player);
 
     if (!player.paused) {
         throw new NexoBotError('Not paused', ErrorTypes.USER_INPUT, 'Playback is not paused.');
     }
 
-    await applyResume(client, interaction.guild.id);
+    await applyResume(client, interaction.guild!.id);
     return successEmbed('Resumed', 'Playback resumed.');
 }
 
-export async function shuffleQueue(client, interaction) {
-    const player = getPlayer(client, interaction.guild.id);
+export async function shuffleQueue(client: NexoClient, interaction: NexoInteraction): Promise<EmbedBuilder> {
+    const player = getPlayer(client, interaction.guild!.id);
     if (!player?.queue?.length) {
         throw new NexoBotError('Empty queue', ErrorTypes.USER_INPUT, 'The queue is empty.');
     }
-    assertCanControl(interaction.member, player);
+    assertCanControl(interaction.member as GuildMember, player);
     player.queue.shuffle();
-    getGuildMusicData(interaction.guild.id).shuffle = true;
-    await refreshPlayerMessage(client, interaction.guild.id);
+    getGuildMusicData(interaction.guild!.id).shuffle = true;
+    await refreshPlayerMessage(client, interaction.guild!.id);
     return successEmbed('Shuffled', 'The queue has been shuffled.');
 }
 
-export async function setLoopMode(client, interaction, mode) {
-    const player = getPlayer(client, interaction.guild.id);
+export async function setLoopMode(client: NexoClient, interaction: NexoInteraction, mode: LoopOption): Promise<EmbedBuilder> {
+    const player = getPlayer(client, interaction.guild!.id);
     if (!player) {
         throw new NexoBotError('No player', ErrorTypes.USER_INPUT, 'No active music player.');
     }
-    assertCanControl(interaction.member, player);
+    assertCanControl(interaction.member as GuildMember, player);
 
-    const guildData = getGuildMusicData(interaction.guild.id);
+    const guildData = getGuildMusicData(interaction.guild!.id);
     guildData.loop = mode;
     player.setLoop(mode);
 
-    const labels = { none: 'Off', track: 'Track', queue: 'Queue' };
-    await refreshPlayerMessage(client, interaction.guild.id);
+    const labels: Record<string, string> = { none: 'Off', track: 'Track', queue: 'Queue' };
+    await refreshPlayerMessage(client, interaction.guild!.id);
     return successEmbed('Loop Updated', `Loop mode set to **${labels[mode] || mode}**.`);
 }
 
-export async function toggleLoop(client, interaction) {
-    const guildData = getGuildMusicData(interaction.guild.id);
+export async function toggleLoop(client: NexoClient, interaction: NexoInteraction): Promise<EmbedBuilder> {
+    const guildData = getGuildMusicData(interaction.guild!.id);
     const next = guildData.loop === 'none' ? 'track' : guildData.loop === 'track' ? 'queue' : 'none';
     return setLoopMode(client, interaction, next);
 }
 
-export async function setVolume(client, interaction, volume) {
-    const player = getPlayer(client, interaction.guild.id);
+export async function setVolume(client: NexoClient, interaction: NexoInteraction, volume: number): Promise<EmbedBuilder> {
+    const player = getPlayer(client, interaction.guild!.id);
     if (!player) {
         throw new NexoBotError('No player', ErrorTypes.USER_INPUT, 'No active music player.');
     }
-    assertCanControl(interaction.member, player);
+    assertCanControl(interaction.member as GuildMember, player);
 
-    const guildData = getGuildMusicData(interaction.guild.id);
+    const guildData = getGuildMusicData(interaction.guild!.id);
     guildData.volume = Math.max(0, Math.min(100, volume));
     player.setVolume(guildData.volume);
-    await refreshPlayerMessage(client, interaction.guild.id);
+    await refreshPlayerMessage(client, interaction.guild!.id);
     return successEmbed('Volume Updated', `Volume set to **${guildData.volume}%**.`);
 }
 
-export async function adjustVolume(client, interaction, delta) {
-    const guildData = getGuildMusicData(interaction.guild.id);
+export async function adjustVolume(client: NexoClient, interaction: NexoInteraction, delta: number): Promise<EmbedBuilder> {
+    const guildData = getGuildMusicData(interaction.guild!.id);
     return setVolume(client, interaction, guildData.volume + delta);
 }
 
-export async function seekTrack(client, interaction, seconds) {
-    const player = getPlayer(client, interaction.guild.id);
+export async function seekTrack(client: NexoClient, interaction: NexoInteraction, seconds: number): Promise<EmbedBuilder> {
+    const player = getPlayer(client, interaction.guild!.id);
     if (!player?.current) {
         throw new NexoBotError('No player', ErrorTypes.USER_INPUT, 'Nothing is playing right now.');
     }
-    assertCanControl(interaction.member, player);
+    assertCanControl(interaction.member as GuildMember, player);
 
-    const info = player.current.info || {};
+    const info: Partial<MusicTrackInfo> = player.current.info || {};
     if (info.isStream || info.isSeekable === false) {
         throw new NexoBotError(
             'Not seekable',
@@ -456,16 +470,16 @@ export async function seekTrack(client, interaction, seconds) {
     }
 
     player.seek(position);
-    await refreshPlayerMessage(client, interaction.guild.id);
+    await refreshPlayerMessage(client, interaction.guild!.id);
     return successEmbed('Seeked', `Seeked to **${seconds}s**.`);
 }
 
-export async function removeFromQueue(client, interaction, index) {
-    const player = getPlayer(client, interaction.guild.id);
+export async function removeFromQueue(client: NexoClient, interaction: NexoInteraction, index: number): Promise<EmbedBuilder> {
+    const player = getPlayer(client, interaction.guild!.id);
     if (!player?.queue?.length) {
         throw new NexoBotError('Empty queue', ErrorTypes.USER_INPUT, 'The queue is empty.');
     }
-    assertCanControl(interaction.member, player);
+    assertCanControl(interaction.member as GuildMember, player);
 
     const queueIndex = index - 1;
     if (queueIndex < 0 || queueIndex >= player.queue.length) {
@@ -474,16 +488,16 @@ export async function removeFromQueue(client, interaction, index) {
 
     const removed = player.queue[queueIndex];
     player.queue.remove(queueIndex);
-    await refreshPlayerMessage(client, interaction.guild.id);
+    await refreshPlayerMessage(client, interaction.guild!.id);
     return successEmbed('Removed', `Removed **${removed.info?.title || 'track'}** from the queue.`);
 }
 
-export async function moveInQueue(client, interaction, from, to) {
-    const player = getPlayer(client, interaction.guild.id);
+export async function moveInQueue(client: NexoClient, interaction: NexoInteraction, from: number, to: number): Promise<EmbedBuilder> {
+    const player = getPlayer(client, interaction.guild!.id);
     if (!player?.queue?.length) {
         throw new NexoBotError('Empty queue', ErrorTypes.USER_INPUT, 'The queue is empty.');
     }
-    assertCanControl(interaction.member, player);
+    assertCanControl(interaction.member as GuildMember, player);
 
     const fromIndex = from - 1;
     const toIndex = to - 1;
@@ -494,23 +508,23 @@ export async function moveInQueue(client, interaction, from, to) {
     const track = player.queue[fromIndex];
     player.queue.remove(fromIndex);
     player.queue.splice(toIndex, 0, track);
-    await refreshPlayerMessage(client, interaction.guild.id);
+    await refreshPlayerMessage(client, interaction.guild!.id);
     return successEmbed('Moved', `Moved **${track.info?.title || 'track'}** to position #${to}.`);
 }
 
-export async function clearQueue(client, interaction) {
-    const player = getPlayer(client, interaction.guild.id);
+export async function clearQueue(client: NexoClient, interaction: NexoInteraction): Promise<EmbedBuilder> {
+    const player = getPlayer(client, interaction.guild!.id);
     if (!player?.queue?.length) {
         throw new NexoBotError('Empty queue', ErrorTypes.USER_INPUT, 'The queue is already empty.');
     }
-    assertCanControl(interaction.member, player);
+    assertCanControl(interaction.member as GuildMember, player);
     player.queue.clear();
-    await refreshPlayerMessage(client, interaction.guild.id);
+    await refreshPlayerMessage(client, interaction.guild!.id);
     return successEmbed('Queue Cleared', 'All queued tracks were removed.');
 }
 
-export async function setTwentyFourSeven(client, interaction, enabled) {
-    const guildData = getGuildMusicData(interaction.guild.id);
+export async function setTwentyFourSeven(client: NexoClient, interaction: NexoInteraction, enabled: boolean): Promise<EmbedBuilder> {
+    const guildData = getGuildMusicData(interaction.guild!.id);
     guildData.twentyFourSeven = enabled;
     return successEmbed(
         '24/7 Mode',
@@ -520,7 +534,7 @@ export async function setTwentyFourSeven(client, interaction, enabled) {
     );
 }
 
-export function buildNowPlayingReply(client, guildId) {
+export function buildNowPlayingReply(client: NexoClient, guildId: string): { embeds: EmbedBuilder[] } {
     const player = getPlayer(client, guildId);
     if (!player?.current) {
         throw new NexoBotError('No player', ErrorTypes.USER_INPUT, 'Nothing is playing right now.');
@@ -531,7 +545,12 @@ export function buildNowPlayingReply(client, guildId) {
     };
 }
 
-export function buildQueueReply(client, guildId, page = 0) {
+export function buildQueueReply(client: NexoClient, guildId: string, page = 0): {
+    embeds: EmbedBuilder[];
+    components: ActionRowBuilder<ButtonBuilder>[];
+    page: number;
+    totalPages: number;
+} {
     const player = getPlayer(client, guildId);
     if (!player) {
         throw new NexoBotError('No player', ErrorTypes.USER_INPUT, 'No active music player.');
@@ -548,7 +567,13 @@ export function buildQueueReply(client, guildId, page = 0) {
     };
 }
 
-export async function destroyPlayerSession(client, guildId, player, guildData, { forceDisconnect = false } = {}) {
+export async function destroyPlayerSession(
+    client: NexoClient,
+    guildId: string,
+    player: Player | null | undefined,
+    guildData: GuildMusicData,
+    { forceDisconnect = false }: { forceDisconnect?: boolean } = {},
+): Promise<void> {
     clearUpdateInterval(guildData);
     if (guildData.idleTimeout) {
         clearTimeout(guildData.idleTimeout);
@@ -562,7 +587,7 @@ export async function destroyPlayerSession(client, guildId, player, guildData, {
 
     if (guildData.playerMessageId && guildData.playerChannelId) {
         try {
-            const channel = client.channels.cache.get(guildData.playerChannelId);
+            const channel = client.channels.cache.get(guildData.playerChannelId) as GuildTextBasedChannel | undefined;
             if (channel) {
                 const msg = await channel.messages.fetch(guildData.playerMessageId);
                 await msg.delete();
@@ -584,17 +609,17 @@ export async function destroyPlayerSession(client, guildId, player, guildData, {
     }
 }
 
-export async function leaveVoiceChannel(client, interaction) {
+export async function leaveVoiceChannel(client: NexoClient, interaction: NexoInteraction): Promise<EmbedBuilder> {
     assertRiffyAvailable(client);
 
-    const guildId = interaction.guild.id;
+    const guildId = interaction.guild!.id;
     const player = getPlayer(client, guildId);
     if (!player) {
         throw new NexoBotError('No player', ErrorTypes.USER_INPUT, 'I am not in a voice channel.');
     }
-    assertCanControl(interaction.member, player);
+    assertCanControl(interaction.member as GuildMember, player);
 
-    const channel = interaction.guild.channels.cache.get(player.voiceChannel);
+    const channel = interaction.guild!.channels.cache.get(player.voiceChannel);
     const channelName = channel?.name || 'voice channel';
     const guildData = getGuildMusicData(guildId);
 
@@ -603,8 +628,8 @@ export async function leaveVoiceChannel(client, interaction) {
     return successEmbed('Left Voice Channel', `Disconnected from **${channelName}**.`);
 }
 
-export async function replyMusicSuccess(interaction, embed) {
-    const options = { embeds: [embed] };
+export async function replyMusicSuccess(interaction: NexoInteraction, embed: EmbedBuilder): Promise<void> {
+    const options: InteractionReplyOptions = { embeds: [embed] };
     if (!interaction._isPrefixCommand) {
         options.flags = MessageFlags.Ephemeral;
     }

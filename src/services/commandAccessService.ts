@@ -7,8 +7,33 @@ import {
   getCategoryIcon,
   PROTECTED_COMMANDS,
 } from '../config/commands/commandCategories.js';
+import type { RESTPostAPIChatInputApplicationCommandsJSONBody } from 'discord.js';
+import type { GuildConfigContext } from '../utils/database/guildConfigStorage.js';
+import type { CommandData, NexoClient } from '../types/index.js';
 
-function normalizeToggleRecord(raw) {
+export interface CommandRegistryEntry {
+  name: string;
+  description: string;
+  protected: boolean;
+  isSubcommand: boolean;
+  parentCommand?: string;
+}
+
+export interface CommandRegistryCategory {
+  key: string;
+  folder: string;
+  displayName: string;
+  icon: string;
+  commands: CommandRegistryEntry[];
+}
+
+/** The config fields this service reads; values may be legacy arrays or toggle records. */
+export interface CommandAccessConfig {
+  disabledCommands?: unknown;
+  disabledCategories?: unknown;
+}
+
+function normalizeToggleRecord(raw: unknown): Record<string, boolean> {
   if (!raw) {
     return {};
   }
@@ -26,8 +51,8 @@ function normalizeToggleRecord(raw) {
   return {};
 }
 
-export function buildCommandRegistry(client) {
-  const categories = new Map();
+export function buildCommandRegistry(client: NexoClient): Map<string, CommandRegistryCategory> {
+  const categories = new Map<string, CommandRegistryCategory>();
 
   for (const command of client.commands.values()) {
     if (!command?.data?.name) {
@@ -48,20 +73,20 @@ export function buildCommandRegistry(client) {
     }
 
     // Add the main command
-    categories.get(categoryKey).commands.push({
+    categories.get(categoryKey)!.commands.push({
       name: command.data.name,
-      description: command.data.description || 'No description',
+      description: (command.data as CommandData & { description?: string }).description || 'No description',
       protected: PROTECTED_COMMANDS.has(command.data.name.toLowerCase()),
       isSubcommand: false,
     });
 
     // Add subcommands if they exist
-    const commandJson = command.data.toJSON?.() || {};
+    const commandJson: Partial<RESTPostAPIChatInputApplicationCommandsJSONBody> = command.data.toJSON?.() || {};
 
     for (const option of commandJson.options || []) {
       if (option.type === 1) {
         const subcommandName = `${command.data.name} ${option.name}`;
-        categories.get(categoryKey).commands.push({
+        categories.get(categoryKey)!.commands.push({
           name: subcommandName,
           description: option.description || 'No description',
           protected: false,
@@ -74,7 +99,7 @@ export function buildCommandRegistry(client) {
         for (const sub of option.options || []) {
           if (sub.type === 1) {
             const subcommandName = `${command.data.name} ${option.name} ${sub.name}`;
-            categories.get(categoryKey).commands.push({
+            categories.get(categoryKey)!.commands.push({
               name: subcommandName,
               description: sub.description || 'No description',
               protected: false,
@@ -94,7 +119,9 @@ export function buildCommandRegistry(client) {
   return categories;
 }
 
-export function getCategoryRegistry(client, categoryKey = null) {
+export function getCategoryRegistry(client: NexoClient, categoryKey?: null): Map<string, CommandRegistryCategory>;
+export function getCategoryRegistry(client: NexoClient, categoryKey: string): CommandRegistryCategory | null;
+export function getCategoryRegistry(client: NexoClient, categoryKey: string | null = null): Map<string, CommandRegistryCategory> | CommandRegistryCategory | null {
   const registry = buildCommandRegistry(client);
 
   if (!categoryKey) {
@@ -104,11 +131,11 @@ export function getCategoryRegistry(client, categoryKey = null) {
   return registry.get(normalizeCategoryKey(categoryKey)) || null;
 }
 
-export function isProtectedCommand(commandName) {
+export function isProtectedCommand(commandName: string | null | undefined): boolean {
   return PROTECTED_COMMANDS.has(String(commandName || '').toLowerCase());
 }
 
-export function isCommandEnabledInConfig(config, commandName, category) {
+export function isCommandEnabledInConfig(config: CommandAccessConfig | null | undefined, commandName: string, category: string | null | undefined): boolean {
   const normalizedName = String(commandName || '').toLowerCase();
 
   // Check if it's a subcommand (contains space)
@@ -142,7 +169,7 @@ export function isCommandEnabledInConfig(config, commandName, category) {
   return true;
 }
 
-export async function isCommandEnabled(client, guildId, commandName, category = null) {
+export async function isCommandEnabled(client: NexoClient, guildId: string, commandName: string, category: string | null = null): Promise<boolean> {
   const config = await getGuildConfig(client, guildId);
   let resolvedCategory = category;
 
@@ -154,17 +181,24 @@ export async function isCommandEnabled(client, guildId, commandName, category = 
   return isCommandEnabledInConfig(config, commandName, resolvedCategory);
 }
 
-export function getCommandAccessSnapshot(client, config) {
+export function getCommandAccessSnapshot(client: NexoClient, config: CommandAccessConfig | null | undefined) {
   const registry = buildCommandRegistry(client);
   const disabledCommands = normalizeToggleRecord(config?.disabledCommands);
   const disabledCategories = normalizeToggleRecord(config?.disabledCategories);
 
-  const categories = [];
+  const categories: Array<CommandRegistryCategory & {
+    categoryDisabled: boolean;
+    enabledCount: number;
+    disabledCount: number;
+    totalCount: number;
+    enabledCommands: string[];
+    disabledCommandNames: string[];
+  }> = [];
 
   for (const category of registry.values()) {
     const categoryDisabled = Boolean(disabledCategories[category.key]);
-    const enabledCommands = [];
-    const disabledCommandNames = [];
+    const enabledCommands: string[] = [];
+    const disabledCommandNames: string[] = [];
 
     for (const command of category.commands) {
       const enabled = isCommandEnabledInConfig(config, command.name, category.folder);
@@ -201,11 +235,11 @@ export function getCommandAccessSnapshot(client, config) {
   };
 }
 
-async function persistAccessConfig(client, guildId, updates, context = {}) {
+async function persistAccessConfig(client: NexoClient, guildId: string, updates: Record<string, unknown>, context: GuildConfigContext = {}) {
   return updateGuildConfig(client, guildId, updates, context);
 }
 
-export function resolveCommandTarget(client, commandName) {
+export function resolveCommandTarget(client: NexoClient, commandName: string | null | undefined): CommandRegistryEntry | null {
   const normalizedName = String(commandName || '').toLowerCase().trim();
   const registry = buildCommandRegistry(client);
 
@@ -219,7 +253,7 @@ export function resolveCommandTarget(client, commandName) {
   return null;
 }
 
-export async function disableCommand(client, guildId, commandName, context = {}) {
+export async function disableCommand(client: NexoClient, guildId: string, commandName: string, context: GuildConfigContext = {}) {
   const normalizedName = String(commandName || '').toLowerCase().trim();
   const target = resolveCommandTarget(client, normalizedName);
 
@@ -240,7 +274,7 @@ export async function disableCommand(client, guildId, commandName, context = {})
   return { commandName: normalizedName, enabled: false };
 }
 
-export async function enableCommand(client, guildId, commandName, context = {}) {
+export async function enableCommand(client: NexoClient, guildId: string, commandName: string, context: GuildConfigContext = {}) {
   const normalizedName = String(commandName || '').toLowerCase().trim();
   const target = resolveCommandTarget(client, normalizedName);
 
@@ -256,7 +290,7 @@ export async function enableCommand(client, guildId, commandName, context = {}) 
   return { commandName: normalizedName, enabled: true };
 }
 
-export async function disableCategory(client, guildId, categoryKey, context = {}) {
+export async function disableCategory(client: NexoClient, guildId: string, categoryKey: string, context: GuildConfigContext = {}) {
   const normalizedKey = normalizeCategoryKey(categoryKey);
   const category = getCategoryRegistry(client, normalizedKey);
 
@@ -272,7 +306,7 @@ export async function disableCategory(client, guildId, categoryKey, context = {}
   return { categoryKey: normalizedKey, displayName: category.displayName, enabled: false };
 }
 
-export async function enableCategory(client, guildId, categoryKey, context = {}) {
+export async function enableCategory(client: NexoClient, guildId: string, categoryKey: string, context: GuildConfigContext = {}) {
   const normalizedKey = normalizeCategoryKey(categoryKey);
   const category = getCategoryRegistry(client, normalizedKey);
 
@@ -288,7 +322,7 @@ export async function enableCategory(client, guildId, categoryKey, context = {})
   return { categoryKey: normalizedKey, displayName: category.displayName, enabled: true };
 }
 
-export async function resetCategoryCommands(client, guildId, categoryKey, context = {}) {
+export async function resetCategoryCommands(client: NexoClient, guildId: string, categoryKey: string, context: GuildConfigContext = {}) {
   const normalizedKey = normalizeCategoryKey(categoryKey);
   const category = getCategoryRegistry(client, normalizedKey);
 
@@ -307,7 +341,7 @@ export async function resetCategoryCommands(client, guildId, categoryKey, contex
   return { categoryKey: normalizedKey, displayName: category.displayName };
 }
 
-export function resolveCategoryChoice(client, input) {
+export function resolveCategoryChoice(client: NexoClient, input: string | null | undefined): CommandRegistryCategory | null {
   if (!input) {
     return null;
   }

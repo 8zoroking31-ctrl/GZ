@@ -3,11 +3,13 @@
 import { GUILD_CONFIG_DEFAULTS } from '../../config/guild/guildConfigDefaults.js';
 import { readGuildConfig, writeGuildConfig } from '../../utils/database/guildConfigStorage.js';
 import { normalizeGuildConfig, validateGuildConfigOrThrow } from '../../utils/schemas.js';
+import type { GuildConfigContext } from '../../utils/database/guildConfigStorage.js';
 import { createError, ErrorTypes, wrapServiceBoundary } from '../../utils/errorHandler.js';
+import type { GuildConfig, NexoClient } from '../../types/index.js';
 
 export { GUILD_CONFIG_DEFAULTS };
 
-export const getGuildConfig = wrapServiceBoundary(async function getGuildConfig(client, guildId, context = {}) {
+export const getGuildConfig = wrapServiceBoundary(async function getGuildConfig(client: NexoClient, guildId: string, context: GuildConfigContext = {}): Promise<GuildConfig> {
     const config = await readGuildConfig(client, guildId, context);
     return normalizeGuildConfig(config, GUILD_CONFIG_DEFAULTS);
 }, {
@@ -17,7 +19,7 @@ export const getGuildConfig = wrapServiceBoundary(async function getGuildConfig(
     userMessage: 'Failed to load server configuration. Please try again.',
 });
 
-export const setGuildConfig = wrapServiceBoundary(async function setGuildConfig(client, guildId, config, context = {}) {
+export const setGuildConfig = wrapServiceBoundary(async function setGuildConfig(client: NexoClient, guildId: string, config: unknown, context: GuildConfigContext = {}): Promise<GuildConfig> {
     const normalized = normalizeGuildConfig(config, GUILD_CONFIG_DEFAULTS);
     return await writeGuildConfig(client, guildId, normalized, context);
 }, {
@@ -27,7 +29,7 @@ export const setGuildConfig = wrapServiceBoundary(async function setGuildConfig(
     userMessage: 'Failed to save server configuration. Please try again.',
 });
 
-export const updateGuildConfig = wrapServiceBoundary(async function updateGuildConfig(client, guildId, updates, context = {}) {
+export const updateGuildConfig = wrapServiceBoundary(async function updateGuildConfig(client: NexoClient, guildId: string, updates: Record<string, unknown>, context: GuildConfigContext = {}): Promise<GuildConfig> {
     const currentConfig = await readGuildConfig(client, guildId, context);
     const merged = { ...currentConfig, ...updates };
     const normalized = normalizeGuildConfig(merged, GUILD_CONFIG_DEFAULTS);
@@ -39,7 +41,7 @@ export const updateGuildConfig = wrapServiceBoundary(async function updateGuildC
     userMessage: 'Failed to update server configuration. Please try again.',
 });
 
-export const getConfigValue = wrapServiceBoundary(async function getConfigValue(client, guildId, key, defaultValue = null, context = {}) {
+export const getConfigValue = wrapServiceBoundary(async function getConfigValue(client: NexoClient, guildId: string, key: string, defaultValue: unknown = null, context: GuildConfigContext = {}): Promise<unknown> {
     const config = await getGuildConfig(client, guildId, context);
     return config[key] !== undefined ? config[key] : defaultValue;
 }, {
@@ -49,7 +51,7 @@ export const getConfigValue = wrapServiceBoundary(async function getConfigValue(
     userMessage: 'Failed to read a server setting. Please try again.',
 });
 
-export const setConfigValue = wrapServiceBoundary(async function setConfigValue(client, guildId, key, value, context = {}) {
+export const setConfigValue = wrapServiceBoundary(async function setConfigValue(client: NexoClient, guildId: string, key: string, value: unknown, context: GuildConfigContext = {}): Promise<GuildConfig> {
     return await updateGuildConfig(client, guildId, { [key]: value }, context);
 }, {
     service: 'guildConfigService',
@@ -61,7 +63,7 @@ export const setConfigValue = wrapServiceBoundary(async function setConfigValue(
 /**
  * Merge partial updates into a nested config object (e.g. verification, logging).
  */
-export const patchGuildConfig = wrapServiceBoundary(async function patchGuildConfig(client, guildId, patch, context = {}) {
+export const patchGuildConfig = wrapServiceBoundary(async function patchGuildConfig(client: NexoClient, guildId: string, patch: Record<string, unknown>, context: GuildConfigContext = {}): Promise<GuildConfig> {
     if (!patch || typeof patch !== 'object') {
         throw createError(
             'Invalid guild config patch',
@@ -83,8 +85,8 @@ export const patchGuildConfig = wrapServiceBoundary(async function patchGuildCon
     userMessage: 'Failed to update server configuration. Please try again.',
 });
 
-function deepMergeGuildConfig(base, patch) {
-    const result = { ...base };
+function deepMergeGuildConfig(base: Record<string, unknown>, patch: Record<string, unknown>): Record<string, unknown> {
+    const result: Record<string, unknown> = { ...base };
 
     for (const [key, value] of Object.entries(patch)) {
         if (
@@ -95,7 +97,7 @@ function deepMergeGuildConfig(base, patch) {
             typeof base[key] === 'object' &&
             !Array.isArray(base[key])
         ) {
-            result[key] = { ...base[key], ...value };
+            result[key] = { ...(base[key] as Record<string, unknown>), ...value };
         } else {
             result[key] = value;
         }
