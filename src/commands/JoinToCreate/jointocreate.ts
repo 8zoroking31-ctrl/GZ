@@ -391,11 +391,16 @@ async function handleNameTemplateModal(interaction: ButtonInteraction, triggerCh
             || currentConfig.channelNameTemplate
             || "Raum von {username}";
 
+        // Keep a stored template that is not in the list (e.g. older English ones) selectable and preselected.
+        const templateOptions = TEMPLATE_OPTIONS.some(o => o.value === currentTemplate)
+            ? TEMPLATE_OPTIONS
+            : [{ label: currentTemplate.slice(0, 100), value: currentTemplate.slice(0, 100) }, ...TEMPLATE_OPTIONS];
+
         const templateSelect = new StringSelectMenuBuilder()
             .setCustomId('template')
             .setPlaceholder('Wähle eine Namensvorlage...')
             .setOptions(
-                TEMPLATE_OPTIONS.map(o => ({
+                templateOptions.map(o => ({
                     label: o.label,
                     value: o.value,
                     default: o.value === currentTemplate,
