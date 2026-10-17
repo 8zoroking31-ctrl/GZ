@@ -120,6 +120,15 @@ export function buildCommandRegistry(client: NexoClient): Map<string, CommandReg
       }
 
       if (option.type === 2) {
+        // The group itself is toggleable too (legacy keys like `usernotes` map to `msg notes`).
+        categories.get(categoryKey)!.commands.push({
+          name: `${command.data.name} ${option.name}`,
+          description: option.description || 'Keine Beschreibung',
+          protected: false,
+          isSubcommand: true,
+          parentCommand: command.data.name,
+        });
+
         for (const sub of option.options || []) {
           if (sub.type === 1) {
             const subcommandName = `${command.data.name} ${option.name} ${sub.name}`;
@@ -279,13 +288,25 @@ export function resolveCommandTarget(client: NexoClient, commandName: string | n
   return null;
 }
 
-export async function disableCommand(client: NexoClient, guildId: string, commandName: string, context: GuildConfigContext = {}) {
-  const normalizedName = translateLegacyAccessKey(String(commandName || ''));
-  const target = resolveCommandTarget(client, normalizedName);
-
-  if (!target) {
-    throw new Error(`Unbekannter Command: \`${normalizedName}\`.`);
+/** Registry entry for user input: a current name, or a pre-consolidation name (`balance`, `usernotes`). */
+export function resolveAccessTarget(client: NexoClient, input: string | null | undefined): { name: string; target: CommandRegistryEntry } | null {
+  const rawName = String(input || '').toLowerCase().trim();
+  for (const name of [rawName, translateLegacyAccessKey(rawName)]) {
+    const target = resolveCommandTarget(client, name);
+    if (target) {
+      return { name, target };
+    }
   }
+  return null;
+}
+
+export async function disableCommand(client: NexoClient, guildId: string, commandName: string, context: GuildConfigContext = {}) {
+  const resolved = resolveAccessTarget(client, commandName);
+
+  if (!resolved) {
+    throw new Error(`Unbekannter Command: \`${String(commandName || '').toLowerCase().trim()}\`.`);
+  }
+  const { name: normalizedName, target } = resolved;
 
   const isProtectedTarget = isProtectedCommand(normalizedName) || (target.isSubcommand && isProtectedCommand(target.parentCommand));
   if (isProtectedTarget) {
@@ -301,12 +322,12 @@ export async function disableCommand(client: NexoClient, guildId: string, comman
 }
 
 export async function enableCommand(client: NexoClient, guildId: string, commandName: string, context: GuildConfigContext = {}) {
-  const normalizedName = translateLegacyAccessKey(String(commandName || ''));
-  const target = resolveCommandTarget(client, normalizedName);
+  const resolved = resolveAccessTarget(client, commandName);
 
-  if (!target) {
-    throw new Error(`Unbekannter Command: \`${normalizedName}\`.`);
+  if (!resolved) {
+    throw new Error(`Unbekannter Command: \`${String(commandName || '').toLowerCase().trim()}\`.`);
   }
+  const { name: normalizedName } = resolved;
 
   const config = await getGuildConfig(client, guildId, context);
   const disabledCommands = normalizeToggleRecord(config?.disabledCommands);

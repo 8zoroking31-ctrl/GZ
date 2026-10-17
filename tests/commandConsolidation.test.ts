@@ -7,7 +7,9 @@ import {
   routeLegacyPrefixCommand,
   translateLegacyAccessKey,
 } from '../src/config/commands/legacyCommandMap.js';
-import { isCommandEnabledInConfig } from '../src/services/commandAccessService.js';
+import { Collection } from 'discord.js';
+import { buildCommandRegistry, isCommandEnabledInConfig, resolveAccessTarget } from '../src/services/commandAccessService.js';
+import type { NexoClient } from '../src/types/index.js';
 import { mapArgumentsToOptions } from '../src/utils/prefixParser.js';
 import { createRouterCommand } from '../src/utils/commandRouter.js';
 import type { Command } from '../src/types/index.js';
@@ -108,4 +110,20 @@ test('prefix parser handles commands mixing subcommands and groups', () => {
   // An exact subcommand name wins over the "roll" -> "reroll" alias.
   const fun = mapArgumentsToOptions(['roll'], { name: 'fun', options: [{ name: 'roll', type: 1 }] });
   assert.equal(fun.getSubcommand(), 'roll');
+});
+
+test('/commands resolves old names, including ones mapped to a group', () => {
+  const notes = fakeCommand(new SlashCommandBuilder().setName('usernotes').setDescription('Notes')
+    .addSubcommand((s) => s.setName('add').setDescription('Add')), []);
+  const balance = fakeCommand(new SlashCommandBuilder().setName('balance').setDescription('Balance'), []);
+  const msg = { ...createRouterCommand({ name: 'msg', description: 'Messages', category: 'Moderation', routes: [{ legacyName: 'usernotes', module: notes }] }), category: 'Moderation' };
+  const eco = { ...createRouterCommand({ name: 'eco', description: 'Economy', category: 'Economy', routes: [{ legacyName: 'balance', module: balance }] }), category: 'Economy' };
+  const client = { commands: new Collection([['msg', msg], ['eco', eco]]) } as unknown as NexoClient; // only .commands is read
+
+  const names = [...buildCommandRegistry(client).values()].flatMap((category) => category.commands.map((command) => command.name));
+  assert.ok(names.includes('msg notes'), 'group node is toggleable');
+  assert.equal(resolveAccessTarget(client, 'usernotes')?.name, 'msg notes');
+  assert.equal(resolveAccessTarget(client, 'balance')?.name, 'eco balance');
+  assert.equal(resolveAccessTarget(client, 'msg notes add')?.name, 'msg notes add');
+  assert.equal(resolveAccessTarget(client, 'nope'), null);
 });
