@@ -9,7 +9,6 @@ Root
 - tsconfig.json               -> TypeScript config (strict, NodeNext, src -> dist)
 - Dockerfile                  -> multi-stage build (tsc) + slim runtime (node dist/app.js)
 - README.md                   -> setup and usage docs (German)
-- SECURITY.md                 -> security policy
 - docs/COMMAND_MIGRATION.md   -> old -> new command mapping (99 -> 36)
 - tests/                      -> node:test checks (npm test, run via tsx)
 - lavalink/                   -> Lavalink node list and local Lavalink config

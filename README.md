@@ -2,6 +2,8 @@
 
 **NexoBot** (Anzeigename „Nexo“) ist ein modularer Discord-Community-Bot mit Moderation, Economy, Leveling, Tickets, Musik, Giveaways, Verifizierung und vielen Werkzeugen. Geschrieben in TypeScript mit discord.js v14, PostgreSQL als Datenspeicher.
 
+> **Herkunft:** NexoBot basiert auf [TitanBot](https://github.com/codebymitch/TitanBot) von codebymitch (MIT-Lizenz) und wurde für diesen Bot überarbeitet: Rebranding, Umstellung auf TypeScript, zusammengefasste Commands und deutsche Texte.
+
 [![Discord.js](https://img.shields.io/npm/v/discord.js?style=flat-square&labelColor=%23202225&color=%23202225&logo=npm&logoColor=white&logoWidth=20)](https://www.npmjs.com/package/discord.js)
 ![TypeScript](https://img.shields.io/badge/-TypeScript-%233178C6?logo=typescript&logoColor=white&style=flat-square)
 ![PostgreSQL](https://img.shields.io/badge/-PostgreSQL-%23336791?logo=postgresql&logoColor=white&style=flat-square&logoWidth=20)
@@ -16,7 +18,6 @@
   - [Railway](#railway)
 - [Umgebungsvariablen](#umgebungsvariablen)
 - [Intents und Berechtigungen](#intents-und-berechtigungen)
-- [Mitwirken](CONTRIBUTING.md)
 - [Lizenz und Credits](#lizenz-und-credits)
 
 ## Funktionen
