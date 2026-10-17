@@ -9,7 +9,7 @@ NexoBot fasst die früheren Einzel-Commands thematisch zusammen. Aus 99 Top-Leve
 - **Cooldowns:** Cooldowns und Missbrauchsschutz zählen weiter pro altem Command.
 - **`/commands disable balance`** akzeptiert alte Namen und sperrt den neuen Subcommand.
 
-Hinweis: Bei Namen, die es alt und neu gibt (`/ban`, `/kick`, `/rank`, `/welcome`), sperrt ein gespeicherter Eintrag ohne Subcommand den ganzen neuen Command. Beispiel: Ein gesperrtes `/ban` sperrt auch `/ban remove` und `/ban mass`.
+Bei Namen, die es alt und neu gibt (`/ban`, `/kick`, `/rank`, `/welcome`), behält ein alter Eintrag seine alte Bedeutung: Ein gesperrtes `/ban` sperrt nur `/ban user`, ein gesperrtes `/welcome` nur `/welcome message`. Wer heute den ganzen neuen Command sperrt, sperrt alle Subcommands.
 
 ## Unverändert
 

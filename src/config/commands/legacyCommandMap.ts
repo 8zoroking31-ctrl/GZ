@@ -158,25 +158,32 @@ function isNewFirstLevelName(command: string, firstArg: string | undefined): boo
   return Boolean(firstArg && NEW_FIRST_LEVEL_NAMES.get(command)?.has(firstArg.toLowerCase()));
 }
 
+/** Suffix marking a stored "whole command" disable for names that existed before and after consolidation. */
+export const WHOLE_COMMAND_MARKER = '*';
+
 /**
  * Translate a stored access key (old or new naming) to the new naming.
  * `balance` -> `eco balance`, `usernotes add` -> `msg notes add`, `welcome setup` -> `welcome message setup`.
- * For old names that are also new top-level names, a bare key keeps the new meaning (whole command).
+ * A bare old name keeps its old meaning (`ban` -> `ban user`); disabling a whole new command with such a
+ * name is stored as `ban *`.
  */
 export function translateLegacyAccessKey(key: string): string {
   const tokens = key.toLowerCase().trim().split(/\s+/);
+  if (tokens[1] === WHOLE_COMMAND_MARKER) {
+    return tokens[0];
+  }
+
   const target = LEGACY_COMMAND_MAP[tokens[0]];
-  if (!target) {
+  if (!target || (target.command === tokens[0] && isNewFirstLevelName(target.command, tokens[1]))) {
     return tokens.join(' ');
   }
 
-  if (target.command === tokens[0]) {
-    if (tokens.length === 1 || isNewFirstLevelName(target.command, tokens[1])) {
-      return tokens.join(' ');
-    }
-  }
-
   return [...getLegacyPath(target), ...tokens.slice(1)].join(' ');
+}
+
+/** Key to store when disabling `name` (new naming), so translateLegacyAccessKey reads it back unchanged. */
+export function toStoredAccessKey(name: string): string {
+  return LEGACY_COMMAND_MAP[name]?.command === name ? `${name} ${WHOLE_COMMAND_MARKER}` : name;
 }
 
 /**

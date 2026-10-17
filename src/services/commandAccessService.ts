@@ -7,7 +7,7 @@ import {
   getCategoryIcon,
   PROTECTED_COMMANDS,
 } from '../config/commands/commandCategories.js';
-import { resolveLegacyName, LEGACY_COMMAND_MAP, translateLegacyAccessKey } from '../config/commands/legacyCommandMap.js';
+import { resolveLegacyName, LEGACY_COMMAND_MAP, toStoredAccessKey, translateLegacyAccessKey } from '../config/commands/legacyCommandMap.js';
 import type { RESTPostAPIChatInputApplicationCommandsJSONBody } from 'discord.js';
 import type { GuildConfigContext } from '../utils/database/guildConfigStorage.js';
 import type { CommandData, NexoClient } from '../types/index.js';
@@ -69,7 +69,7 @@ function translateDisabledCommands(record: Record<string, boolean>): Record<stri
 /** Remove a key and every stored legacy key that translates to it. */
 function deleteDisabledKey(record: Record<string, boolean>, normalizedName: string): void {
   for (const key of Object.keys(record)) {
-    if (key === normalizedName || translateLegacyAccessKey(key) === normalizedName) {
+    if (translateLegacyAccessKey(key) === normalizedName) {
       delete record[key];
     }
   }
@@ -169,8 +169,9 @@ export function isProtectedCommand(commandName: string | null | undefined): bool
 }
 
 export function isCommandEnabledInConfig(config: CommandAccessConfig | null | undefined, commandName: string, category: string | null | undefined): boolean {
-  const normalizedName = translateLegacyAccessKey(String(commandName || ''));
-  const tokens = normalizedName.split(' ');
+  // Queried names are always current names (access keys, registry entries); only stored keys are translated.
+  const normalizedName = String(commandName || '').toLowerCase().trim();
+  const tokens = normalizedName.split(/\s+/);
   const baseCommand = tokens[0];
   const isProtected = isProtectedCommand(baseCommand);
 
@@ -315,7 +316,7 @@ export async function disableCommand(client: NexoClient, guildId: string, comman
 
   const config = await getGuildConfig(client, guildId, context);
   const disabledCommands = normalizeToggleRecord(config?.disabledCommands);
-  disabledCommands[normalizedName] = true;
+  disabledCommands[toStoredAccessKey(normalizedName)] = true;
 
   await persistAccessConfig(client, guildId, { disabledCommands }, context);
   return { commandName: normalizedName, enabled: false };

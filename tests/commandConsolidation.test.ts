@@ -5,6 +5,7 @@ import type { ChatInputCommandInteraction } from 'discord.js';
 import {
   resolveLegacyName,
   routeLegacyPrefixCommand,
+  toStoredAccessKey,
   translateLegacyAccessKey,
 } from '../src/config/commands/legacyCommandMap.js';
 import { Collection } from 'discord.js';
@@ -19,8 +20,13 @@ test('stored legacy access keys translate to the new paths', () => {
   assert.equal(translateLegacyAccessKey('usernotes add'), 'msg notes add');
   assert.equal(translateLegacyAccessKey('shop-config setrole'), 'economy shop setrole');
   assert.equal(translateLegacyAccessKey('welcome setup'), 'welcome message setup');
-  // Old names that are also new top-level names keep the new meaning.
-  assert.equal(translateLegacyAccessKey('ban'), 'ban');
+  // A bare old name keeps its old meaning; whole new commands are stored as `<name> *`.
+  assert.equal(translateLegacyAccessKey('ban'), 'ban user');
+  assert.equal(translateLegacyAccessKey('welcome'), 'welcome message');
+  assert.equal(translateLegacyAccessKey('ban *'), 'ban');
+  assert.equal(toStoredAccessKey('ban'), 'ban *');
+  assert.equal(toStoredAccessKey('ban remove'), 'ban remove');
+  assert.equal(toStoredAccessKey('eco'), 'eco');
   assert.equal(translateLegacyAccessKey('welcome autorole add'), 'welcome autorole add');
   assert.equal(translateLegacyAccessKey('music pause'), 'music pause');
 });
@@ -34,6 +40,12 @@ test('disabled legacy commands and categories block the new subcommands', () => 
   assert.equal(isCommandEnabledInConfig(config, 'tools weather', 'Tools'), false);
   assert.equal(isCommandEnabledInConfig(config, 'tools hexcolor', 'Tools'), true);
   assert.equal(isCommandEnabledInConfig({ disabledCommands: ['commands'] }, 'commands disable', 'Core'), true);
+
+  // An old `/ban` disable only blocks `/ban user`; a new whole-command disable blocks everything.
+  assert.equal(isCommandEnabledInConfig({ disabledCommands: { ban: true } }, 'ban user', 'Moderation'), false);
+  assert.equal(isCommandEnabledInConfig({ disabledCommands: { ban: true } }, 'ban remove', 'Moderation'), true);
+  assert.equal(isCommandEnabledInConfig({ disabledCommands: { ban: true } }, 'ban', 'Moderation'), true);
+  assert.equal(isCommandEnabledInConfig({ disabledCommands: { 'ban *': true } }, 'ban remove', 'Moderation'), false);
 });
 
 test('prefix invocations with old names are routed', () => {
