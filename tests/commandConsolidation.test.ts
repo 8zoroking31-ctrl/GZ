@@ -12,6 +12,7 @@ import { Collection } from 'discord.js';
 import { buildCommandRegistry, isCommandEnabledInConfig, resolveAccessTarget } from '../src/services/commandAccessService.js';
 import type { NexoClient } from '../src/types/index.js';
 import { mapArgumentsToOptions } from '../src/utils/prefixParser.js';
+import { getPrefixRestriction } from '../src/config/commands/prefixRestrictions.js';
 import { createRouterCommand } from '../src/utils/commandRouter.js';
 import type { Command } from '../src/types/index.js';
 
@@ -138,4 +139,16 @@ test('/commands resolves old names, including ones mapped to a group', () => {
   assert.equal(resolveAccessTarget(client, 'balance')?.name, 'eco balance');
   assert.equal(resolveAccessTarget(client, 'msg notes add')?.name, 'msg notes add');
   assert.equal(resolveAccessTarget(client, 'nope'), null);
+});
+
+test('prefix blocks routed subcommands whose old command was slash-only', () => {
+  const shop = { ...fakeCommand(new SlashCommandBuilder().setName('shop').setDescription('Shop'), []), slashOnly: true };
+  const work = fakeCommand(new SlashCommandBuilder().setName('work').setDescription('Work'), []);
+  const eco = createRouterCommand({
+    name: 'eco', description: 'Economy', category: 'Economy',
+    routes: [{ legacyName: 'shop', module: shop }, { legacyName: 'work', module: work }],
+  });
+  const keep = (name: string) => name;
+  assert.equal(getPrefixRestriction(eco, ['shop'], keep).blocked, true);
+  assert.equal(getPrefixRestriction(eco, ['work'], keep).blocked, false);
 });

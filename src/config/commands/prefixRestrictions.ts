@@ -15,7 +15,7 @@ export interface PrefixRestriction {
   reason?: string;
 }
 
-type PrefixCheckedCommand = Pick<Command, 'data' | 'prefixOnly' | 'slashOnly'>;
+type PrefixCheckedCommand = Pick<Command, 'data' | 'prefixOnly' | 'slashOnly' | 'resolveRoute'>;
 
 function isSubcommandGroupOption(opt: APIApplicationCommandOption): opt is APIApplicationCommandSubcommandGroupOption {
   return opt.type === 2;
@@ -54,11 +54,7 @@ export const COMMAND_BLOCKED_SUBCOMMANDS: Record<string, Set<string> | undefined
     'move',
     'clear',
     '247',
-    'play',
-    'queue',
   ]),
-  eco: new Set(['shop']),
-  msg: new Set(['embed']),
   birthday: new Set(['setchannel']),
   report: new Set(['setchannel']),
 };
@@ -132,6 +128,17 @@ export function getPrefixRestriction(
     return {
       blocked: true,
       reason: 'Diese Konfiguration ist nur als Slash-Command verfügbar.',
+    };
+  }
+
+  // Routed subcommands keep the slash-only flag of the old command they come from (e.g. /eco shop).
+  const route = matchedGroup
+    ? command.resolveRoute?.(matchedGroup.name, null)
+    : firstArg && (command.resolveRoute?.(null, firstArg) ?? command.resolveRoute?.(null, resolvedFirstArg));
+  if (route && route.module.slashOnly) {
+    return {
+      blocked: true,
+      reason: 'Dieser Subcommand ist nur als Slash-Command verfügbar.',
     };
   }
 
