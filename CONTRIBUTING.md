@@ -1,6 +1,6 @@
-# Contributing to TitanBot
+# Contributing to NexoBot
 
-Thank you for your interest in contributing to TitanBot! This guide covers local setup, project conventions, and what we look for in pull requests.
+Thank you for your interest in contributing to NexoBot! This guide covers local setup, project conventions, and what we look for in pull requests.
 
 ## Ways to Contribute
 
@@ -8,7 +8,7 @@ Thank you for your interest in contributing to TitanBot! This guide covers local
 - New commands or enhancements to existing features
 - Documentation updates
 
-Before starting large features, open an issue or discuss in the [support server](https://discord.gg/8kJBYhTGW9) so we can align on scope and avoid duplicate work.
+Before starting large features, open an issue on [GitHub](https://github.com/Robertwlt03/NexoBot/issues) so we can align on scope and avoid duplicate work.
 
 ## Getting Started
 
@@ -55,7 +55,7 @@ Use descriptive branch names, for example:
 
 ## Database & Migrations
 
-TitanBot uses PostgreSQL as its primary store. If PostgreSQL is unreachable at startup, the bot can operate in a **degraded in-memory mode** — but that mode is not suitable for production and should not be the only way you test persistence-related changes.
+NexoBot uses PostgreSQL as its primary store. If PostgreSQL is unreachable at startup, the bot can operate in a **degraded in-memory mode** — but that mode is not suitable for production and should not be the only way you test persistence-related changes.
 
 Useful commands:
 

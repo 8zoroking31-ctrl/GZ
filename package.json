@@ -1,7 +1,17 @@
 {
-  "name": "titanbot",
-  "version": "2.1.0",
-  "description": "Modular Ultimate Community Bot by Touchpoint Support",
+  "name": "nexobot",
+  "version": "1.0.0",
+  "description": "Nexo - Ein Bot. Alle Funktionen. Modular Discord community bot.",
+  "author": "Robertwlt03",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Robertwlt03/NexoBot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Robertwlt03/NexoBot/issues"
+  },
+  "homepage": "https://github.com/Robertwlt03/NexoBot#readme",
   "main": "src/app.js",
   "type": "module",
   "scripts": {
