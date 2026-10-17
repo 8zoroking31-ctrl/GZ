@@ -1,0 +1,46 @@
+/**
+ * Command category metadata for the command access manager.
+ */
+
+export const CATEGORY_ICONS: Record<string, string> = {
+  Birthday: '🎂',
+  Community: '👥',
+  Core: 'ℹ️',
+  Economy: '💰',
+  Fun: '🎮',
+  Giveaway: '🎉',
+  JoinToCreate: '🔌',
+  Leveling: '📊',
+  Logging: '📝',
+  Moderation: '🛡️',
+  Music: '🎵',
+  Reaction_roles: '🎭',
+  Search: '🔍',
+  ServerStats: '📈',
+  Ticket: '🎫',
+  Tools: '🛠️',
+  Utility: '🔧',
+  Verification: '✅',
+  Welcome: '👋',
+};
+
+/** Commands that always stay available so admins can recover access. */
+export const PROTECTED_COMMANDS = new Set(['commands', 'configwizard']);
+
+export function normalizeCategoryKey(category: string | null | undefined): string {
+  return String(category || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+}
+
+export function formatCategoryName(rawCategory: string | null | undefined): string {
+  return String(rawCategory || '')
+    .replace(/_/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+export function getCategoryIcon(category: string): string {
+  return CATEGORY_ICONS[category] || CATEGORY_ICONS[formatCategoryName(category)] || '📁';
+}
