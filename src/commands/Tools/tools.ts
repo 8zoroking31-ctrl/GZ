@@ -14,7 +14,7 @@ import firstmsgCommand from '../Utility/modules/firstmsg.js';
 
 export default createRouterCommand({
   name: 'tools',
-  description: 'Handy tools and utilities',
+  description: 'Praktische Tools und Helfer',
   category: 'Tools',
   routes: [
     { legacyName: 'baseconvert', module: baseconvertCommand },

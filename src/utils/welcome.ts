@@ -3,8 +3,8 @@
 import { logger } from './logger.js';
 
 const DEFAULT_TEMPLATES = {
-    welcome: 'Welcome {user} to {server}!',
-    goodbye: '{user.tag} has left the server.'
+    welcome: 'Willkommen {user} auf {server}!',
+    goodbye: '{user.tag} hat den Server verlassen.'
 };
 
 /** Fields read from a (possibly partial) discord.js User. */
@@ -61,11 +61,11 @@ export function formatWelcomeMessage(message: unknown, data: WelcomeFormatData |
     }
 
     const tokens: Record<string, string> = {
-        '{user}': user?.toString?.() || 'User',
-        '{user.mention}': user?.toString?.() || 'User',
-        '{user.tag}': user?.tag || 'Unknown#0000',
-        '{user.username}': user?.username || 'Unknown',
-        '{username}': user?.username || 'Unknown',
+        '{user}': user?.toString?.() || 'Nutzer',
+        '{user.mention}': user?.toString?.() || 'Nutzer',
+        '{user.tag}': user?.tag || 'Unbekannt#0000',
+        '{user.username}': user?.username || 'Unbekannt',
+        '{username}': user?.username || 'Unbekannt',
         '{user.discriminator}': user?.discriminator || '0000',
         '{user.id}': user?.id || 'unknown',
         '{server}': guild?.name || 'Server',

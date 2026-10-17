@@ -7,7 +7,7 @@ import levelsetCommand from './modules/levelset.js';
 
 export default createRouterCommand({
   name: 'level',
-  description: 'Configure leveling and manage member levels',
+  description: 'Leveling konfigurieren und Level von Mitgliedern verwalten',
   category: 'Leveling',
   defaultMemberPermissions: PermissionFlagsBits.ManageGuild,
   routes: [

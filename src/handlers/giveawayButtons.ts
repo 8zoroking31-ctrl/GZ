@@ -25,7 +25,7 @@ export const giveawayJoinHandler = {
         try {
             
             if (isUserRateLimited(interaction.user.id, interaction.message.id)) {
-                return replyUserError(interaction, { type: ErrorTypes.RATE_LIMIT, message: 'Please wait a moment before interacting with this giveaway again.' });
+                return replyUserError(interaction, { type: ErrorTypes.RATE_LIMIT, message: 'Warte bitte einen Moment, bevor du erneut mit diesem Giveaway interagierst.' });
             }
 
             await recordUserInteraction(interaction.user.id, interaction.message.id);
@@ -39,7 +39,7 @@ export const giveawayJoinHandler = {
                     throw new NexoBotError(
                         'Giveaway not found in database',
                         ErrorTypes.VALIDATION,
-                        'This giveaway is no longer active.',
+                        'Dieses Giveaway ist nicht mehr aktiv.',
                         { messageId: interaction.message.id, guildId: interaction.guildId }
                     );
                 }
@@ -48,14 +48,14 @@ export const giveawayJoinHandler = {
                 const endedByFlag = giveaway.ended || giveaway.isEnded;
 
                 if (endedByTime || endedByFlag) {
-                    return replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'This giveaway has already ended.' });
+                    return replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Dieses Giveaway ist bereits beendet.' });
                 }
 
                 const participants = giveaway.participants || [];
                 const userId = interaction.user.id;
 
                 if (participants.includes(userId)) {
-                    return replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'You have already entered this giveaway! 🎉' });
+                    return replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Du nimmst bereits an diesem Giveaway teil! 🎉' });
                 }
 
                 participants.push(userId);
@@ -76,8 +76,8 @@ export const giveawayJoinHandler = {
                 await interaction.reply({
                     embeds: [
                         successEmbed(
-                            'Success! You have entered the giveaway! 🎉',
-                            `Good luck! There are now ${participants.length} entry/entries.`
+                            'Geschafft! Du nimmst jetzt am Giveaway teil! 🎉',
+                            `Viel Glück! Es gibt jetzt ${participants.length} Teilnahme(n).`
                         )
                     ],
                     flags: MessageFlags.Ephemeral
@@ -103,13 +103,13 @@ export const giveawayEndHandler = {
                 throw new NexoBotError(
                     'Button used outside guild',
                     ErrorTypes.VALIDATION,
-                    'This button can only be used in a server.',
+                    'Diesen Button kannst du nur auf einem Server nutzen.',
                     { userId: interaction.user.id }
                 );
             }
 
             if (!(interaction.member as GuildMember).permissions.has(PermissionFlagsBits.ManageGuild)) {
-                return replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'You need the \'Manage Server\' permission to end a giveaway.' });
+                return replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'Du brauchst die Berechtigung „Server verwalten“, um ein Giveaway zu beenden.' });
             }
 
             const guildGiveaways = await getGuildGiveaways(client, interaction.guildId);
@@ -119,7 +119,7 @@ export const giveawayEndHandler = {
                 throw new NexoBotError(
                     'Giveaway not found in database',
                     ErrorTypes.VALIDATION,
-                    'This giveaway is no longer active.',
+                    'Dieses Giveaway ist nicht mehr aktiv.',
                     { messageId: interaction.message.id, guildId: interaction.guildId }
                 );
             }
@@ -128,7 +128,7 @@ export const giveawayEndHandler = {
                 throw new NexoBotError(
                     'Giveaway already ended',
                     ErrorTypes.VALIDATION,
-                    'This giveaway has already ended.',
+                    'Dieses Giveaway ist bereits beendet.',
                     { messageId: interaction.message.id }
                 );
             }
@@ -150,7 +150,7 @@ export const giveawayEndHandler = {
             const updatedRow = createGiveawayButtons(true);
 
             await interaction.message.edit({
-                content: '🎉 **GIVEAWAY ENDED** 🎉',
+                content: '🎉 **GIVEAWAY BEENDET** 🎉',
                 embeds: [updatedEmbed],
                 components: [updatedRow]
             });
@@ -161,24 +161,24 @@ export const giveawayEndHandler = {
                     guildId: interaction.guildId,
                     eventType: EVENT_TYPES.GIVEAWAY_WINNER,
                     data: {
-                        description: `Giveaway ended with ${winners.length} winner(s)`,
+                        description: `Giveaway mit ${winners.length} Gewinner(n) beendet`,
                         channelId: interaction.channelId,
                         userId: interaction.user.id,
                         fields: [
                             {
-                                name: '🎁 Prize',
-                                value: giveaway.prize || 'Mystery Prize!',
+                                name: '🎁 Preis',
+                                value: giveaway.prize || 'Überraschungspreis!',
                                 inline: true
                             },
                             {
-                                name: '🏆 Winners',
+                                name: '🏆 Gewinner',
                                 value: winners.length > 0 
                                     ? winners.map(id => `<@${id}>`).join(', ')
-                                    : 'No valid entries',
+                                    : 'Keine gültigen Teilnahmen',
                                 inline: false
                             },
                             {
-                                name: '👥 Total Entries',
+                                name: '👥 Teilnahmen gesamt',
                                 value: participants.length.toString(),
                                 inline: true
                             }
@@ -192,8 +192,8 @@ export const giveawayEndHandler = {
             await interaction.reply({
                 embeds: [
                     successEmbed(
-                        `Giveaway Ended ✅`,
-                        `The giveaway has been ended and ${winners.length} winner(s) have been selected!`
+                        `Giveaway beendet ✅`,
+                        `Das Giveaway wurde beendet und ${winners.length} Gewinner ausgelost!`
                     )
                 ],
                 flags: MessageFlags.Ephemeral
@@ -219,13 +219,13 @@ export const giveawayRerollHandler = {
                 throw new NexoBotError(
                     'Button used outside guild',
                     ErrorTypes.VALIDATION,
-                    'This button can only be used in a server.',
+                    'Diesen Button kannst du nur auf einem Server nutzen.',
                     { userId: interaction.user.id }
                 );
             }
 
             if (!(interaction.member as GuildMember).permissions.has(PermissionFlagsBits.ManageGuild)) {
-                return replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'You need the \'Manage Server\' permission to reroll a giveaway.' });
+                return replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'Du brauchst die Berechtigung „Server verwalten“, um ein Giveaway neu auszulosen.' });
             }
 
             const guildGiveaways = await getGuildGiveaways(client, interaction.guildId);
@@ -235,7 +235,7 @@ export const giveawayRerollHandler = {
                 throw new NexoBotError(
                     'Giveaway not found in database',
                     ErrorTypes.VALIDATION,
-                    'This giveaway is no longer active.',
+                    'Dieses Giveaway ist nicht mehr aktiv.',
                     { messageId: interaction.message.id, guildId: interaction.guildId }
                 );
             }
@@ -244,7 +244,7 @@ export const giveawayRerollHandler = {
                 throw new NexoBotError(
                     'Giveaway still active',
                     ErrorTypes.VALIDATION,
-                    'This giveaway has not ended yet. Please end it first.',
+                    'Dieses Giveaway läuft noch. Bitte beende es zuerst.',
                     { messageId: interaction.message.id }
                 );
             }
@@ -255,7 +255,7 @@ export const giveawayRerollHandler = {
                 throw new NexoBotError(
                     'No participants to reroll',
                     ErrorTypes.VALIDATION,
-                    'There are no entries to reroll from.',
+                    'Es gibt keine Teilnahmen für eine neue Auslosung.',
                     { messageId: interaction.message.id }
                 );
             }
@@ -274,7 +274,7 @@ export const giveawayRerollHandler = {
             const updatedRow = createGiveawayButtons(true);
 
             await interaction.message.edit({
-                content: '🔄 **GIVEAWAY REROLLED** 🔄',
+                content: '🔄 **GIVEAWAY NEU AUSGELOST** 🔄',
                 embeds: [updatedEmbed],
                 components: [updatedRow]
             });
@@ -285,22 +285,22 @@ export const giveawayRerollHandler = {
                     guildId: interaction.guildId,
                     eventType: EVENT_TYPES.GIVEAWAY_REROLL,
                     data: {
-                        description: `Giveaway rerolled`,
+                        description: `Giveaway neu ausgelost`,
                         channelId: interaction.channelId,
                         userId: interaction.user.id,
                         fields: [
                             {
-                                name: '🎁 Prize',
-                                value: giveaway.prize || 'Mystery Prize!',
+                                name: '🎁 Preis',
+                                value: giveaway.prize || 'Überraschungspreis!',
                                 inline: true
                             },
                             {
-                                name: '🏆 New Winners',
+                                name: '🏆 Neue Gewinner',
                                 value: newWinners.map(id => `<@${id}>`).join(', '),
                                 inline: false
                             },
                             {
-                                name: '👥 Total Entries',
+                                name: '👥 Teilnahmen gesamt',
                                 value: participants.length.toString(),
                                 inline: true
                             }
@@ -314,8 +314,8 @@ export const giveawayRerollHandler = {
             await interaction.reply({
                 embeds: [
                     successEmbed(
-                        'Giveaway Rerolled ✅',
-                        `New winner(s) have been selected!`
+                        'Giveaway neu ausgelost ✅',
+                        `Neue Gewinner wurden ausgelost!`
                     )
                 ],
                 flags: MessageFlags.Ephemeral
@@ -340,7 +340,7 @@ export const giveawayViewHandler = {
                 throw new NexoBotError(
                     'Button used outside guild',
                     ErrorTypes.VALIDATION,
-                    'This button can only be used in a server.',
+                    'Diesen Button kannst du nur auf einem Server nutzen.',
                     { userId: interaction.user.id }
                 );
             }
@@ -352,24 +352,24 @@ export const giveawayViewHandler = {
                 throw new NexoBotError(
                     'Giveaway not found in database',
                     ErrorTypes.VALIDATION,
-                    'This giveaway could not be found.',
+                    'Dieses Giveaway wurde nicht gefunden.',
                     { messageId: interaction.message.id, guildId: interaction.guildId }
                 );
             }
 
             if (!giveaway.ended && !giveaway.isEnded && !isGiveawayEnded(giveaway)) {
-                return replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'This giveaway has not ended yet, so winners are not available.' });
+                return replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Dieses Giveaway läuft noch, daher gibt es noch keine Gewinner.' });
             }
 
             const winnerIds = Array.isArray(giveaway.winnerIds) ? giveaway.winnerIds : [];
             const winnerMentions = winnerIds.length > 0
                 ? winnerIds.map(id => `<@${id}>`).join(', ')
-                : 'No valid winners were selected for this giveaway.';
+                : 'Für dieses Giveaway wurden keine gültigen Gewinner ausgelost.';
 
             await interaction.reply({
                 embeds: [
                     successEmbed(
-                        `Winners for ${giveaway.prize || 'this giveaway'} 🎉`,
+                        `Gewinner für ${giveaway.prize || 'dieses Giveaway'} 🎉`,
                         winnerMentions
                     )
                 ],

@@ -5,7 +5,7 @@ import userinfoCommand from './modules/userinfo.js';
 
 export default createRouterCommand({
   name: 'info',
-  description: 'Information about users and the server',
+  description: 'Infos über Nutzer und den Server',
   category: 'Utility',
   routes: [
     { legacyName: 'avatar', module: avatarCommand },

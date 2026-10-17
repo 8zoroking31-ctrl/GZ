@@ -99,9 +99,9 @@ export function splitComparisonFields(fields: LogField[] = []): ComparisonFields
   for (const field of fields) {
     const label = stripFieldLabel(field.name).toLowerCase();
 
-    if (/^old|^before/.test(label)) {
+    if (/^old|^before|^alt|^vorher/.test(label)) {
       comparison.before = field.value;
-    } else if (/^new|^after/.test(label)) {
+    } else if (/^new|^after|^neu|^nachher/.test(label)) {
       comparison.after = field.value;
     } else {
       comparison.rest.push(field);
@@ -168,7 +168,7 @@ export async function resolveUserAuthor(client: Client, userId: string | null | 
     };
   } catch {
     return {
-      name: `User ${userId}`,
+      name: `Nutzer ${userId}`,
     };
   }
 }
@@ -230,17 +230,17 @@ export interface RoleAuditOptions {
 export function buildRoleAuditFields(role: Role, { includeMemberCount = false }: RoleAuditOptions = {}): APIEmbedField[] {
   const fields: APIEmbedField[] = [
     {
-      name: 'Role Name',
+      name: 'Rollenname',
       value: role.name,
       inline: true
     },
     {
-      name: 'Color',
+      name: 'Farbe',
       value: role.hexColor || '#000000',
       inline: true
     },
     {
-      name: 'Role ID',
+      name: 'Rollen-ID',
       value: role.id,
       inline: true
     }
@@ -250,9 +250,9 @@ export function buildRoleAuditFields(role: Role, { includeMemberCount = false }:
   if (permissions.length > 0) {
     const displayPerms = permissions.slice(0, MAX_DISPLAYED_ROLE_PERMISSIONS).join(',');
     fields.push({
-      name: 'Permissions',
+      name: 'Berechtigungen',
       value: permissions.length > MAX_DISPLAYED_ROLE_PERMISSIONS
-        ? `${displayPerms}... (+${permissions.length - MAX_DISPLAYED_ROLE_PERMISSIONS} more)`
+        ? `${displayPerms}... (+${permissions.length - MAX_DISPLAYED_ROLE_PERMISSIONS} weitere)`
         : displayPerms,
       inline: false
     });
@@ -260,13 +260,13 @@ export function buildRoleAuditFields(role: Role, { includeMemberCount = false }:
 
   fields.push(
     {
-      name: 'Hoisted',
-      value: role.hoist ? 'Yes' : 'No',
+      name: 'Separat angezeigt',
+      value: role.hoist ? 'Ja' : 'Nein',
       inline: true
     },
     {
-      name: 'Managed',
-      value: role.managed ? 'Yes (Bot role)' : 'No',
+      name: 'Verwaltet',
+      value: role.managed ? 'Ja (Bot-Rolle)' : 'Nein',
       inline: true
     },
     {
@@ -278,7 +278,7 @@ export function buildRoleAuditFields(role: Role, { includeMemberCount = false }:
 
   if (includeMemberCount) {
     fields.push({
-      name: 'Members with Role',
+      name: 'Mitglieder mit Rolle',
       value: role.members.size.toString(),
       inline: true
     });

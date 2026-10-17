@@ -10,7 +10,7 @@ import { claimTicket } from '../../../services/ticket.js';
 export default {
     data: new SlashCommandBuilder()
         .setName("claim")
-        .setDescription("Claims an open ticket, assigning it to you.")
+        .setDescription("Ein offenes Ticket übernehmen und dir zuweisen.")
         .setDMPermission(false),
 
     async execute(interaction, guildConfig, client) {
@@ -21,11 +21,11 @@ export default {
 
         const permissionContext = await getTicketPermissionContext({ client, interaction });
         if (!permissionContext.ticketData) {
-            return await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'This command can only be used in a valid ticket channel.' });
+            return await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'Dieser Command funktioniert nur in einem gültigen Ticket-Kanal.' });
         }
 
         if (!permissionContext.canManageTicket) {
-            return await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'You need the `Manage Channels` permission or the configured `Ticket Staff Role` to claim tickets.' });
+            return await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'Du brauchst die Berechtigung „Kanäle verwalten“ oder die eingestellte Ticket-Team-Rolle, um Tickets zu übernehmen.' });
         }
 
         await claimTicket(interaction.channel as TextChannel, interaction.user);
@@ -33,8 +33,8 @@ export default {
         await InteractionHelper.safeEditReply(interaction, {
             embeds: [
                 successEmbed(
-                    "Ticket Claimed!",
-                    "You have successfully claimed this ticket.",
+                    "Ticket übernommen!",
+                    "Du hast dieses Ticket erfolgreich übernommen.",
                 ),
             ],
         });

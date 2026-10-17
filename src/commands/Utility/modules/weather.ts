@@ -37,11 +37,11 @@ interface WeatherResponse {
 export default {
     data: new SlashCommandBuilder()
         .setName("weather")
-        .setDescription("Get real-time weather information for a location")
+        .setDescription("Aktuelles Wetter für einen Ort abrufen")
         .addStringOption((option) =>
             option
                 .setName("city")
-                .setDescription("The city name, e.g., 'London' or 'Tokyo'")
+                .setDescription("Der Name der Stadt, z. B. 'Berlin' oder 'Tokio'")
                 .setRequired(true),
         ),
 
@@ -69,7 +69,7 @@ export default {
                 city: city,
                 guildId: interaction.guildId
             });
-            await replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: `Could not find a location for **${city}**. Please check the spelling.` });
+            await replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: `Für **${city}** wurde kein Ort gefunden. Bitte prüf die Schreibweise.` });
             return;
         }
 
@@ -88,38 +88,38 @@ export default {
                 userId: interaction.user.id,
                 guildId: interaction.guildId
             });
-            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'A weather service error occurred.' });
+            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Beim Wetterdienst ist ein Fehler aufgetreten.' });
             return;
         }
 
         const current: CurrentWeather = weatherData.current || weatherData.current_weather || {};
-        const temperature = current.temperature != null ? Math.round(current.temperature) : "N/A";
-        const humidity = current.relativehumidity ?? current.relative_humidity_2m ?? "N/A";
-        const windSpeed = current.windspeed != null ? Math.round(current.windspeed) : "N/A";
+        const temperature = current.temperature != null ? Math.round(current.temperature) : "–";
+        const humidity = current.relativehumidity ?? current.relative_humidity_2m ?? "–";
+        const windSpeed = current.windspeed != null ? Math.round(current.windspeed) : "–";
         const weatherCode = current.weathercode ?? current.weather_code ?? null;
 
         const condition = getWeatherDescription(weatherCode);
 
-        const embed = createEmbed({ title: `Weather in ${cityDisplay}, ${country}`, description: condition.description })
+        const embed = createEmbed({ title: `Wetter in ${cityDisplay}, ${country}`, description: condition.description })
             .addFields(
                 {
-                    name: "Temperature",
+                    name: "Temperatur",
                     value: `${temperature}°C`,
                     inline: true,
                 },
                 {
-                    name: "Humidity",
+                    name: "Luftfeuchtigkeit",
                     value: `${humidity}%`,
                     inline: true,
                 },
                 {
-                    name: "Wind Speed",
+                    name: "Windgeschwindigkeit",
                     value: `${windSpeed} km/h`,
                     inline: true,
                 },
             )
             .setFooter({
-                text: `Latitude: ${latitude.toFixed(2)} | Longitude: ${longitude.toFixed(2)}`,
+                text: `Breitengrad: ${latitude.toFixed(2)} | Längengrad: ${longitude.toFixed(2)}`,
             });
 
         await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
@@ -137,17 +137,17 @@ function getWeatherDescription(codeValue: number | null) {
     // Number(null) === 0, same coercion the relational operators applied in JS
     const code = Number(codeValue);
     if (code >= 0 && code <= 3) {
-        return { description: "Clear sky / Partly cloudy", emoji: "" };
+        return { description: "Klar / teilweise bewölkt", emoji: "" };
     } else if (code >= 45 && code <= 48) {
-        return { description: "Fog and Rime fog", emoji: "" };
+        return { description: "Nebel und Raureifnebel", emoji: "" };
     } else if (code >= 51 && code <= 67) {
-        return { description: "Drizzle or Rain", emoji: "" };
+        return { description: "Nieselregen oder Regen", emoji: "" };
     } else if (code >= 71 && code <= 75) {
-        return { description: "Snow fall", emoji: "" };
+        return { description: "Schneefall", emoji: "" };
     } else if (code >= 80 && code <= 86) {
-        return { description: "Showers (Rain/Snow)", emoji: "" };
+        return { description: "Schauer (Regen/Schnee)", emoji: "" };
     } else if (code >= 95 && code <= 99) {
-        return { description: "Thunderstorm", emoji: "" };
+        return { description: "Gewitter", emoji: "" };
     }
-    return { description: "Unknown conditions.", emoji: "" };
+    return { description: "Unbekannte Wetterlage.", emoji: "" };
 }

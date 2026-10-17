@@ -77,7 +77,7 @@ export async function saveGiveaway(client: NexoClient, guildId: string, giveaway
             throw new NexoBotError(
                 'Invalid giveaway data: missing messageId',
                 ErrorTypes.VALIDATION,
-                'Cannot save giveaway without a message ID.',
+                'Ein Giveaway kann ohne Nachrichten-ID nicht gespeichert werden.',
                 { giveawayData }
             );
         }
@@ -112,7 +112,7 @@ export async function deleteGiveaway(client: NexoClient, guildId: string, messag
             throw new NexoBotError(
                 'Missing messageId parameter',
                 ErrorTypes.VALIDATION,
-                'Cannot delete giveaway without a message ID.',
+                'Ein Giveaway kann ohne Nachrichten-ID nicht gelöscht werden.',
                 { messageId }
             );
         }
@@ -188,22 +188,22 @@ export function giveawayButtons(ended = false) {
             row.addComponents(
                 new ButtonBuilder()
                     .setCustomId('giveaway_reroll')
-                    .setLabel('🎲 Reroll')
+                    .setLabel('🎲 Neu auslosen')
                     .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId('giveaway_view')
-                    .setLabel('👁️ View')
+                    .setLabel('👁️ Gewinner anzeigen')
                     .setStyle(ButtonStyle.Primary)
             );
         } else {
             row.addComponents(
                 new ButtonBuilder()
                     .setCustomId('giveaway_join')
-                    .setLabel('🎉 Join')
+                    .setLabel('🎉 Teilnehmen')
                     .setStyle(ButtonStyle.Primary),
                 new ButtonBuilder()
                     .setCustomId('giveaway_end')
-                    .setLabel('🛑 End')
+                    .setLabel('🛑 Beenden')
                     .setStyle(ButtonStyle.Danger)
             );
         }

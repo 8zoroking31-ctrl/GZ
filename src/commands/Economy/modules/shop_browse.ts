@@ -17,17 +17,17 @@ export default {
                 const startIndex = (page - 1) * ITEMS_PER_PAGE;
                 const pageItems = shopItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
                 const embed = new EmbedBuilder()
-                    .setTitle('Store')
+                    .setTitle('Shop')
                     .setColor(getColor('primary'))
-                    .setDescription('Use `/eco buy item_id:<id> quantity:<amount>` to purchase an item.');
+                    .setDescription('Nutze `/eco buy item_id:<id> quantity:<amount>`, um ein Item zu kaufen.');
                 pageItems.forEach(item => {
                     embed.addFields({
                         name: `${item.name} (${item.id})`,
-                        value: `**Type:** ${item.type}\n **Price:** $${item.price.toLocaleString()}\n${item.description}`,
+                        value: `**Typ:** ${item.type}\n **Preis:** $${item.price.toLocaleString()}\n${item.description}`,
                         inline: false,
                     });
                 });
-                embed.setFooter({ text: `Page ${page}/${totalPages}` });
+                embed.setFooter({ text: `Seite ${page}/${totalPages}` });
                 return embed;
             };
 
@@ -37,12 +37,12 @@ export default {
                     new ActionRowBuilder<ButtonBuilder>().addComponents(
                         new ButtonBuilder()
                             .setCustomId('shop_prev')
-                            .setLabel('⬅️ Previous')
+                            .setLabel('⬅️ Vorherige')
                             .setStyle(ButtonStyle.Secondary)
                             .setDisabled(page === 1),
                         new ButtonBuilder()
                             .setCustomId('shop_next')
-                            .setLabel('Next ➡️')
+                            .setLabel('Weiter ➡️')
                             .setStyle(ButtonStyle.Secondary)
                             .setDisabled(page === totalPages),
                     ),
@@ -62,7 +62,7 @@ export default {
 
             collector.on('collect', async (buttonInteraction) => {
                 if (buttonInteraction.user.id !== interaction.user.id) {
-                    await buttonInteraction.reply({ content: '❌ You cannot use these buttons. Run `/eco shop` to get your own shop view.', flags: 64 });
+                    await buttonInteraction.reply({ content: '❌ Du kannst diese Buttons nicht nutzen. Führe `/eco shop` aus, um deine eigene Shop-Ansicht zu öffnen.', flags: 64 });
                     return;
                 }
                 const { customId } = buttonInteraction;

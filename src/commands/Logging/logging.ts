@@ -10,40 +10,40 @@ import { replyUserError, ErrorTypes } from '../../utils/errorHandler.js';
 export default {
     data: new SlashCommandBuilder()
         .setName('logging')
-        .setDescription('Manage server logging — channels, filters, and event categories.')
+        .setDescription('Server-Logging verwalten – Kanäle, Filter und Event-Kategorien.')
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
         .setDMPermission(false)
         .addSubcommand((subcommand) =>
             subcommand
                 .setName('dashboard')
-                .setDescription('Open the logging dashboard — set channels, filters, and toggle categories.'),
+                .setDescription('Logging-Dashboard öffnen – Kanäle, Filter und Kategorien einstellen.'),
         )
         .addSubcommand((subcommand) =>
             subcommand
                 .setName('channel')
-                .setDescription('Quick-set a log channel without opening the dashboard.')
+                .setDescription('Log-Kanal schnell setzen, ohne das Dashboard zu öffnen.')
                 .addStringOption((option) =>
                     option
                         .setName('destination')
-                        .setDescription('Which log destination to configure.')
+                        .setDescription('Welches Log-Ziel du konfigurieren willst.')
                         .setRequired(true)
                         .addChoices(
-                            { name: 'Audit (moderation, messages, members…)', value: 'audit' },
-                            { name: 'Applications', value: 'applications' },
-                            { name: 'Reports', value: 'reports' },
+                            { name: 'Audit (Moderation, Nachrichten, Mitglieder…)', value: 'audit' },
+                            { name: 'Bewerbungen', value: 'applications' },
+                            { name: 'Meldungen', value: 'reports' },
                         ),
                 )
                 .addChannelOption((option) =>
                     option
                         .setName('channel')
-                        .setDescription('The text channel for logs.')
+                        .setDescription('Der Textkanal für Logs.')
                         .addChannelTypes(ChannelType.GuildText)
                         .setRequired(false),
                 )
                 .addBooleanOption((option) =>
                     option
                         .setName('disable')
-                        .setDescription('Set to True to clear this log channel.')
+                        .setDescription('Auf True setzen, um diesen Log-Kanal zu entfernen.')
                         .setRequired(false),
                 ),
         ),
@@ -60,10 +60,10 @@ export default {
                 return await channel.execute(interaction, config, client);
             }
 
-            await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'This subcommand is not recognised.' });
+            await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'Dieser Subcommand ist unbekannt.' });
         } catch (error) {
             logger.error('logging command error:', error);
-            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'An unexpected error occurred.' }).catch(() => {});
+            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Ein unerwarteter Fehler ist aufgetreten.' }).catch(() => {});
         }
     },
 } satisfies Command;

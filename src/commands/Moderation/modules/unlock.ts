@@ -11,7 +11,7 @@ export default {
     data: new SlashCommandBuilder()
         .setName("unlock")
         .setDescription(
-            "Unlocks the current channel (allows @everyone to send messages again).",
+            "Entsperrt den aktuellen Kanal (@everyone kann wieder Nachrichten senden).",
         )
 .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
     category: "moderation",
@@ -38,7 +38,7 @@ export default {
                 currentPermissions.has(PermissionFlagsBits.SendMessages) ===
                     null
             ) {
-                return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: `${channel} is not explicitly locked (everyone can already send messages).` });
+                return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: `${channel} ist nicht explizit gesperrt (alle können bereits Nachrichten senden).` });
             }
 
             await channel.permissionOverwrites.edit(
@@ -46,7 +46,7 @@ export default {
                 { SendMessages: true },
                 {
                     type: 0,
-                    reason: `Channel unlocked by ${interaction.user.tag}`,
+                    reason: `Kanal entsperrt von ${interaction.user.tag}`,
 },
             );
 
@@ -67,14 +67,14 @@ export default {
             await InteractionHelper.safeEditReply(interaction, {
                 embeds: [
                     successEmbed(
-                        `🔓 **Channel Unlocked**`,
-                        `${channel} is now unlocked. You may speak now.`,
+                        `🔓 **Kanal entsperrt**`,
+                        `${channel} ist jetzt entsperrt. Ihr könnt wieder schreiben.`,
                     ),
                 ],
             });
         } catch (error) {
             logger.error('Unlock command error:', error);
-            await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'An unexpected error occurred while trying to unlock the channel. Check my permissions (I need \'Manage Channels\').' });
+            await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'Beim Entsperren des Kanals ist ein unerwarteter Fehler aufgetreten. Prüf meine Berechtigungen (ich brauche „Kanäle verwalten“).' });
         }
     }
 } satisfies Command;

@@ -10,14 +10,14 @@ import type { SubcommandModule } from '../../../types/index.js';
 export default {
     async execute(interaction, config, client) {
         const category = interaction.options.getChannel('category') as CategoryChannel | null;
-        const nameTemplate = interaction.options.getString('channel_name') || "{username}'s Room";
+        const nameTemplate = interaction.options.getString('channel_name') || "Raum von {username}";
         const userLimit = interaction.options.getInteger('user_limit') || 0;
         const bitrate = interaction.options.getInteger('bitrate') || 64;
         const guildId = interaction.guild!.id;
 
         try {
             const triggerChannel = await interaction.guild!.channels.create({
-                name: 'Join to Create',
+                name: 'Join-to-Create',
                 type: ChannelType.GuildVoice,
                 parent: category?.id,
                 userLimit: userLimit,
@@ -40,14 +40,14 @@ export default {
             await addJoinToCreateTrigger(client, guildId, triggerChannel.id, triggerOptions);
 
             const embed = successEmbed(
-                '✅ Join to Create Setup Complete',
-                `Created trigger channel: ${triggerChannel}\n\n` +
-                `**Settings:**\n` +
-                `• Temporary Channel Name Template: \`${nameTemplate}\`\n` +
-                `• User Limit: ${userLimit === 0 ? 'No limit' : userLimit + ' users'}\n` +
+                '✅ Join-to-Create eingerichtet',
+                `Trigger-Kanal erstellt: ${triggerChannel}\n\n` +
+                `**Einstellungen:**\n` +
+                `• Namensvorlage für temporäre Kanäle: \`${nameTemplate}\`\n` +
+                `• Nutzerlimit: ${userLimit === 0 ? 'Kein Limit' : userLimit + ' Nutzer'}\n` +
                 `• Bitrate: ${bitrate} kbps\n` +
-                `${category ?`• Category: ${category.name}`: '• Category: None (root level)'}\n\n` +
-                `When users join this channel, a temporary voice channel will be created for them.`
+                `${category ?`• Kategorie: ${category.name}`: '• Kategorie: Keine (oberste Ebene)'}\n\n` +
+                `Wenn Nutzer diesem Kanal beitreten, wird für sie ein temporärer Sprachkanal erstellt.`
             );
 
             try {
@@ -75,7 +75,7 @@ export default {
             throw new NexoBotError(
                 `Setup failed: ${(error as Error).message}`,
                 ErrorTypes.DISCORD_API,
-                'Failed to set up Join to Create system.'
+                'Join-to-Create konnte nicht eingerichtet werden.'
             );
         }
     }

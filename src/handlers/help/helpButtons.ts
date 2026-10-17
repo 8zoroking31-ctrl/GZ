@@ -44,25 +44,25 @@ export const helpBugReportButton = {
     name: BUG_REPORT_BUTTON_ID,
     async execute(interaction, client) {
         const githubButton = new ButtonBuilder()
-            .setLabel('🐛 Report Bug on GitHub')
+            .setLabel('🐛 Bug auf GitHub melden')
             .setStyle(ButtonStyle.Link)
             .setURL('https://github.com/Robertwlt03/NexoBot/issues');
 
         const bugRow = new ActionRowBuilder<ButtonBuilder>().addComponents(githubButton);
 
         const bugReportEmbed = createEmbed({
-            title: '🐛 Bug Report',
-            description: 'Found a bug? Please report it on our GitHub Issues page!\n\n' +
-                '**When reporting a bug, please include:**\n' +
-                '• 📝 Detailed description of the issue\n' +
-                '• 📋 Steps to reproduce the problem\n' +
-                '• 📸 Screenshots if applicable\n' +
-                '• 💻 Your bot version and environment\n\n' +
-                'This helps us fix issues faster and more effectively!',
+            title: '🐛 Bug melden',
+            description: 'Du hast einen Bug gefunden? Melde ihn bitte auf unserer GitHub-Issues-Seite!\n\n' +
+                '**Bitte gib beim Melden an:**\n' +
+                '• 📝 Genaue Beschreibung des Problems\n' +
+                '• 📋 Schritte, um das Problem nachzustellen\n' +
+                '• 📸 Screenshots, falls vorhanden\n' +
+                '• 💻 Deine Bot-Version und Umgebung\n\n' +
+                'So können wir Fehler schneller und gezielter beheben!',
             color: 'error'
         });
         bugReportEmbed.setFooter({
-            text: 'Nexo Bug Reporting System',
+            text: 'Nexo Bug-Meldesystem',
             iconURL: client.user.displayAvatarURL()
         });
         bugReportEmbed.setTimestamp();
@@ -80,7 +80,7 @@ function getPaginationInfo(components: readonly TopLevelComponent[] | undefined)
         for (const component of ('components' in row && row.components) || []) {
             if ('customId' in component && component.customId === `${PAGINATION_PREFIX}_page`) {
                 const label = ('label' in component && component.label) || '';
-                const match = label.match(/Page\s+(\d+)\s+of\s+(\d+)/i);
+                const match = label.match(/(?:Page|Seite)\s+(\d+)\s+(?:of|von)\s+(\d+)/i);
                 if (match) {
                     return {
                         currentPage: Number(match[1]),

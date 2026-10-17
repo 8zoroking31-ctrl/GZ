@@ -10,17 +10,17 @@ import type { Command } from '../../../types/index.js';
 export default {
   data: new SlashCommandBuilder()
     .setName('levelremove')
-    .setDescription('Remove levels from a user')
+    .setDescription('Einem Nutzer Level abziehen')
     .addUserOption((option) =>
       option
         .setName('user')
-        .setDescription('The user to remove levels from')
+        .setDescription('Der Nutzer, dem Level abgezogen werden')
         .setRequired(true)
     )
     .addIntegerOption((option) =>
       option
         .setName('levels')
-        .setDescription('Number of levels to remove')
+        .setDescription('Anzahl der Level, die abgezogen werden')
         .setRequired(true)
         .setMinValue(1)
     )
@@ -34,7 +34,7 @@ export default {
     const hasPermission = await checkUserPermissions(
       interaction,
       PermissionFlagsBits.ManageGuild,
-      'You need ManageGuild permission to use this command.'
+      'Du brauchst die Berechtigung „Server verwalten“, um diesen Command zu nutzen.'
     );
     if (!hasPermission) return;
 
@@ -44,7 +44,7 @@ export default {
         embeds: [
           new EmbedBuilder()
             .setColor('#f1c40f')
-            .setDescription('The leveling system is currently disabled on this server.')
+            .setDescription('Das Leveling-System ist auf diesem Server derzeit deaktiviert.')
         ],
         flags: MessageFlags.Ephemeral
       });
@@ -59,7 +59,7 @@ export default {
       throw new NexoBotError(
         `User ${targetUser.id} not found in this guild`,
         ErrorTypes.USER_INPUT,
-        'The specified user is not in this server.'
+        'Der angegebene Nutzer ist nicht auf diesem Server.'
       );
     }
 
@@ -68,7 +68,7 @@ export default {
       throw new NexoBotError(
         `User ${targetUser.id} is already at minimum level`,
         ErrorTypes.VALIDATION,
-        `${targetUser.tag} is already at level 0 and cannot have levels removed.`
+        `${targetUser.tag} ist bereits auf Level 0, es können keine Level abgezogen werden.`
       );
     }
 
@@ -77,8 +77,8 @@ export default {
     await InteractionHelper.safeEditReply(interaction, {
       embeds: [
         createEmbed({
-          title: 'Levels Removed',
-          description: `Successfully removed ${levelsToRemove} levels from ${targetUser.tag}.\n**New Level:** ${updatedData.level}`,
+          title: 'Level abgezogen',
+          description: `${targetUser.tag} wurden ${levelsToRemove} Level abgezogen.\n**Neues Level:** ${updatedData.level}`,
           color: 'success'
         })
       ]

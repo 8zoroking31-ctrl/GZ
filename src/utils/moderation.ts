@@ -71,6 +71,26 @@ const ACTION_TO_EVENT_TYPE: Record<string, AuditEventType> = {
   'Case Updated': EVENT_TYPES.MODERATION_CONFIG,
 };
 
+/** German log titles for the (English) action keys above; the keys stay English because they are matched and stored. */
+const ACTION_LABELS: Record<string, string> = {
+  'Member Banned': 'Mitglied gebannt',
+  'Member Kicked': 'Mitglied gekickt',
+  'Member Timed Out': 'Mitglied im Timeout',
+  'Member Untimeouted': 'Timeout aufgehoben',
+  'Member Unbanned': 'Mitglied entbannt',
+  'User Warned': 'Nutzer verwarnt',
+  'Warnings Viewed': 'Verwarnungen angesehen',
+  'Messages Purged': 'Nachrichten gelöscht',
+  'Channel Locked': 'Kanal gesperrt',
+  'Channel Unlocked': 'Kanal entsperrt',
+  'DM Sent': 'DM gesendet',
+  'Bot Message Sent': 'Bot-Nachricht gesendet',
+  'Log Channel Activated': 'Log-Kanal aktiviert',
+  'Log Filter Updated': 'Log-Filter aktualisiert',
+  'Case Created': 'Fall erstellt',
+  'Case Updated': 'Fall aktualisiert',
+};
+
 function buildModerationLogData(event: ModerationEvent) {
   const targetIdMatch = event.target?.match(/\((\d+)\)/);
   const targetId = targetIdMatch?.[1];
@@ -79,19 +99,19 @@ function buildModerationLogData(event: ModerationEvent) {
 
   const lines: string[] = [];
   if (event.target) {
-    lines.push(formatLogLine('User', event.target));
+    lines.push(formatLogLine('Nutzer', event.target));
   }
   if (event.reason) {
     const reason = event.reason.length > 900
       ? `${event.reason.substring(0, 897)}...`
       : event.reason;
-    lines.push(formatLogLine('Reason', reason));
+    lines.push(formatLogLine('Grund', reason));
   }
   if (event.duration) {
-    lines.push(formatLogLine('Duration', event.duration));
+    lines.push(formatLogLine('Dauer', event.duration));
   }
   if (event.caseId) {
-    lines.push(formatLogLine('Case', `\`${event.caseId}\``));
+    lines.push(formatLogLine('Fall', `\`${event.caseId}\``));
   }
 
   const meta: [string, string][] = [];
@@ -103,7 +123,8 @@ function buildModerationLogData(event: ModerationEvent) {
     });
   }
 
-  const title = event.caseId ? `${event.action} · Case #${event.caseId}` : event.action;
+  const actionLabel = ACTION_LABELS[event.action] ?? event.action;
+  const title = event.caseId ? `${actionLabel} · Fall #${event.caseId}` : actionLabel;
 
   return {
     title,

@@ -7,7 +7,7 @@ import welcomeCommand from './modules/welcome.js';
 
 export default createRouterCommand({
   name: 'welcome',
-  description: 'Welcome, goodbye and auto role settings',
+  description: 'Einstellungen für Willkommen, Abschied und Auto-Rolle',
   category: 'Welcome',
   defaultMemberPermissions: PermissionFlagsBits.ManageGuild,
   routes: [

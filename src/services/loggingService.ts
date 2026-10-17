@@ -182,6 +182,47 @@ const EVENT_ICONS: Record<string, string> = {
   'report.file': '🚨',
 };
 
+/** German display titles for log embeds that do not pass their own title. */
+const EVENT_TITLES: Record<string, string> = {
+  'moderation.ban': 'Mitglied gebannt',
+  'moderation.kick': 'Mitglied gekickt',
+  'moderation.mute': 'Mitglied stummgeschaltet',
+  'moderation.warn': 'Mitglied verwarnt',
+  'moderation.purge': 'Nachrichten gelöscht',
+  'moderation.timeout': 'Timeout',
+  'moderation.untimeout': 'Timeout aufgehoben',
+  'moderation.unban': 'Bann aufgehoben',
+  'moderation.lock': 'Kanal gesperrt',
+  'moderation.unlock': 'Kanal entsperrt',
+  'moderation.dm': 'Moderations-DM',
+  'moderation.config': 'Moderations-Einstellungen',
+  'leveling.levelup': 'Level-Up',
+  'leveling.milestone': 'Level-Meilenstein',
+  'message.delete': 'Nachricht gelöscht',
+  'message.edit': 'Nachricht bearbeitet',
+  'message.bulkdelete': 'Nachrichten gesammelt gelöscht',
+  'role.create': 'Rolle erstellt',
+  'role.delete': 'Rolle gelöscht',
+  'role.update': 'Rolle aktualisiert',
+  'member.join': 'Mitglied beigetreten',
+  'member.leave': 'Mitglied hat den Server verlassen',
+  'member.namechange': 'Name geändert',
+  'reactionrole.add': 'Reaktionsrolle vergeben',
+  'reactionrole.remove': 'Reaktionsrolle entfernt',
+  'reactionrole.create': 'Reaktionsrollen-Panel erstellt',
+  'reactionrole.delete': 'Reaktionsrollen-Panel gelöscht',
+  'reactionrole.update': 'Reaktionsrollen-Panel aktualisiert',
+  'giveaway.create': 'Giveaway erstellt',
+  'giveaway.winner': 'Giveaway-Gewinner',
+  'giveaway.reroll': 'Giveaway neu ausgelost',
+  'giveaway.delete': 'Giveaway gelöscht',
+  'counter.update': 'Zähler aktualisiert',
+  'counter.config': 'Zähler-Einstellungen',
+  'application.submit': 'Bewerbung eingereicht',
+  'application.review': 'Bewerbung geprüft',
+  'report.file': 'Meldung eingereicht',
+};
+
 const CATEGORY_DESTINATION: Record<string, string> = {
   application: 'applications',
   report: 'reports',
@@ -308,7 +349,7 @@ export async function logEvent({
 function createLogEmbed(guild: Guild, eventType: string, data: LogEventData) {
   const color = data.color ?? EVENT_COLORS[eventType] ?? 0x0099ff;
   const icon = EVENT_ICONS[eventType] || '📌';
-  const title = data.title || `${icon} ${formatEventType(eventType)}`;
+  const title = data.title || `${icon} ${EVENT_TITLES[eventType] ?? formatEventType(eventType)}`;
 
   const inlineFields: LogField[] = [];
   let description = data.description || '';
@@ -323,8 +364,8 @@ function createLogEmbed(guild: Guild, eventType: string, data: LogEventData) {
 
     if (data.fields?.length) {
       const { before, after } = splitComparisonFields(data.fields);
-      if (before !== null) inlineFields.push({ name: 'Before', value: before, inline: true });
-      if (after !== null) inlineFields.push({ name: 'After', value: after, inline: true });
+      if (before !== null) inlineFields.push({ name: 'Vorher', value: before, inline: true });
+      if (after !== null) inlineFields.push({ name: 'Nachher', value: after, inline: true });
     }
   } else if (data.fields?.length) {
     const { before, after, rest } = splitComparisonFields(data.fields);
@@ -338,10 +379,10 @@ function createLogEmbed(guild: Guild, eventType: string, data: LogEventData) {
       });
 
       if (before !== null) {
-        inlineFields.push({ name: 'Before', value: before, inline: true });
+        inlineFields.push({ name: 'Vorher', value: before, inline: true });
       }
       if (after !== null) {
-        inlineFields.push({ name: 'After', value: after, inline: true });
+        inlineFields.push({ name: 'Nachher', value: after, inline: true });
       }
     } else {
       description = buildLogDescription({
@@ -358,7 +399,7 @@ function createLogEmbed(guild: Guild, eventType: string, data: LogEventData) {
   }
 
   if (data.section?.body) {
-    description = appendContentSection(description, data.section.title || 'Message', data.section.body);
+    description = appendContentSection(description, data.section.title || 'Nachricht', data.section.body);
   }
 
   if (data.inlineFields?.length) {
@@ -380,7 +421,7 @@ function createLogEmbed(guild: Guild, eventType: string, data: LogEventData) {
 
 function formatEventType(eventType: string): string {
   if (!eventType || typeof eventType !== 'string') {
-    return 'Unknown Event';
+    return 'Unbekanntes Ereignis';
   }
 
   return eventType

@@ -221,11 +221,11 @@ export async function deleteBirthday(client: NexoClient, guildId: string, userId
 
 export function getMonthName(monthNum: number): string {
     const months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
+        'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+        'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
     ];
     const index = Math.max(0, Math.min(monthNum - 1, 11));
-    return monthNum >= 1 && monthNum <= 12 ? months[index] : 'Invalid Month';
+    return monthNum >= 1 && monthNum <= 12 ? months[index] : 'Ungültiger Monat';
 }
 
 function isPostgresSqlReady(dbWrapper: NexoClient['db'] | undefined): boolean {
@@ -402,23 +402,23 @@ function normalizeWelcomeConfig(raw: unknown = {}): WelcomeConfig {
     const channelId = base.channelId ?? null;
     const goodbyeChannelId = base.goodbyeChannelId ?? null;
 
-    const welcomeMessage = base.welcomeMessage ?? "Welcome {user} to {server}!";
-    const leaveMessage = base.leaveMessage ?? "{user.tag} has left the server.";
+    const welcomeMessage = base.welcomeMessage ?? "Willkommen {user} auf {server}!";
+    const leaveMessage = base.leaveMessage ?? "{user.tag} hat den Server verlassen.";
 
     const welcomeEmbed = base.welcomeEmbed ?? {
-        title: "🎉 Welcome!",
-        description: "Welcome {user} to {server}!",
+        title: "🎉 Willkommen!",
+        description: "Willkommen {user} auf {server}!",
         color: getColor("success"),
         thumbnail: true,
-        footer: "Welcome to {server}!"
+        footer: "Willkommen auf {server}!"
     };
 
     const leaveEmbed = base.leaveEmbed ?? {
-        title: "👋 Goodbye",
-        description: "{user.tag} has left the server.",
+        title: "👋 Auf Wiedersehen",
+        description: "{user.tag} hat den Server verlassen.",
         color: getColor("error"),
         thumbnail: true,
-        footer: "Goodbye from {server}!"
+        footer: "Tschüss von {server}!"
     };
 
     const roleIds = Array.isArray(base.roleIds) ? base.roleIds : [];
@@ -1226,7 +1226,7 @@ export async function getJoinToCreateConfig(client: NexoClient, guildId: string)
             enabled: false,
             triggerChannels: [],
             categoryId: null,
-            channelNameTemplate: "{username}'s Room",
+            channelNameTemplate: "Raum von {username}",
             userLimit: 0,
             bitrate: 64000,
             temporaryChannels: {}
@@ -1242,7 +1242,7 @@ export async function getJoinToCreateConfig(client: NexoClient, guildId: string)
             enabled: unwrapped.enabled || false,
             triggerChannels: unwrapped.triggerChannels || [],
             categoryId: unwrapped.categoryId || null,
-            channelNameTemplate: unwrapped.channelNameTemplate || "{username}'s Room",
+            channelNameTemplate: unwrapped.channelNameTemplate || "Raum von {username}",
             userLimit: unwrapped.userLimit || 0,
             bitrate: unwrapped.bitrate || 64000,
             temporaryChannels: unwrapped.temporaryChannels || {},
@@ -1254,7 +1254,7 @@ export async function getJoinToCreateConfig(client: NexoClient, guildId: string)
             enabled: false,
             triggerChannels: [],
             categoryId: null,
-            channelNameTemplate: "{username}'s Room",
+            channelNameTemplate: "Raum von {username}",
             userLimit: 0,
             bitrate: 64000,
             temporaryChannels: {}
@@ -1415,11 +1415,11 @@ export function formatChannelName(template: string, variables: ChannelNameVariab
     let formatted = template;
     
     const replacements = {
-        '{username}': variables.username || 'User',
-        '{user_tag}': variables.userTag || 'User#0000',
-        '{display_name}': variables.displayName || 'User',
+        '{username}': variables.username || 'Nutzer',
+        '{user_tag}': variables.userTag || 'Nutzer#0000',
+        '{display_name}': variables.displayName || 'Nutzer',
         '{guild_name}': variables.guildName || 'Server',
-        '{channel_name}': variables.channelName || 'Voice Channel'
+        '{channel_name}': variables.channelName || 'Sprachkanal'
     };
     
     for (const [placeholder, value] of Object.entries(replacements)) {
@@ -1429,7 +1429,7 @@ export function formatChannelName(template: string, variables: ChannelNameVariab
     formatted = formatted.replace(/[^\w\s-]/g, '').trim();
 formatted = formatted.substring(0, 100);
     
-    return formatted || 'Voice Channel';
+    return formatted || 'Sprachkanal';
 }
 
 function generateCaseId(): string {

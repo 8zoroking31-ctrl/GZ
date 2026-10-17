@@ -7,7 +7,7 @@ import nowplayingCommand from './modules/nowplaying.js';
 
 export default createRouterCommand({
   name: 'music',
-  description: 'Play and control music',
+  description: 'Musik abspielen und steuern',
   category: 'Music',
   routes: [
     { legacyName: 'music', module: musicCommand, spread: true },

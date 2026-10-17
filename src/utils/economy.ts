@@ -112,7 +112,7 @@ export function getMaxBankCapacity(userData: EconomyData | null | undefined): nu
 }
 
 export function formatCurrency(amount: number): string {
-    const currencyName = ECONOMY_CONFIG.currency?.name || 'coins';
+    const currencyName = ECONOMY_CONFIG.currency?.name || 'Münzen';
     return `${amount.toLocaleString()} ${currencyName}`;
 }
 
@@ -198,7 +198,7 @@ export function checkCooldown(userData: EconomyData, action: string): CooldownSt
 }
 
 function formatCooldown(ms: number): string {
-    if (ms < 1000) return 'now';
+    if (ms < 1000) return 'jetzt';
     
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
@@ -214,16 +214,16 @@ function formatCooldown(ms: number): string {
 export function getWorkReward() {
     const amount = Math.floor(Math.random() * (WORK_MAX - WORK_MIN + 1)) + WORK_MIN;
     const jobs = [
-        'worked at a fast food restaurant',
-        'worked as a programmer',
-        'worked as a construction worker',
-        'worked as a doctor',
-        'worked as a streamer',
-        'worked as a YouTuber',
-        'worked as a teacher',
-        'worked as a cashier',
-        'worked as a delivery driver',
-        'worked as a freelancer'
+        'in einem Fast-Food-Restaurant gearbeitet',
+        'als Programmierer gearbeitet',
+        'auf dem Bau gearbeitet',
+        'als Ärztin bzw. Arzt gearbeitet',
+        'als Streamer gearbeitet',
+        'als YouTuber gearbeitet',
+        'als Lehrkraft gearbeitet',
+        'an der Kasse gearbeitet',
+        'als Lieferfahrer gearbeitet',
+        'als Freelancer gearbeitet'
     ];
     
     const job = jobs[Math.floor(Math.random() * jobs.length)];
@@ -231,7 +231,7 @@ export function getWorkReward() {
     return {
         amount,
         job,
-        message: `You ${job} and earned ${formatCurrency(amount)}!`
+        message: `Du hast ${job} und ${formatCurrency(amount)} verdient!`
     };
 }
 
@@ -240,32 +240,32 @@ export function getCrimeOutcome() {
         {
             success: true,
             amount: Math.floor(Math.random() * 200) + 50,
-            message: 'You successfully robbed a bank and got away with {amount}!' 
+            message: 'Du hast erfolgreich eine Bank ausgeraubt und bist mit {amount} entkommen!' 
         },
         {
             success: true,
             amount: Math.floor(Math.random() * 100) + 20,
-            message: 'You pickpocketed someone and stole {amount}!' 
+            message: 'Du hast jemandem die Taschen geleert und {amount} erbeutet!' 
         },
         {
             success: true,
             amount: Math.floor(Math.random() * 150) + 30,
-            message: 'You hacked into a bank account and transferred {amount} to yourself!' 
+            message: 'Du hast ein Bankkonto gehackt und dir {amount} überwiesen!' 
         },
         {
             success: false,
             fine: Math.floor(Math.random() * 100) + 50,
-            message: 'You got caught and had to pay a fine of {fine}!' 
+            message: 'Du wurdest erwischt und musstest {fine} Strafe zahlen!' 
         },
         {
             success: false,
             fine: Math.floor(Math.random() * 150) + 50,
-            message: 'The police caught you! You paid {fine} to get out of jail.' 
+            message: 'Die Polizei hat dich geschnappt! Du hast {fine} gezahlt, um aus dem Gefängnis zu kommen.' 
         },
         {
             success: false,
             fine: 0,
-            message: 'Your attempt failed, but you managed to escape!' 
+            message: 'Dein Versuch ist gescheitert, aber du konntest entkommen!' 
         }
     ];
     
@@ -277,7 +277,7 @@ export function getRobOutcome(targetBalance: number) {
         return {
             success: false,
             amount: 0,
-            message: 'The target has no money to steal!'
+            message: 'Bei deinem Ziel gibt es kein Geld zu holen!'
         };
     }
     
@@ -292,7 +292,7 @@ Math.floor(Math.random() * (targetBalance * 0.3)) + 1,
         return {
             success: true,
             amount,
-            message: `You successfully robbed them and got away with {amount}!`
+            message: `Du hast dein Ziel erfolgreich ausgeraubt und bist mit {amount} entkommen!`
         };
     } else {
         const fine = Math.floor(Math.random() * 200) + 100;
@@ -301,7 +301,7 @@ Math.floor(Math.random() * (targetBalance * 0.3)) + 1,
             success: false,
             amount: 0,
             fine,
-            message: `You got caught! You had to pay a fine of {fine}.`
+            message: `Du wurdest erwischt! Du musstest {fine} Strafe zahlen.`
         };
     }
 }
@@ -316,7 +316,7 @@ export const addMoney = wrapServiceBoundary(async function addMoney(client: Nexo
         throw createError(
             'Invalid amount',
             ErrorTypes.VALIDATION,
-            'Amount must be a positive number.',
+            'Der Betrag muss eine positive Zahl sein.',
             { guildId, userId, amount, operation: 'addMoney' }
         );
     }
@@ -325,7 +325,7 @@ export const addMoney = wrapServiceBoundary(async function addMoney(client: Nexo
         throw createError(
             'Invalid money type',
             ErrorTypes.VALIDATION,
-            'Type must be "wallet" or "bank".',
+            'Der Typ muss "wallet" oder "bank" sein.',
             { guildId, userId, type, operation: 'addMoney' }
         );
     }
@@ -338,7 +338,7 @@ export const addMoney = wrapServiceBoundary(async function addMoney(client: Nexo
             throw createError(
                 'Bank capacity exceeded',
                 ErrorTypes.VALIDATION,
-                `Bank capacity exceeded. Current: ${userData.bank || 0}, Max: ${maxBank}.`,
+                `Bankkapazität überschritten. Aktuell: ${userData.bank || 0}, Maximum: ${maxBank}.`,
                 { guildId, userId, current: userData.bank || 0, max: maxBank, operation: 'addMoney' }
             );
         }
@@ -356,7 +356,7 @@ export const addMoney = wrapServiceBoundary(async function addMoney(client: Nexo
 }, {
     service: 'economy',
     operation: 'addMoney',
-    userMessage: 'Failed to add money. Please try again.',
+    userMessage: 'Geld konnte nicht hinzugefügt werden. Bitte versuch es erneut.',
 });
 
 export const removeMoney = wrapServiceBoundary(async function removeMoney(client: NexoClient, guildId: string, userId: string, amount: number, type = 'wallet') {
@@ -365,7 +365,7 @@ export const removeMoney = wrapServiceBoundary(async function removeMoney(client
         throw createError(
             'Invalid amount',
             ErrorTypes.VALIDATION,
-            'Amount must be a positive number.',
+            'Der Betrag muss eine positive Zahl sein.',
             { guildId, userId, amount, operation: 'removeMoney' }
         );
     }
@@ -374,7 +374,7 @@ export const removeMoney = wrapServiceBoundary(async function removeMoney(client
         throw createError(
             'Invalid money type',
             ErrorTypes.VALIDATION,
-            'Type must be "wallet" or "bank".',
+            'Der Typ muss "wallet" oder "bank" sein.',
             { guildId, userId, type, operation: 'removeMoney' }
         );
     }
@@ -386,7 +386,7 @@ export const removeMoney = wrapServiceBoundary(async function removeMoney(client
             throw createError(
                 'Insufficient bank funds',
                 ErrorTypes.VALIDATION,
-                `Insufficient funds in bank. You have ${userData.bank || 0}, need ${validAmount}.`,
+                `Nicht genug Geld auf der Bank. Du hast ${userData.bank || 0}, brauchst aber ${validAmount}.`,
                 { guildId, userId, current: userData.bank || 0, required: validAmount, operation: 'removeMoney' }
             );
         }
@@ -396,7 +396,7 @@ export const removeMoney = wrapServiceBoundary(async function removeMoney(client
             throw createError(
                 'Insufficient wallet funds',
                 ErrorTypes.VALIDATION,
-                `Insufficient funds in wallet. You have ${userData.wallet || 0}, need ${validAmount}.`,
+                `Nicht genug Geld in der Geldbörse. Du hast ${userData.wallet || 0}, brauchst aber ${validAmount}.`,
                 { guildId, userId, current: userData.wallet || 0, required: validAmount, operation: 'removeMoney' }
             );
         }
@@ -411,25 +411,25 @@ export const removeMoney = wrapServiceBoundary(async function removeMoney(client
 }, {
     service: 'economy',
     operation: 'removeMoney',
-    userMessage: 'Failed to remove money. Please try again.',
+    userMessage: 'Geld konnte nicht abgezogen werden. Bitte versuch es erneut.',
 });
 
 export function getShopInventory(): ShopItem[] {
     return [
         {
             id: 'fishing_rod',
-            name: 'Fishing Rod',
+            name: 'Angel',
             emoji: '🎣',
             price: 500,
-            description: 'Catch fish to sell for profit!',
+            description: 'Fang Fische und verkaufe sie mit Gewinn!',
             type: 'tool'
         },
         {
             id: 'hunting_rifle',
-            name: 'Hunting Rifle',
+            name: 'Jagdgewehr',
             emoji: '🔫',
             price: 1000,
-            description: 'Hunt animals for meat and fur!',
+            description: 'Jage Tiere für Fleisch und Fell!',
             type: 'tool'
         },
         {
@@ -437,26 +437,26 @@ export function getShopInventory(): ShopItem[] {
             name: 'Laptop',
             emoji: '💻',
             price: 2000,
-            description: 'Work as a programmer for higher pay!',
+            description: 'Arbeite als Programmierer für mehr Lohn!',
             type: 'tool',
             workMultiplier: 1.5
         },
         {
             id: 'bank_loan',
-            name: 'Bank Loan',
+            name: 'Bankkredit',
             emoji: '🏦',
             price: 5000,
-            description: 'Increases your bank capacity by 50,000!',
+            description: 'Erhöht deine Bankkapazität um 50.000!',
             type: 'upgrade',
             effect: 'bank_capacity',
             value: 50000
         },
         {
             id: 'lottery_ticket',
-            name: 'Lottery Ticket',
+            name: 'Lotterielos',
             emoji: '🎫',
             price: 100,
-            description: 'A chance to win big!',
+            description: 'Deine Chance auf den großen Gewinn!',
             type: 'consumable',
             use: 'gamble'
         }

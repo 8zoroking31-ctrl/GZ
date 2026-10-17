@@ -6,7 +6,7 @@ import massbanCommand from './modules/massban.js';
 
 export default createRouterCommand({
   name: 'ban',
-  description: 'Ban, unban and mass ban members',
+  description: 'Mitglieder bannen, entbannen und massenhaft bannen',
   category: 'Moderation',
   defaultMemberPermissions: PermissionFlagsBits.BanMembers,
   routes: [

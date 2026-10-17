@@ -23,19 +23,19 @@ const GIVEAWAY_MAX_WINNERS = botConfig.giveaways?.maximumWinners ?? 10;
 export default {
     data: new SlashCommandBuilder()
         .setName("gcreate")
-        .setDescription("Starts a new giveaway in a specified channel.")
+        .setDescription("Startet ein neues Giveaway in einem bestimmten Kanal.")
         .addStringOption((option) =>
             option
                 .setName("duration")
                 .setDescription(
-                    "How long the giveaway should last (e.g., 1h, 30m, 5d).",
+                    "Wie lange das Giveaway laufen soll (z. B. 1h, 30m, 5d).",
                 )
                 .setRequired(true),
         )
         .addIntegerOption((option) =>
             option
                 .setName("winners")
-                .setDescription("The number of winners to pick.")
+                .setDescription("Die Anzahl der Gewinner.")
                 .setMinValue(GIVEAWAY_MIN_WINNERS)
                 .setMaxValue(GIVEAWAY_MAX_WINNERS)
                 .setRequired(true),
@@ -43,13 +43,13 @@ export default {
         .addStringOption((option) =>
             option
                 .setName("prize")
-                .setDescription("The prize being given away.")
+                .setDescription("Der Preis, der verlost wird.")
                 .setRequired(true),
         )
         .addChannelOption((option) =>
             option
                 .setName("channel")
-                .setDescription("The channel to send the giveaway to (defaults to current channel).")
+                .setDescription("Der Kanal für das Giveaway (Standard: aktueller Kanal).")
                 .addChannelTypes(ChannelType.GuildText)
                 .setRequired(false),
         )
@@ -63,7 +63,7 @@ export default {
             throw new NexoBotError(
                 'Giveaway command used outside guild',
                 ErrorTypes.VALIDATION,
-                'This command can only be used in a server.',
+                'Dieser Command kann nur auf einem Server genutzt werden.',
                 { userId: interaction.user.id }
             );
         }
@@ -72,7 +72,7 @@ export default {
             throw new NexoBotError(
                 'User lacks ManageGuild permission',
                 ErrorTypes.PERMISSION,
-                "You need the 'Manage Server' permission to start a giveaway.",
+                "Du brauchst die Berechtigung „Server verwalten“, um ein Giveaway zu starten.",
                 { userId: interaction.user.id, guildId: interaction.guildId }
             );
         }
@@ -92,7 +92,7 @@ export default {
             throw new NexoBotError(
                 'Target channel is not text-based',
                 ErrorTypes.VALIDATION,
-                'The channel must be a text channel.',
+                'Der Kanal muss ein Textkanal sein.',
                 { channelId: targetChannel.id, channelType: targetChannel.type }
             );
         }
@@ -118,7 +118,7 @@ export default {
         const row = createGiveawayButtons(false);
 
         const giveawayMessage = await targetChannel.send({
-            content: "🎉 **NEW GIVEAWAY** 🎉",
+            content: "🎉 **NEUES GIVEAWAY** 🎉",
             embeds: [embed],
             components: [row],
         });
@@ -140,27 +140,27 @@ export default {
                 guildId: interaction.guildId,
                 eventType: EVENT_TYPES.GIVEAWAY_CREATE,
                 data: {
-                    description: `Giveaway created: ${prizeName}`,
+                    description: `Giveaway erstellt: ${prizeName}`,
                     channelId: targetChannel.id,
                     userId: interaction.user.id,
                     fields: [
                         {
-                            name: 'Prize',
+                            name: 'Preis',
                             value: prizeName,
                             inline: true
                         },
                         {
-                            name: 'Winners',
+                            name: 'Gewinner',
                             value: winnerCount.toString(),
                             inline: true
                         },
                         {
-                            name: 'Duration',
+                            name: 'Dauer',
                             value: durationString,
                             inline: true
                         },
                         {
-                            name: 'Channel',
+                            name: 'Kanal',
                             value: targetChannel.toString(),
                             inline: true
                         }
@@ -176,8 +176,8 @@ export default {
         await InteractionHelper.safeReply(interaction, {
             embeds: [
                 successEmbed(
-                    `Giveaway Started! 🎉`,
-                    `A new giveaway for **${prizeName}** has been started in ${targetChannel} and will end in **${durationString}**.`,
+                    `Giveaway gestartet! 🎉`,
+                    `Ein neues Giveaway für **${prizeName}** läuft jetzt in ${targetChannel} und endet in **${durationString}**.`,
                 ),
             ],
             flags: MessageFlags.Ephemeral,

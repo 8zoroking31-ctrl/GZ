@@ -8,7 +8,7 @@ import dmCommand from './modules/dm.js';
 
 export default createRouterCommand({
   name: 'mod',
-  description: 'Timeouts, warnings and moderator DMs',
+  description: 'Timeouts, Verwarnungen und Moderator-DMs',
   category: 'Moderation',
   defaultMemberPermissions: PermissionFlagsBits.ModerateMembers,
   routes: [

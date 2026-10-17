@@ -22,7 +22,7 @@ const DEFAULT_VOICE_BITRATE = 64000;
 const MAX_VOICE_BITRATE = 384000;
 const MIN_VOICE_BITRATE = 8000;
 const MAX_CHANNEL_NAME_LENGTH = 100;
-const FALLBACK_CHANNEL_NAME = 'Voice Room';
+const FALLBACK_CHANNEL_NAME = 'Sprachraum';
 const MAX_TRACKED_COOLDOWNS = 10000;
 
 export default {
@@ -163,7 +163,7 @@ if (now - lastCreation < VOICE_CREATE_COOLDOWN_MS) {
                 }
 
                 const channelOptions: Partial<JoinToCreateChannelOptions> = config.channelOptions?.[triggerChannel.id] || {};
-                const nameTemplate = channelOptions.nameTemplate || config.channelNameTemplate || "{username}'s Room";
+                const nameTemplate = channelOptions.nameTemplate || config.channelNameTemplate || 'Raum von {username}';
                 
                 let userLimit = channelOptions.userLimit ?? config.userLimit ?? 0;
                 const bitrate = clampVoiceBitrate(channelOptions.bitrate ?? config.bitrate ?? DEFAULT_VOICE_BITRATE);
@@ -237,7 +237,7 @@ userLimit: userLimit === 0 ? undefined : userLimit,
                 
                 try {
                     await member.send({
-                        content: `❌ Failed to create your temporary voice channel. Please contact a server administrator.`
+                        content: `❌ Dein temporärer Sprachkanal konnte nicht erstellt werden. Bitte wende dich an einen Server-Admin.`
                     });
                 } catch (dmError) {
                     logger.debug(`Unable to send temporary channel failure DM to user ${member.id}:`, dmError);
@@ -249,7 +249,7 @@ userLimit: userLimit === 0 ? undefined : userLimit,
             try {
                 await unregisterTemporaryChannel(client, guildId, channel.id);
 
-                await channel.delete('Temporary voice channel - empty');
+                await channel.delete('Temporärer Sprachkanal – leer');
 
                 logger.info(`Deleted temporary voice channel ${channel.name} (${channel.id}) in guild ${channel.guild.name}`);
 
@@ -278,7 +278,7 @@ userLimit: userLimit === 0 ? undefined : userLimit,
                         userTag: newOwner.user.tag,
                         displayName: newOwner.displayName,
                         guildName: channel.guild.name,
-                        channelName: channel.guild.channels.cache.get(tempChannelInfo.triggerChannelId)?.name || 'Voice Channel'
+                        channelName: channel.guild.channels.cache.get(tempChannelInfo.triggerChannelId)?.name || 'Sprachkanal'
                     }));
 
                     await channel.setName(newChannelName);

@@ -22,29 +22,29 @@ export const shopConfig = {
     categories: [
         {
             id: 'consumables',
-            name: 'Consumables',
-            description: 'One-time use items that provide temporary benefits',
+            name: 'Verbrauchsgüter',
+            description: 'Einmal nutzbare Items mit zeitlich begrenzten Vorteilen',
             icon: '🍯',
             itemTypes: ['consumable']
         },
         {
             id: 'upgrades',
             name: 'Upgrades',
-            description: 'Permanent upgrades that enhance your abilities',
+            description: 'Dauerhafte Upgrades, die deine Fähigkeiten verbessern',
             icon: '⚡',
             itemTypes: ['upgrade']
         },
         {
             id: 'tools',
-            name: 'Tools',
-            description: 'Equipment that helps you gather resources more efficiently',
+            name: 'Werkzeuge',
+            description: 'Ausrüstung, mit der du Ressourcen effizienter sammelst',
             icon: '⛏️',
             itemTypes: ['tool']
         },
         {
             id: 'roles',
-            name: 'Roles',
-            description: 'Special roles with unique perks',
+            name: 'Rollen',
+            description: 'Besondere Rollen mit einzigartigen Vorteilen',
             icon: '🎭',
             itemTypes: ['role']
         }
@@ -106,7 +106,7 @@ mythic: '#E74C3C'
             enabled: true,
 interval: 86400000,
 announcementChannel: null as string | null,
-            message: '🛒 **Shop Restocked!** New items are now available!'
+            message: '🛒 **Shop aufgefüllt!** Neue Items sind jetzt verfügbar!'
         },
         
         sales: {
@@ -115,7 +115,7 @@ announcementChannel: null as string | null,
                 {
 day: 0,
 discount: 0.2,
-                    message: '🔥 **Weekend Sale!** 20% off all items!'
+                    message: '🔥 **Wochenend-Sale!** 20 % Rabatt auf alle Items!'
                 },
             ]
         }
@@ -167,8 +167,8 @@ export function getCategoryForItem(itemType: string): Omit<ShopCategory, 'itemTy
         cat.itemTypes.includes(itemType)
     ) || {
         id: 'other',
-        name: 'Other',
-        description: 'Miscellaneous items',
+        name: 'Sonstiges',
+        description: 'Verschiedene Items',
         icon: '📦'
     };
 }

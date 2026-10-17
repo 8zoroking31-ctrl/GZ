@@ -6,11 +6,11 @@ import type { Command } from '../../../types/index.js';
 export default {
     data: new SlashCommandBuilder()
     .setName("userinfo")
-    .setDescription("Get detailed information about a user")
+    .setDescription("Zeigt ausführliche Infos über einen Nutzer")
     .addUserOption((option) =>
       option
         .setName("target")
-        .setDescription("The user to inspect (defaults to you)"),
+        .setDescription("Der Nutzer, den du ansehen willst (Standard: du)"),
     ),
 
   async execute(interaction) {
@@ -30,35 +30,35 @@ export default {
     const createdTimestamp = Math.floor(user.createdAt.getTime() / 1000);
     const joinedTimestamp = member?.joinedAt ? Math.floor(member.joinedAt.getTime() / 1000) : null;
 
-    const embed = createEmbed({ title: `User Info: ${user.username}` })
+    const embed = createEmbed({ title: `Nutzer-Info: ${user.username}` })
       .setThumbnail(user.displayAvatarURL({ size: 256 }))
       .addFields(
         { name: "ID", value: user.id, inline: true },
-        { name: "Bot", value: user.bot ? "Yes" : "No", inline: true },
+        { name: "Bot", value: user.bot ? "Ja" : "Nein", inline: true },
         {
-          name: "Roles",
+          name: "Rollen",
           value:
             member && member.roles.cache.size > 1
               ? member.roles.cache
                   .map((r) => r.name)
                   .slice(0, 5)
                   .join(",")
-              : "None",
+              : "Keine",
           inline: true,
         },
         {
-          name: "Account Created",
+          name: "Account erstellt",
           value: `<t:${createdTimestamp}:R>`,
           inline: false,
         },
         {
-          name: "Joined Server",
-          value: joinedTimestamp ? `<t:${joinedTimestamp}:R>` : "Not in server",
+          name: "Server beigetreten",
+          value: joinedTimestamp ? `<t:${joinedTimestamp}:R>` : "Nicht auf dem Server",
           inline: false,
         },
         {
-          name: "Highest Role",
-          value: member?.roles?.highest?.name || "None",
+          name: "Höchste Rolle",
+          value: member?.roles?.highest?.name || "Keine",
           inline: true,
         },
       );

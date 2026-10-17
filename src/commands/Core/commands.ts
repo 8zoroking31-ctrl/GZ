@@ -40,7 +40,7 @@ function buildCategoryChoices(client: NexoClient) {
 
 async function ensureManageGuild(interaction: ChatInputCommandInteraction) {
   if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
-    await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'You need the **Manage Server** permission to manage commands.' });
+    await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'Du brauchst die Berechtigung **Server verwalten**, um Commands zu verwalten.' });
     return false;
   }
 
@@ -50,32 +50,32 @@ async function ensureManageGuild(interaction: ChatInputCommandInteraction) {
 export default {
   data: new SlashCommandBuilder()
     .setName('commands')
-    .setDescription('Enable or disable bot commands and categories for this server')
+    .setDescription('Commands und Kategorien des Bots für diesen Server aktivieren oder deaktivieren')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .setDMPermission(false)
     .addSubcommand((subcommand) =>
       subcommand
         .setName('dashboard')
-        .setDescription('Open the interactive command access dashboard'),
+        .setDescription('Öffnet das interaktive Dashboard für Command-Zugriff'),
     )
     .addSubcommand((subcommand) =>
       subcommand
         .setName('disable')
-        .setDescription('Disable a command or entire category')
+        .setDescription('Einen Command oder eine ganze Kategorie deaktivieren')
         .addStringOption((option) =>
           option
             .setName('scope')
-            .setDescription('Disable a single command or a whole category')
+            .setDescription('Einen einzelnen Command oder eine ganze Kategorie deaktivieren')
             .setRequired(true)
             .addChoices(
-              { name: 'Category', value: 'category' },
+              { name: 'Kategorie', value: 'category' },
               { name: 'Command', value: 'command' },
             ),
         )
         .addStringOption((option) =>
           option
             .setName('target')
-            .setDescription('Category or command name')
+            .setDescription('Name der Kategorie oder des Commands')
             .setRequired(true)
             .setAutocomplete(true),
         ),
@@ -83,21 +83,21 @@ export default {
     .addSubcommand((subcommand) =>
       subcommand
         .setName('enable')
-        .setDescription('Enable a command or entire category')
+        .setDescription('Einen Command oder eine ganze Kategorie aktivieren')
         .addStringOption((option) =>
           option
             .setName('scope')
-            .setDescription('Enable a single command or a whole category')
+            .setDescription('Einen einzelnen Command oder eine ganze Kategorie aktivieren')
             .setRequired(true)
             .addChoices(
-              { name: 'Category', value: 'category' },
+              { name: 'Kategorie', value: 'category' },
               { name: 'Command', value: 'command' },
             ),
         )
         .addStringOption((option) =>
           option
             .setName('target')
-            .setDescription('Category or command name')
+            .setDescription('Name der Kategorie oder des Commands')
             .setRequired(true)
             .setAutocomplete(true),
         ),
@@ -198,7 +198,7 @@ export default {
           });
           await replyUserError(componentInteraction, {
             type: ErrorTypes.UNKNOWN,
-            message: (error as Error).message || 'Failed to update command access.',
+            message: (error as Error).message || 'Command-Zugriff konnte nicht aktualisiert werden.',
           }).catch(() => {});
         }
       });
@@ -229,7 +229,7 @@ export default {
     if (scope === 'category') {
       const category = resolveCategoryChoice(client, target);
       if (!category) {
-        return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: `No category matched \`${target}\`. Use \`/commands dashboard\` to browse categories.` });
+        return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: `Keine Kategorie passt zu \`${target}\`. Nutze \`/commands dashboard\`, um die Kategorien zu durchsuchen.` });
       }
 
       if (isDisable) {
@@ -237,8 +237,8 @@ export default {
         return InteractionHelper.safeEditReply(interaction, {
           embeds: [
             successEmbed(
-              'Category Disabled',
-              `All **${category.displayName}** commands are now disabled.\nProtected commands remain available.`,
+              'Kategorie deaktiviert',
+              `Alle Commands aus **${category.displayName}** sind jetzt deaktiviert.\nGeschützte Commands bleiben verfügbar.`,
             ),
           ],
         });
@@ -246,7 +246,7 @@ export default {
 
       await enableCategory(client, interaction.guildId!, category.key);
       return InteractionHelper.safeEditReply(interaction, {
-        embeds: [successEmbed('Category Enabled', `**${category.displayName}** commands are now enabled (except individually disabled commands).`)],
+        embeds: [successEmbed('Kategorie aktiviert', `Die Commands aus **${category.displayName}** sind jetzt aktiviert (außer einzeln deaktivierte Commands).`)],
       });
     }
 
@@ -254,13 +254,13 @@ export default {
     if (isDisable) {
       const result = await disableCommand(client, interaction.guildId!, commandName);
       return InteractionHelper.safeEditReply(interaction, {
-        embeds: [successEmbed('Command Disabled', `\`/${result.commandName}\` is now disabled in this server.`)],
+        embeds: [successEmbed('Command deaktiviert', `\`/${result.commandName}\` ist auf diesem Server jetzt deaktiviert.`)],
       });
     }
 
     const result = await enableCommand(client, interaction.guildId!, commandName);
     return InteractionHelper.safeEditReply(interaction, {
-      embeds: [successEmbed('Command Enabled', `\`/${result.commandName}\` is now enabled in this server.`)],
+      embeds: [successEmbed('Command aktiviert', `\`/${result.commandName}\` ist auf diesem Server jetzt aktiviert.`)],
     });
   },
 } satisfies Command;

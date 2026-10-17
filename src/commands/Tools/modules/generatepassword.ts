@@ -9,24 +9,24 @@ import type { Command } from '../../../types/index.js';
 export default {
     data: new SlashCommandBuilder()
         .setName('generatepassword')
-        .setDescription('Generate a strong, random password')
+        .setDescription('Erzeugt ein starkes, zufälliges Passwort')
         .addIntegerOption(option =>
             option.setName('length')
-                .setDescription('Password length (default: 16, max: 50)')
+                .setDescription('Passwortlänge (Standard: 16, max.: 50)')
                 .setMinValue(8)
                 .setMaxValue(50)
                 .setRequired(false))
         .addBooleanOption(option =>
             option.setName('uppercase')
-                .setDescription('Include uppercase letters (A-Z)')
+                .setDescription('Großbuchstaben verwenden (A-Z)')
                 .setRequired(false))
         .addBooleanOption(option =>
             option.setName('numbers')
-                .setDescription('Include numbers (0-9)')
+                .setDescription('Zahlen verwenden (0-9)')
                 .setRequired(false))
         .addBooleanOption(option =>
             option.setName('symbols')
-                .setDescription('Include symbols (!@#$%^&*)')
+                .setDescription('Sonderzeichen verwenden (!@#$%^&*)')
                 .setRequired(false)),
 
     async execute(interaction) {
@@ -49,7 +49,7 @@ export default {
         const includeSymbols = interaction.options.getBoolean('symbols') ?? true;
 
         if (length < 8 || length > 50) {
-            await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: `Password must be 8-50 characters. You provided: ${length}` });
+            await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: `Das Passwort muss 8-50 Zeichen lang sein. Deine Angabe: ${length}` });
             return;
         }
 
@@ -90,7 +90,7 @@ export default {
             password = password.substring(0, randomIndex) + randomSymbol + password.substring(randomIndex + 1);
         }
 
-        let strength = 'Weak';
+        let strength = 'Schwach';
         let strengthEmoji = '🔴';
         let strengthColor = getColor('error');
 
@@ -115,29 +115,29 @@ export default {
         if (hasSymbol) score *= 1.3;
 
         if (score > 80) {
-            strength = 'Very Strong';
+            strength = 'Sehr stark';
             strengthEmoji = '🟢';
             strengthColor = getColor('success');
         } else if (score > 60) {
-            strength = 'Strong';
+            strength = 'Stark';
             strengthEmoji = '🟢';
             strengthColor = getColor('success');
         } else if (score > 40) {
-            strength = 'Good';
+            strength = 'Gut';
             strengthEmoji = '🟡';
             strengthColor = getColor('warning');
         } else if (score > 20) {
-            strength = 'Weak';
+            strength = 'Schwach';
             strengthEmoji = '🟠';
             strengthColor = getColor('warning');
         }
 
         const embed = successEmbed(
-            '🔑 Generated Password',
-            `**Password:** ||\`${password}\`||\n` +
-            `**Length:** ${password.length} characters\n` +
-            `**Strength:** ${strengthEmoji} ${strength}\n` +
-            `**Contains:** ${hasLower ? 'Lowercase' : ''}${hasUpper ? ', Uppercase' : ''}${hasNumber ? ', Numbers' : ''}${hasSymbol ? ', Symbols' : ''}`
+            '🔑 Generiertes Passwort',
+            `**Passwort:** ||\`${password}\`||\n` +
+            `**Länge:** ${password.length} Zeichen\n` +
+            `**Stärke:** ${strengthEmoji} ${strength}\n` +
+            `**Enthält:** ${hasLower ? 'Kleinbuchstaben' : ''}${hasUpper ? ', Großbuchstaben' : ''}${hasNumber ? ', Zahlen' : ''}${hasSymbol ? ', Sonderzeichen' : ''}`
         ).setColor(strengthColor);
 
         await InteractionHelper.safeEditReply(interaction, {

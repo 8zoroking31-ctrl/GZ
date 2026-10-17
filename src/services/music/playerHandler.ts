@@ -237,7 +237,7 @@ export function setupPlayerHandler(client: Client): void {
         if (guildData.playerChannelId) {
             const channel = client.channels.cache.get(guildData.playerChannelId) as GuildTextBasedChannel | undefined;
             if (channel) {
-                channel.send(`Failed to play **${track?.info?.title || 'track'}**. Skipping...`).catch(() => null);
+                channel.send(`**${track?.info?.title || 'Titel'}** konnte nicht abgespielt werden. Wird übersprungen …`).catch(() => null);
             }
         }
     });

@@ -7,7 +7,7 @@ import type { Command } from '../../../types/index.js';
 export default {
     data: new SlashCommandBuilder()
         .setName('unixtime')
-        .setDescription('Get the current Unix timestamp'),
+        .setDescription('Zeigt den aktuellen Unix-Zeitstempel'),
 
     async execute(interaction) {
         await InteractionHelper.safeExecute(
@@ -17,11 +17,11 @@ export default {
                 const unixTimestamp = Math.floor(now.getTime() / 1000);
 
                 const embed = successEmbed(
-                    '⏱️ Current Unix Timestamp',
-                    `**Seconds since Unix Epoch:** \`${unixTimestamp}\`\n` +
-                    `**Milliseconds since Unix Epoch:** \`${now.getTime()}\`\n\n` +
-                    `**Human-readable (UTC):** ${now.toUTCString()}\n` +
-                    `**ISO String:** ${now.toISOString()}`
+                    '⏱️ Aktueller Unix-Zeitstempel',
+                    `**Sekunden seit Unix-Epoche:** \`${unixTimestamp}\`\n` +
+                    `**Millisekunden seit Unix-Epoche:** \`${now.getTime()}\`\n\n` +
+                    `**Lesbar (UTC):** ${now.toUTCString()}\n` +
+                    `**ISO-String:** ${now.toISOString()}`
                 );
                 embed.setColor(getColor('success'));
 
@@ -29,7 +29,7 @@ export default {
                     embeds: [embed],
                 });
             },
-            'Failed to get unix timestamp. Please try again.',
+            'Der Unix-Zeitstempel konnte nicht abgerufen werden. Versuch es noch mal.',
             {
                 autoDefer: true,
                 deferOptions: { flags: MessageFlags.Ephemeral }

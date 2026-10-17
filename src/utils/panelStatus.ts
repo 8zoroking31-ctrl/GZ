@@ -82,29 +82,29 @@ export function messageHasPanelMarker(message: PanelMessage, { buttonCustomId, s
 
 export function formatPanelStatusField(
     panelStatus: PanelStatus | null | undefined,
-    { repostHint = 'Repost Panel' }: { repostHint?: string } = {},
+    { repostHint = 'Panel neu posten' }: { repostHint?: string } = {},
 ): string {
-    if (!panelStatus) return '`Unknown`';
+    if (!panelStatus) return '`Unbekannt`';
 
     if (panelStatus.exists) {
         return panelStatus.message?.url
-            ? `✅ Active — [view panel](${panelStatus.message.url})`
-            : '✅ Active';
+            ? `✅ Aktiv — [Panel ansehen](${panelStatus.message.url})`
+            : '✅ Aktiv';
     }
 
     if (panelStatus.reason === 'channel_missing') {
-        return '⚠️ Panel channel missing or deleted';
+        return '⚠️ Panel-Kanal fehlt oder wurde gelöscht';
     }
 
     if (panelStatus.reason === 'panel_deleted') {
-        return `⚠️ Panel message was deleted — use **${repostHint}** below`;
+        return `⚠️ Panel-Nachricht wurde gelöscht — nutze unten **${repostHint}**`;
     }
 
     if (panelStatus.reason === 'no_channel') {
-        return '⚠️ No panel channel configured';
+        return '⚠️ Kein Panel-Kanal konfiguriert';
     }
 
-    return '`Unknown`';
+    return '`Unbekannt`';
 }
 
 export async function getBotPanelStatus(client: NexoClient, guild: Guild, {

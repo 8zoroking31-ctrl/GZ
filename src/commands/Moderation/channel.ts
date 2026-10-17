@@ -5,7 +5,7 @@ import unlockCommand from './modules/unlock.js';
 
 export default createRouterCommand({
   name: 'channel',
-  description: 'Lock and unlock channels',
+  description: 'Kanäle sperren und entsperren',
   category: 'Moderation',
   defaultMemberPermissions: PermissionFlagsBits.ManageChannels,
   routes: [

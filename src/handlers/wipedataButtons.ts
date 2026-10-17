@@ -115,13 +115,13 @@ const wipedataConfirmHandler = {
       }
 
       const successMessage =
-        `✅ **Your data has been successfully wiped!**\n\n` +
-        `**Records Deleted:** ${deletedCount}\n\n` +
-        `Your account has been reset to default values. You can now start fresh!\n\n` +
-        `*All your economy balance, levels, items, and personal data have been removed.*`;
+        `✅ **Deine Daten wurden erfolgreich gelöscht!**\n\n` +
+        `**Gelöschte Einträge:** ${deletedCount}\n\n` +
+        `Dein Konto wurde auf die Standardwerte zurückgesetzt. Du kannst jetzt neu starten!\n\n` +
+        `*Dein Kontostand, deine Level, Items und persönlichen Daten wurden entfernt.*`;
 
       await interaction.editReply({
-        embeds: [successEmbed('Data Wipe Complete', successMessage)],
+        embeds: [successEmbed('Daten gelöscht', successMessage)],
         components: []
       });
 
@@ -133,7 +133,7 @@ const wipedataConfirmHandler = {
     } catch (error) {
       logger.error('Wipedata confirm button handler error:', error);
       
-      await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'An error occurred while wiping your data. Please try again later or contact support.' });
+      await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Beim Löschen deiner Daten ist ein Fehler aufgetreten. Bitte versuch es später erneut oder wende dich an den Support.' });
     }
   }
 } satisfies ButtonHandler;
@@ -145,8 +145,8 @@ const wipedataCancelHandler = {
       await interaction.update({
         embeds: [
           createEmbed({
-            title: '❌ Data Wipe Cancelled',
-            description: 'Your data has been preserved. Your account remains unchanged.',
+            title: '❌ Löschen abgebrochen',
+            description: 'Deine Daten bleiben erhalten. Dein Konto bleibt unverändert.',
             color: 'info'
           })
         ],
@@ -158,7 +158,7 @@ const wipedataCancelHandler = {
       logger.error('Wipedata cancel button handler error:', error);
       
       if (!interaction.replied && !interaction.deferred) {
-        await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Could not cancel data wipe.' });
+        await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Das Löschen konnte nicht abgebrochen werden.' });
       }
     }
   }

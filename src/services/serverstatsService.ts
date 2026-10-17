@@ -38,17 +38,17 @@ export interface ServerCounterInput {
 
 export const COUNTER_TYPE_CONFIG: Record<string, CounterTypeConfig> = {
   members: {
-    label: 'Members + Bots',
-    baseName: 'Members & Bots',
+    label: 'Mitglieder + Bots',
+    baseName: 'Mitglieder & Bots',
     emoji: '👥'
   },
   members_only: {
-    label: 'Members Only',
-    baseName: 'Members',
+    label: 'Nur Mitglieder',
+    baseName: 'Mitglieder',
     emoji: '👤'
   },
   bots: {
-    label: 'Bots Only',
+    label: 'Nur Bots',
     baseName: 'Bots',
     emoji: '🤖'
   }
@@ -56,8 +56,8 @@ export const COUNTER_TYPE_CONFIG: Record<string, CounterTypeConfig> = {
 
 function getCounterConfig(type: string): CounterTypeConfig {
   return COUNTER_TYPE_CONFIG[type] || {
-    label: 'Unknown',
-    baseName: 'Counter',
+    label: 'Unbekannt',
+    baseName: 'Zähler',
     emoji: '❓'
   };
 }
@@ -222,11 +222,11 @@ export async function updateCounter(client: NexoClient, guild: Guild, counter: S
             guildId: guild.id,
             eventType: EVENT_TYPES.COUNTER_UPDATE,
             data: {
-              title: 'Counter Updated',
+              title: 'Zähler aktualisiert',
               lines: [
-                formatLogLine('Type', getCounterTypeLabel(type)),
-                formatLogLine('Count', count.toString()),
-                formatLogLine('Channel', channel.toString()),
+                formatLogLine('Typ', getCounterTypeLabel(type)),
+                formatLogLine('Anzahl', count.toString()),
+                formatLogLine('Kanal', channel.toString()),
               ],
               channelId: channel.id,
             },

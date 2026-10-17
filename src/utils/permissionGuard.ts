@@ -154,7 +154,7 @@ export async function checkModerationPermissions(
   interaction: ChatInputCommandInteraction,
   guildConfig: ModeratorRoleConfig,
   requiredPermissions: PermissionResolvable | null,
-  errorMessage = 'You do not have permission to use this command.'
+  errorMessage = 'Du hast keine Berechtigung, diesen Command zu nutzen.'
 ): Promise<boolean> {
   // Guild commands: member is a full GuildMember (as the JS assumed).
   if (memberHasModerationCommandAccess(interaction.member as GuildMember | null, guildConfig, requiredPermissions)) {
@@ -256,7 +256,7 @@ export function botHasPermission(channel: GuildBasedChannel | null | undefined, 
 export async function checkUserPermissions(
   interaction: ChatInputCommandInteraction,
   requiredPermissions: PermissionResolvable,
-  errorMessage = 'You do not have permission to use this command.'
+  errorMessage = 'Du hast keine Berechtigung, diesen Command zu nutzen.'
 ): Promise<boolean> {
   // Guild commands: member is a full GuildMember (as the JS assumed).
   const member = interaction.member as GuildMember;
@@ -288,7 +288,7 @@ export async function checkBotPermissions(
   if (!targetChannel || !targetChannel.guild) {
     await replyUserError(interaction, {
       type: ErrorTypes.UNKNOWN,
-      message: 'Could not determine channel.',
+      message: 'Der Kanal konnte nicht ermittelt werden.',
       context: { source: 'permissionGuard.checkBotPermissions' }
     });
     return false;
@@ -298,7 +298,7 @@ export async function checkBotPermissions(
   if (!botMember) {
     await replyUserError(interaction, {
       type: ErrorTypes.UNKNOWN,
-      message: 'Could not find bot member in this guild.',
+      message: 'Das Bot-Mitglied wurde auf diesem Server nicht gefunden.',
       context: { source: 'permissionGuard.checkBotPermissions' }
     });
     return false;
@@ -317,7 +317,7 @@ export async function checkBotPermissions(
   if (missingPerms.length > 0) {
     await replyUserError(interaction, {
       type: ErrorTypes.PERMISSION,
-      message: `I need the following permissions in ${targetChannel}: ${missingPerms.join(', ')}`,
+      message: `Ich brauche folgende Berechtigungen in ${targetChannel}: ${missingPerms.join(', ')}`,
       context: { source: 'permissionGuard.checkBotPermissions', subtype: 'bot_permission' }
     });
 

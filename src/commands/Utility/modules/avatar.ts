@@ -7,12 +7,12 @@ import type { Command } from '../../../types/index.js';
 export default {
     data: new SlashCommandBuilder()
     .setName("avatar")
-    .setDescription("Display a user's avatar image")
+    .setDescription("Zeigt den Avatar eines Nutzers an")
     .addUserOption((option) =>
       option
         .setName("target")
         .setDescription(
-          "The user whose avatar you want to see (defaults to you)",
+          "Der Nutzer, dessen Avatar du sehen willst (Standard: du)",
         ),
     ),
 
@@ -21,8 +21,8 @@ export default {
     const avatarUrl = user.displayAvatarURL({ size: 2048 });
 
     const embed = createEmbed({ 
-      title: `${user.username}'s Avatar`, 
-      description: `[Download Link](${avatarUrl})` 
+      title: `Avatar von ${user.username}`, 
+      description: `[Download-Link](${avatarUrl})` 
     })
       .setImage(avatarUrl);
 

@@ -26,8 +26,8 @@ const COUNTING_GAME_KEY_PREFIX = 'countingGame:';
 
 const COUNTING_SYSTEMS: Record<string, CountingSystem> = {
   decimal: {
-    label: 'Decimal',
-    description: 'Standard 10-number system using 0-9',
+    label: 'Dezimal',
+    description: 'Standard-Zehnersystem mit 0-9',
     toString: (n) => n.toString(10),
     parse: (value) => {
       if (!/^[0-9]+$/.test(value)) return null;
@@ -35,8 +35,8 @@ const COUNTING_SYSTEMS: Record<string, CountingSystem> = {
     },
   },
   hexadecimal: {
-    label: 'Hexadecimal',
-    description: '16-number system using 0-9 and A-F',
+    label: 'Hexadezimal',
+    description: '16er-System mit 0-9 und A-F',
     toString: (n) => n.toString(16).toUpperCase(),
     parse: (value) => {
       if (!/^[0-9A-Fa-f]+$/.test(value)) return null;
@@ -44,8 +44,8 @@ const COUNTING_SYSTEMS: Record<string, CountingSystem> = {
     },
   },
   binary: {
-    label: 'Binary',
-    description: '2-number system using 0-1',
+    label: 'Binär',
+    description: 'Zweiersystem mit 0-1',
     toString: (n) => n.toString(2),
     parse: (value) => {
       if (!/^[01]+$/.test(value)) return null;
@@ -54,7 +54,7 @@ const COUNTING_SYSTEMS: Record<string, CountingSystem> = {
   },
   base36: {
     label: 'Base36',
-    description: '36-number system using 0-9 and A-Z',
+    description: '36er-System mit 0-9 und A-Z',
     toString: (n) => n.toString(36).toUpperCase(),
     parse: (value) => {
       if (!/^[0-9A-Za-z]+$/.test(value)) return null;
@@ -63,7 +63,7 @@ const COUNTING_SYSTEMS: Record<string, CountingSystem> = {
   },
   base64: {
     label: 'Base64',
-    description: '64-number system using A-Z, a-z, 0-9, +, /',
+    description: '64er-System mit A-Z, a-z, 0-9, +, /',
     alphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
     toString: (n) => {
       if (n === 0) return 'A';
@@ -93,8 +93,8 @@ const COUNTING_SYSTEMS: Record<string, CountingSystem> = {
     },
   },
   roman: {
-    label: 'Roman',
-    description: 'Roman numerals like I, II, III, IV, V',
+    label: 'Römisch',
+    description: 'Römische Zahlen wie I, II, III, IV, V',
     toString: (n) => {
       const romanNumerals: Array<[string, number]> = [
         ['M', 1000], ['CM', 900], ['D', 500], ['CD', 400],
@@ -133,8 +133,8 @@ const COUNTING_SYSTEMS: Record<string, CountingSystem> = {
     },
   },
   math: {
-    label: 'Math Expressions',
-    description: 'Use a math expression that equals the next number, like 4*4=16',
+    label: 'Mathe-Ausdrücke',
+    description: 'Ein Rechenausdruck, der die nächste Zahl ergibt, z. B. 4*4=16',
     toString: (n) => `${n}`,
     parse: (value) => {
       const expression = value.replace(/\s+/g, '');
@@ -168,7 +168,7 @@ const COUNTING_SYSTEMS: Record<string, CountingSystem> = {
   },
   alphabet: {
     label: 'Alphabet',
-    description: 'Letters A-Z in sequence',
+    description: 'Buchstaben A-Z der Reihe nach',
     toString: (n) => {
       let num = n;
       let result = '';
@@ -328,6 +328,6 @@ export function buildCountingLeaderboard(config: CountingGameState, guild: Guild
     .map(([userId, count], index) => {
       const member = guild?.members?.cache?.get(userId);
       const username = member ? `${member.user.username}#${member.user.discriminator}` : `<@${userId}>`;
-      return `**${index + 1}.** ${username} — ${count} ${count === 1 ? 'count' : 'counts'}`;
+      return `**${index + 1}.** ${username} — ${count} ${count === 1 ? 'Zahl' : 'Zahlen'}`;
     });
 }

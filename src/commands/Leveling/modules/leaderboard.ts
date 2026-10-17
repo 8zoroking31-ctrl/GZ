@@ -8,7 +8,7 @@ import type { Command } from '../../../types/index.js';
 export default {
   data: new SlashCommandBuilder()
     .setName('leaderboard')
-    .setDescription("Shows the server's level leaderboard")
+    .setDescription('Zeigt die Level-Bestenliste des Servers')
     .setDMPermission(false),
   category: 'Leveling',
 
@@ -22,7 +22,7 @@ export default {
         embeds: [
           new EmbedBuilder()
             .setColor('#f1c40f')
-            .setDescription('The leveling system is currently disabled on this server.')
+            .setDescription('Das Leveling-System ist auf diesem Server derzeit deaktiviert.')
         ],
         flags: MessageFlags.Ephemeral
       });
@@ -35,14 +35,14 @@ export default {
       throw new NexoBotError(
         'No leaderboard data found',
         ErrorTypes.DATABASE,
-        'No level data found yet. Start chatting to gain XP!'
+        'Noch keine Level-Daten vorhanden. Schreib Nachrichten, um XP zu sammeln!'
       );
     }
 
     const embed = new EmbedBuilder()
-      .setTitle('Level Leaderboard')
+      .setTitle('Level-Bestenliste')
       .setColor('#2ecc71')
-      .setDescription("Top 10 most active members in this server:")
+      .setDescription('Die 10 aktivsten Mitglieder auf diesem Server:')
       .setTimestamp();
 
     const leaderboardText = await Promise.all(
@@ -58,15 +58,15 @@ export default {
           else if (index === 2) rankPrefix = '🥉';
           else rankPrefix = `**${index + 1}.**`;
 
-          return `${rankPrefix} ${userMention} - Level ${user.level} (${user.xp}/${xpForNextLevel} XP)`;
+          return `${rankPrefix} ${userMention} – Level ${user.level} (${user.xp}/${xpForNextLevel} XP)`;
         } catch {
-          return `**${index + 1}.** Error loading user ${user.userId}`;
+          return `**${index + 1}.** Fehler beim Laden von Nutzer ${user.userId}`;
         }
       })
     );
 
     embed.addFields({
-      name: 'Rankings',
+      name: 'Rangliste',
       value: leaderboardText.join('\n')
     });
 

@@ -12,22 +12,22 @@ const MIN_WORK_AMOUNT = botConfig.economy?.workMin ?? 10;
 const MAX_WORK_AMOUNT = botConfig.economy?.workMax ?? 100;
 const LAPTOP_MULTIPLIER = 1.5;
 const WORK_JOBS = [
-    "Software Developer",
+    "Softwareentwickler",
     "Barista",
-    "Janitor",
+    "Hausmeister",
     "YouTuber",
-    "Discord Bot Developer",
-    "Cashier",
-    "Pizza Delivery Driver",
-    "Librarian",
-    "Gardener",
-    "Data Analyst",
+    "Discord-Bot-Entwickler",
+    "Kassierer",
+    "Pizzalieferant",
+    "Bibliothekar",
+    "Gärtner",
+    "Datenanalyst",
 ];
 
 export default {
     data: new SlashCommandBuilder()
         .setName('work')
-        .setDescription('Work to earn some money'),
+        .setDescription('Arbeite, um etwas Geld zu verdienen'),
 
     execute: withErrorHandling(async (interaction, config, client) => {
         const deferred = await InteractionHelper.safeDefer(interaction);
@@ -43,7 +43,7 @@ export default {
                 throw createError(
                     "Failed to load economy data for work",
                     ErrorTypes.DATABASE,
-                    "Failed to load your economy data. Please try again later.",
+                    "Deine Wirtschaftsdaten konnten nicht geladen werden. Bitte versuch es später erneut.",
                     { userId, guildId }
                 );
             }
@@ -67,7 +67,7 @@ export default {
                     throw createError(
                         "Work cooldown active",
                         ErrorTypes.RATE_LIMIT,
-                        `You're working too fast! Wait **${Math.floor(remaining / 3600000)}h ${Math.floor((remaining % 3600000) / 60000)}m** before working again.`,
+                        `Du arbeitest zu schnell! Warte **${Math.floor(remaining / 3600000)}h ${Math.floor((remaining % 3600000) / 60000)}m**, bevor du wieder arbeitest.`,
                         { timeRemaining: remaining, cooldownType: 'work' }
                     );
                 }
@@ -79,7 +79,7 @@ export default {
             let multiplierMessage = "";
             if (hasLaptop > 0) {
                 earned = Math.floor(earned * LAPTOP_MULTIPLIER);
-                multiplierMessage = "\n💻 **Laptop Bonus:** +50% earnings!";
+                multiplierMessage = "\n💻 **Laptop-Bonus:** +50 % Verdienst!";
             }
 
             userData.wallet = (userData.wallet || 0) + earned;
@@ -99,23 +99,23 @@ export default {
             });
 
             const embed = successEmbed(
-                "💼 Work Complete!",
-                `You worked as a **${job}** and earned **$${earned.toLocaleString()}**!${multiplierMessage}`
+                "💼 Arbeit erledigt!",
+                `Du hast als **${job}** gearbeitet und **$${earned.toLocaleString()}** verdient!${multiplierMessage}`
             )
                 .addFields(
                     {
-                        name: "New Balance",
+                        name: "Neuer Kontostand",
                         value: `$${userData.wallet.toLocaleString()}`,
                         inline: true,
                     },
                     {
-                        name: "Next Work",
+                        name: "Nächste Schicht",
                         value: `<t:${Math.floor((now + WORK_COOLDOWN) / 1000)}:R>`,
                         inline: true,
                     }
                 )
                 .setFooter({
-                    text: `Requested by ${interaction.user.tag}`,
+                    text: `Angefragt von ${interaction.user.tag}`,
                     iconURL: interaction.user.displayAvatarURL(),
                 });
 

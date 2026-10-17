@@ -5,7 +5,7 @@ import masskickCommand from './modules/masskick.js';
 
 export default createRouterCommand({
   name: 'kick',
-  description: 'Kick members',
+  description: 'Mitglieder kicken',
   category: 'Moderation',
   defaultMemberPermissions: PermissionFlagsBits.KickMembers,
   routes: [

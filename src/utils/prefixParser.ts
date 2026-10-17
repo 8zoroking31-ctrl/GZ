@@ -233,14 +233,14 @@ export function mapArgumentsToOptions(args: string[], commandData: PrefixCommand
     if (matchedGroup) {
       missing.push({
         name: 'subcommand',
-        description: `Available: ${matchedGroup.options?.map((s) => s.name).join(', ') || 'none'}`,
+        description: `Verfügbar: ${matchedGroup.options?.map((s) => s.name).join(', ') || 'keine'}`,
         type: 1,
       });
     } else {
-      const available = [...subcommands, ...groups].map((s) => s.name).join(', ') || 'none';
+      const available = [...subcommands, ...groups].map((s) => s.name).join(', ') || 'keine';
       missing.push({
         name: hasSubcommands ? 'subcommand' : 'subcommand group',
-        description: `Available: ${available}`,
+        description: `Verfügbar: ${available}`,
         type: 1,
       });
     }

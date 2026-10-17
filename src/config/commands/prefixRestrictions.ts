@@ -104,11 +104,11 @@ export function getPrefixRestriction(
   const commandName = commandJson.name?.toLowerCase();
 
   if (command.prefixOnly === false || command.slashOnly === true) {
-    return { blocked: true, reason: 'This command is only available as a slash command.' };
+    return { blocked: true, reason: 'Dieser Command ist nur als Slash-Command verfügbar.' };
   }
 
   if (SLASH_ONLY_COMMANDS.has(commandName)) {
-    return { blocked: true, reason: 'This command is only available as a slash command.' };
+    return { blocked: true, reason: 'Dieser Command ist nur als Slash-Command verfügbar.' };
   }
 
   const [firstArg, secondArg] = args.map((arg) => arg?.toLowerCase?.() || null);
@@ -125,27 +125,27 @@ export function getPrefixRestriction(
     allSubcommandNames.every((name) => isSubcommandBlocked(commandName, name));
 
   if (allSubcommandsBlocked) {
-    return { blocked: true, reason: 'This command is only available as a slash command.' };
+    return { blocked: true, reason: 'Dieser Command ist nur als Slash-Command verfügbar.' };
   }
 
   if (firstArg && GLOBAL_BLOCKED_SUBCOMMAND_GROUPS.has(firstArg)) {
     return {
       blocked: true,
-      reason: 'This configuration flow is only available as a slash command.',
+      reason: 'Diese Konfiguration ist nur als Slash-Command verfügbar.',
     };
   }
 
   if (firstArg && (isSubcommandBlocked(commandName, firstArg) || isSubcommandBlocked(commandName, resolvedFirstArg))) {
     return {
       blocked: true,
-      reason: 'This subcommand is only available as a slash command.',
+      reason: 'Dieser Subcommand ist nur als Slash-Command verfügbar.',
     };
   }
 
   if (matchedGroup && secondArg && (isSubcommandBlocked(commandName, secondArg) || isSubcommandBlocked(commandName, resolvedSecondArg))) {
     return {
       blocked: true,
-      reason: 'This subcommand is only available as a slash command.',
+      reason: 'Dieser Subcommand ist nur als Slash-Command verfügbar.',
     };
   }
 

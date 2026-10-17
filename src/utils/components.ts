@@ -8,12 +8,12 @@ export function getConfirmationButtons(customIdPrefix: string = 'confirm'): Acti
     return new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
             .setCustomId(`${customIdPrefix}_yes`)
-            .setLabel('Confirm')
+            .setLabel('Bestätigen')
             .setStyle(ButtonStyle.Success)
             .setEmoji('✅'),
         new ButtonBuilder()
             .setCustomId(`${customIdPrefix}_no`)
-            .setLabel('Cancel')
+            .setLabel('Abbrechen')
             .setStyle(ButtonStyle.Danger)
             .setEmoji('❌')
     );
@@ -33,7 +33,7 @@ export function getPaginationRow(customIdPrefix: string = 'page', currentPage: n
             .setDisabled(currentPage === 1),
         new ButtonBuilder()
             .setCustomId(`${customIdPrefix}_page`)
-            .setLabel(`Page ${currentPage} of ${totalPages}`)
+            .setLabel(`Seite ${currentPage} von ${totalPages}`)
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(true),
         new ButtonBuilder()

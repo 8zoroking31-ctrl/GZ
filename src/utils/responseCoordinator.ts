@@ -234,8 +234,8 @@ export class ResponseCoordinator {
   async respondUsage(usageLine: string): Promise<Message | null> {
     const embed = buildUserErrorEmbed(
       'validation',
-      `Usage\n\`${usageLine}\``,
-      { titleOverride: 'Wrong Usage' }
+      `Verwendung\n\`${usageLine}\``,
+      { titleOverride: 'Falsche Verwendung' }
     );
 
     const result = await this.respond({ embeds: [embed] });

@@ -6,7 +6,7 @@ import type { Command } from '../../../types/index.js';
 export default {
     data: new SlashCommandBuilder()
         .setName("firstmsg")
-        .setDescription("Get a link to the first message in this channel")
+        .setDescription("Link zur ersten Nachricht in diesem Kanal")
         .setDMPermission(false)
         .setDefaultMemberPermissions(PermissionFlagsBits.SendMessages),
     category: "Utility",
@@ -37,7 +37,7 @@ export default {
                 guildId: interaction.guildId
             });
             return await InteractionHelper.safeEditReply(interaction, {
-                embeds: [successEmbed('First Message', "No messages found in this channel!")],
+                embeds: [successEmbed('Erste Nachricht', "In diesem Kanal wurden keine Nachrichten gefunden!")],
             });
         }
 
@@ -46,8 +46,8 @@ export default {
         await InteractionHelper.safeEditReply(interaction, {
             embeds: [
                 successEmbed(
-                    "First Message in #" + (interaction.channel as GuildTextBasedChannel).name,
-                    `Message Link: ${messageLink}`
+                    "Erste Nachricht in #" + (interaction.channel as GuildTextBasedChannel).name,
+                    `Link zur Nachricht: ${messageLink}`
                 ),
             ],
         });

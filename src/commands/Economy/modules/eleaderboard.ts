@@ -10,7 +10,7 @@ import type { EconomyData } from '../../../utils/economy.js';
 export default {
     data: new SlashCommandBuilder()
         .setName("eleaderboard")
-        .setDescription("View the server's top 10 richest users.")
+        .setDescription("Zeige die 10 reichsten Nutzer des Servers.")
         .setDMPermission(false),
 
     execute: withErrorHandling(async (interaction, config, client) => {
@@ -33,7 +33,7 @@ export default {
                 throw createError(
                     "No economy data found",
                     ErrorTypes.VALIDATION,
-                    "No economy data found for this server."
+                    "Für diesen Server wurden keine Wirtschaftsdaten gefunden."
                 );
             }
 
@@ -78,12 +78,12 @@ export default {
 
             const description = leaderboardEntries.length > 0
                 ? leaderboardEntries.join("\n")
-                : "No economy data is available for this server yet.";
+                : "Für diesen Server gibt es noch keine Wirtschaftsdaten.";
 
             const embed = createEmbed({
-                title: `Economy Leaderboard`,
+                title: `Wirtschafts-Bestenliste`,
                 description,
-                footer: `Your Rank: ${userRank > 0 ?`#${userRank}`: "No ranking data available"}`,
+                footer: `Dein Rang: ${userRank > 0 ?`#${userRank}`: "Keine Rangdaten verfügbar"}`,
             });
 
             await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });

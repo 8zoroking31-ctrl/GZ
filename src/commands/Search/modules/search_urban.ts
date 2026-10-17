@@ -30,7 +30,7 @@ export default {
                     term: term,
                     guildId: interaction.guildId
                 });
-                return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Please enter a term with at least 2 characters.' });
+                return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Bitte gib einen Begriff mit mindestens 2 Zeichen ein.' });
             }
 
             let deferTimer: ReturnType<typeof setTimeout> | null = null;
@@ -58,7 +58,7 @@ export default {
             clearDeferTimer();
 
             if (!response.data?.list?.length) {
-                return await replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: `No definitions found for "${term}" on Urban Dictionary.` });
+                return await replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: `Keine Definitionen für „${term}“ im Urban Dictionary gefunden.` });
             }
 
             const definition = response.data.list![0];
@@ -71,7 +71,7 @@ export default {
 
             const formattedExample = cleanExample
                 ? `*"${cleanExample.replace(/\n/g, ' ').slice(0, 500)}..."*`
-                : '*No example provided*';
+                : '*Kein Beispiel vorhanden*';
 
             const embed = createEmbed({
                 title: definition.word,
@@ -81,18 +81,18 @@ export default {
             .setURL(definition.permalink)
             .addFields(
                 {
-                    name: 'Example',
+                    name: 'Beispiel',
                     value: formattedExample,
                     inline: false
                 },
                 {
-                    name: 'Stats',
+                    name: 'Statistik',
                     value: `${definition.thumbs_up.toLocaleString()} • ${definition.thumbs_down.toLocaleString()}`,
                     inline: true
                 },
                 {
-                    name: 'Author',
-                    value: definition.author || 'Anonymous',
+                    name: 'Autor',
+                    value: definition.author || 'Anonym',
                     inline: true
                 }
             )
@@ -123,9 +123,9 @@ export default {
             });
 
             if (err.response?.status === 404 || !err.response) {
-                await replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: `No definitions found for "${interaction.options.getString('term')}" on Urban Dictionary.` });
+                await replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: `Keine Definitionen für „${interaction.options.getString('term')}“ im Urban Dictionary gefunden.` });
             } else if (err.response?.status === 429) {
-                await replyUserError(interaction, { type: ErrorTypes.RATE_LIMIT, message: 'Too many requests to Urban Dictionary. Please try again in a few minutes.' });
+                await replyUserError(interaction, { type: ErrorTypes.RATE_LIMIT, message: 'Zu viele Anfragen an das Urban Dictionary. Bitte versuch es in ein paar Minuten noch einmal.' });
             } else {
                 await handleInteractionError(interaction, error, {
                     commandName: 'urban',

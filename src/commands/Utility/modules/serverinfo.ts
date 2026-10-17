@@ -7,7 +7,7 @@ import type { Command } from '../../../types/index.js';
 export default {
     data: new SlashCommandBuilder()
     .setName("serverinfo")
-    .setDescription("Get detailed information about the server"),
+    .setDescription("Zeigt ausführliche Infos über den Server"),
 
   async execute(interaction) {
     const deferSuccess = await InteractionHelper.safeDefer(interaction);
@@ -25,24 +25,24 @@ export default {
 
     const createdTimestamp = Math.floor(guild.createdAt.getTime() / 1000);
 
-    const embed = createEmbed({ title: `Server Info: ${guild.name}`, description: `Server ID: ${guild.id}` })
+    const embed = createEmbed({ title: `Server-Info: ${guild.name}`, description: `Server-ID: ${guild.id}` })
       .setThumbnail(guild.iconURL({ size: 256 }))
       .addFields(
-        { name: "Owner", value: owner.user.tag, inline: true },
-        { name: "Members", value: `${guild.memberCount}`, inline: true },
+        { name: "Inhaber", value: owner.user.tag, inline: true },
+        { name: "Mitglieder", value: `${guild.memberCount}`, inline: true },
         {
-          name: "Channels",
+          name: "Kanäle",
           value: `${guild.channels.cache.size}`,
           inline: true,
         },
-        { name: "Roles", value: `${guild.roles.cache.size}`, inline: true },
+        { name: "Rollen", value: `${guild.roles.cache.size}`, inline: true },
         {
           name: "Boosts",
           value: `Level ${guild.premiumTier} (${guild.premiumSubscriptionCount})`,
           inline: true,
         },
         {
-          name: "Creation Date",
+          name: "Erstellt",
           value: `<t:${createdTimestamp}:R>`,
           inline: true,
         },

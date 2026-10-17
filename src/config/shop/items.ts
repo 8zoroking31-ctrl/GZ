@@ -38,9 +38,9 @@ export interface PurchaseValidation {
 export const shopItems: ShopItem[] = [
     {
         id: 'extra_work',
-        name: 'Extra Work Shift',
+        name: 'Extraschicht',
         price: 5000,
-        description: 'Allows 1 extra use of the `/eco work` command.',
+        description: 'Erlaubt eine zusätzliche Nutzung von `/eco work`.',
         type: 'consumable',
         maxQuantity: 5,
 cooldown: 86400000,
@@ -52,9 +52,9 @@ cooldown: 86400000,
     },
     {
         id: 'bank_upgrade_1',
-        name: 'Bank Upgrade I',
+        name: 'Bank-Upgrade I',
         price: 15000,
-        description: 'Increases bank capacity and allows more funds to be deposited.',
+        description: 'Erhöht deine Bankkapazität, damit du mehr einzahlen kannst.',
         type: 'upgrade',
         maxLevel: 5,
         effect: {
@@ -64,9 +64,9 @@ cooldown: 86400000,
     },
     {
         id: 'diamond_pickaxe',
-        name: 'Diamond Pickaxe',
+        name: 'Diamantspitzhacke',
         price: 50000,
-        description: 'Increases yield from `/eco mine`',
+        description: 'Erhöht den Ertrag von `/eco mine`',
         type: 'tool',
         durability: 100,
         effect: {
@@ -76,9 +76,9 @@ cooldown: 86400000,
     },
     {
         id: 'premium_role',
-        name: 'Premium Server Role',
+        name: 'Premium-Serverrolle',
         price: 15000,
-        description: 'A special role granting a fancy color and a 10% daily bonus.',
+        description: 'Eine besondere Rolle mit schicker Farbe und 10 % Daily-Bonus.',
         type: 'role',
 roleId: null,
         effect: {
@@ -88,9 +88,9 @@ roleId: null,
     },
     {
         id: 'lucky_clover',
-        name: 'Lucky Clover',
+        name: 'Glücksklee',
         price: 10000,
-        description: 'Increases the chance of winning a higher payout on `/eco gamble` once.',
+        description: 'Erhöht einmalig die Chance auf einen höheren Gewinn bei `/eco gamble`.',
         type: 'consumable',
         maxQuantity: 10,
         effect: {
@@ -101,9 +101,9 @@ roleId: null,
     },
     {
         id: 'fishing_rod',
-        name: '🎣 Fishing Rod',
+        name: '🎣 Angel',
         price: 5000,
-        description: 'Used for fishing commands',
+        description: 'Wird für Angel-Commands benötigt',
         type: 'tool',
         durability: 100,
         effect: {
@@ -113,9 +113,9 @@ roleId: null,
     },
     {
         id: 'pickaxe',
-        name: '⛏️ Pickaxe',
+        name: '⛏️ Spitzhacke',
         price: 7500,
-        description: 'Used for mining commands',
+        description: 'Wird für Bergbau-Commands benötigt',
         type: 'tool',
         durability: 100,
         effect: {
@@ -127,7 +127,7 @@ roleId: null,
         id: 'laptop',
         name: '💻 Laptop',
         price: 15000,
-        description: 'Increases work earnings',
+        description: 'Erhöht deine Einnahmen beim Arbeiten',
         type: 'tool',
         durability: 200,
         effect: {
@@ -137,9 +137,9 @@ roleId: null,
     },
     {
         id: 'lucky_charm',
-        name: '🍀 Lucky Charm',
+        name: '🍀 Glücksbringer',
         price: 10000,
-        description: 'Increases luck for gambling. Has 3 uses before being consumed.',
+        description: 'Erhöht dein Glück beim Glücksspiel. Hält 3 Nutzungen lang.',
         type: 'consumable',
         maxQuantity: 10,
         effect: {
@@ -150,9 +150,9 @@ roleId: null,
     },
     {
         id: 'bank_note',
-        name: '📜 Bank Note',
+        name: '📜 Bankschein',
         price: 25000,
-        description: 'Increases bank capacity by 10,000. Can be purchased multiple times.',
+        description: 'Erhöht deine Bankkapazität um 10.000. Mehrfach kaufbar.',
         type: 'tool',
         durability: null,
         effect: {
@@ -162,9 +162,9 @@ roleId: null,
     },
     {
         id: 'personal_safe',
-        name: '🔒 Personal Safe',
+        name: '🔒 Persönlicher Tresor',
         price: 30000,
-        description: 'Protects your money from theft. Prevents others from robbing you.',
+        description: 'Schützt dein Geld vor Diebstahl. Andere können dich nicht mehr ausrauben.',
         type: 'tool',
         durability: null,
         effect: {
@@ -190,7 +190,7 @@ export function getItemPrice(itemId: string): number {
 export function validatePurchase(itemId: string, userData: ShopUserData): PurchaseValidation {
     const item = getItemById(itemId);
     if (!item) {
-        return { valid: false, reason: 'Item not found' };
+        return { valid: false, reason: 'Item nicht gefunden' };
     }
 
     const inventory: Record<string, number> = userData.inventory || {};
@@ -201,7 +201,7 @@ export function validatePurchase(itemId: string, userData: ShopUserData): Purcha
         if (currentQuantity >= item.maxQuantity) {
             return { 
                 valid: false, 
-                reason: `You can only have a maximum of ${item.maxQuantity} ${item.name}s` 
+                reason: `Du kannst höchstens ${item.maxQuantity}× ${item.name} besitzen` 
             };
         }
     }
@@ -211,7 +211,7 @@ export function validatePurchase(itemId: string, userData: ShopUserData): Purcha
         if (upgrades[itemId]) {
             return { 
                 valid: false, 
-                reason: `You've already purchased ${item.name}` 
+                reason: `Du hast ${item.name} bereits gekauft` 
             };
         }
     }
@@ -222,7 +222,7 @@ export function validatePurchase(itemId: string, userData: ShopUserData): Purcha
         if (itemId !== 'bank_note' && currentQuantity > 0) {
             return { 
                 valid: false, 
-                reason: `You already have a ${item.name}` 
+                reason: `Du besitzt bereits: ${item.name}` 
             };
         }
     }
@@ -231,7 +231,7 @@ export function validatePurchase(itemId: string, userData: ShopUserData): Purcha
         if (userData.roles?.includes(item.roleId)) {
             return { 
                 valid: false, 
-                reason: `You already have the ${item.name} role` 
+                reason: `Du hast die Rolle ${item.name} bereits` 
             };
         }
     }

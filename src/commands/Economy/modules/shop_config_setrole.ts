@@ -9,7 +9,7 @@ import { replyUserError, ErrorTypes } from '../../../utils/errorHandler.js';
 export default {
     async execute(interaction, config, client) {
         if (!(interaction.member as GuildMember).permissions.has(PermissionsBitField.Flags.ManageGuild)) {
-            return await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'You need **Manage Server** permissions to set the premium role.' });
+            return await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'Du brauchst die Berechtigung **Server verwalten**, um die Premium-Rolle festzulegen.' });
         }
 
         const role = interaction.options.getRole('role')!;
@@ -21,12 +21,12 @@ export default {
             await setGuildConfig(client, guildId, currentConfig);
 
             return InteractionHelper.safeReply(interaction, {
-                embeds: [successEmbed('Premium Role Set', `The **Premium Shop Role** has been set to ${role.toString()}. Members who purchase the Premium Role item will be granted this role.`)],
+                embeds: [successEmbed('Premium-Rolle festgelegt', `Die **Premium-Shop-Rolle** ist jetzt ${role.toString()}. Mitglieder, die das Item „Premium-Rolle“ kaufen, erhalten diese Rolle.`)],
                 ephemeral: true,
             });
         } catch (error) {
             logger.error('shop_config_setrole error:', error);
-            return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Could not save the guild configuration.' });
+            return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Die Server-Konfiguration konnte nicht gespeichert werden.' });
         }
     },
 } satisfies SubcommandModule;

@@ -6,7 +6,7 @@ import uptimeCommand from './modules/uptime.js';
 
 export default createRouterCommand({
   name: 'bot',
-  description: 'Bot status and information',
+  description: 'Status und Infos zum Bot',
   category: 'Core',
   routes: [
     { legacyName: 'ping', module: pingCommand },

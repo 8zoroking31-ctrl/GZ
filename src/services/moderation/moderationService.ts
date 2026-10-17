@@ -16,7 +16,20 @@ export interface ModerationActionResult {
 }
 
 function getTargetLabel(target: GuildMember): string {
-  return target.user?.tag ?? target.displayName ?? 'this user';
+  return target.user?.tag ?? target.displayName ?? 'diesen Nutzer';
+}
+
+/** German verb for the internal action keys passed to the hierarchy checks. */
+const ACTION_VERBS: Record<string, string> = {
+  ban: 'bannen',
+  kick: 'kicken',
+  timeout: 'in den Timeout schicken',
+  warn: 'verwarnen',
+  untimeout: 'aus dem Timeout holen',
+};
+
+function actionVerb(action: string): string {
+  return ACTION_VERBS[action] ?? action;
 }
 
 function getHighestRole(member: GuildMember | null | undefined): Role | null {
@@ -34,14 +47,14 @@ export class ModerationService {
   }): string {
     if (actor === 'moderator') {
       return (
-        `You cannot ${action} **${targetLabel}** — their role **${targetRole.name}** is equal to or above yours (**${actorRole.name}**). ` +
-        `In **Server Settings → Roles**, drag your moderator role above **${targetRole.name}**.`
+        `Du kannst **${targetLabel}** nicht ${actionVerb(action)} – die Rolle **${targetRole.name}** ist gleich hoch oder höher als deine (**${actorRole.name}**). ` +
+        `Zieh unter **Servereinstellungen → Rollen** deine Moderator-Rolle über **${targetRole.name}**.`
       );
     }
 
     return (
-      `I cannot ${action} **${targetLabel}** — my role **${actorRole.name}** is equal to or below theirs (**${targetRole.name}**). ` +
-      `In **Server Settings → Roles**, drag my bot role above **${targetRole.name}**.`
+      `Ich kann **${targetLabel}** nicht ${actionVerb(action)} – meine Rolle **${actorRole.name}** ist gleich hoch oder niedriger als deren Rolle (**${targetRole.name}**). ` +
+      `Zieh unter **Servereinstellungen → Rollen** meine Bot-Rolle über **${targetRole.name}**.`
     );
   }
 
@@ -53,21 +66,21 @@ export class ModerationService {
       const botMember = target.guild?.members?.me;
       const botRole = getHighestRole(botMember);
       if (!botRole || !targetRole) {
-        return `Bot role hierarchy blocked ${action} for ${targetLabel}`;
+        return `Bot-Rollenhierarchie: ${targetLabel} lässt sich nicht ${actionVerb(action)}`;
       }
-      return `Bot role **${botRole.name}** is too low for **${targetRole.name}** — move the bot role higher`;
+      return `Bot-Rolle **${botRole.name}** ist zu niedrig für **${targetRole.name}** – schieb die Bot-Rolle höher`;
     }
 
     const modRole = getHighestRole(moderator);
     if (!modRole || !targetRole) {
-      return `Role hierarchy blocked ${action} for ${targetLabel}`;
+      return `Rollenhierarchie: ${targetLabel} lässt sich nicht ${actionVerb(action)}`;
     }
-    return `Your role **${modRole.name}** is too low for **${targetRole.name}** — move your role higher`;
+    return `Deine Rolle **${modRole.name}** ist zu niedrig für **${targetRole.name}** – schieb deine Rolle höher`;
   }
 
   static validateHierarchy(moderator: GuildMember, target: GuildMember, action: string): HierarchyCheck {
     if (!moderator || !target) {
-      return { valid: false, error: 'Invalid moderator or target' };
+      return { valid: false, error: 'Ungültiger Moderator oder ungültiges Ziel' };
     }
 
     if (moderator.guild?.ownerId === moderator.id) {
@@ -80,7 +93,7 @@ export class ModerationService {
     if (!modRole || !targetRole) {
       return {
         valid: false,
-        error: 'Could not resolve role hierarchy. Try mentioning the user or use the slash command.',
+        error: 'Die Rollenhierarchie konnte nicht ermittelt werden. Erwähne den Nutzer oder nutze den Slash-Command.',
       };
     }
 
@@ -102,12 +115,12 @@ export class ModerationService {
 
   static validateBotHierarchy(target: GuildMember, action: string): HierarchyCheck {
     if (!target) {
-      return { valid: false, error: 'Invalid target' };
+      return { valid: false, error: 'Ungültiges Ziel' };
     }
 
     const botMember = target.guild?.members?.me;
     if (!botMember) {
-      return { valid: false, error: 'Bot is not in the guild' };
+      return { valid: false, error: 'Der Bot ist nicht auf dem Server' };
     }
 
     const botRole = getHighestRole(botMember);
@@ -116,7 +129,7 @@ export class ModerationService {
     if (!botRole || !targetRole) {
       return {
         valid: false,
-        error: 'Could not resolve bot role hierarchy. Check that my role is configured in this server.',
+        error: 'Die Rollenhierarchie des Bots konnte nicht ermittelt werden. Prüfe, ob meine Rolle auf diesem Server eingerichtet ist.',
       };
     }
 
@@ -152,7 +165,7 @@ export class ModerationService {
     guild,
     user,
     moderator,
-    reason = 'No reason provided',
+    reason = 'Kein Grund angegeben',
     deleteDays = 0
   }: {
     guild: Guild;
@@ -166,7 +179,7 @@ export class ModerationService {
         throw new NexoBotError(
           'Missing required parameters',
           ErrorTypes.VALIDATION,
-          'Guild, user, and moderator are required'
+          'Server, Nutzer und Moderator sind erforderlich.'
         );
       }
 
@@ -191,7 +204,7 @@ export class ModerationService {
             throw new NexoBotError(
                 'You do not have sufficient permissions to ban users who are not in the server.',
                 ErrorTypes.PERMISSION,
-                'You need "Manage Server" or "Administrator" permissions to ban users not currently in the guild.'
+                'Du brauchst die Berechtigung „Server verwalten“ oder „Administrator“, um Nutzer zu bannen, die nicht auf dem Server sind.'
             );
         }
       }
@@ -232,7 +245,7 @@ export class ModerationService {
     guild,
     member,
     moderator,
-    reason = 'No reason provided'
+    reason = 'Kein Grund angegeben'
   }: {
     guild: Guild;
     member: GuildMember;
@@ -244,7 +257,7 @@ export class ModerationService {
         throw new NexoBotError(
           'Missing required parameters',
           ErrorTypes.VALIDATION,
-          'Guild, member, and moderator are required'
+          'Server, Mitglied und Moderator sind erforderlich.'
         );
       }
 
@@ -255,8 +268,8 @@ export class ModerationService {
         throw new NexoBotError(
           'Cannot kick member',
           ErrorTypes.PERMISSION,
-          `I cannot kick **${targetLabel}**. They may have **Administrator** permission or a managed/integration role. ` +
-          'Ensure my bot role is above theirs in **Server Settings → Roles** and that they do not have Admin.'
+          `Ich kann **${targetLabel}** nicht kicken. Eventuell hat das Mitglied die Berechtigung **Administrator** oder eine verwaltete/Integrationsrolle. ` +
+          'Stell sicher, dass meine Bot-Rolle unter **Servereinstellungen → Rollen** darüber liegt und das Mitglied kein Admin ist.'
         );
       }
 
@@ -295,7 +308,7 @@ export class ModerationService {
     member,
     moderator,
     durationMs,
-    reason = 'No reason provided'
+    reason = 'Kein Grund angegeben'
   }: {
     guild: Guild;
     member: GuildMember;
@@ -308,7 +321,7 @@ export class ModerationService {
         throw new NexoBotError(
           'Missing required parameters',
           ErrorTypes.VALIDATION,
-          'Guild, member, moderator, and duration are required'
+          'Server, Mitglied, Moderator und Dauer sind erforderlich.'
         );
       }
 
@@ -319,8 +332,8 @@ export class ModerationService {
         throw new NexoBotError(
           'Cannot timeout member',
           ErrorTypes.PERMISSION,
-          `I cannot timeout **${targetLabel}**. They may have **Administrator** permission or a managed/integration role. ` +
-          'Ensure my bot role is above theirs in **Server Settings → Roles** and that they do not have Admin.'
+          `Ich kann **${targetLabel}** nicht in den Timeout schicken. Eventuell hat das Mitglied die Berechtigung **Administrator** oder eine verwaltete/Integrationsrolle. ` +
+          'Stell sicher, dass meine Bot-Rolle unter **Servereinstellungen → Rollen** darüber liegt und das Mitglied kein Admin ist.'
         );
       }
 
@@ -335,7 +348,7 @@ export class ModerationService {
           target: `${member.user.tag} (${member.id})`,
           executor: `${moderator.user.tag} (${moderator.id})`,
           reason,
-          duration: `${durationMinutes} minutes`,
+          duration: `${durationMinutes} Minuten`,
           metadata: {
             userId: member.id,
             moderatorId: moderator.id,
@@ -362,7 +375,7 @@ export class ModerationService {
     guild,
     member,
     moderator,
-    reason = 'Timeout removed by moderator'
+    reason = 'Timeout durch Moderator aufgehoben'
   }: {
     guild: Guild;
     member: GuildMember;
@@ -374,19 +387,19 @@ export class ModerationService {
         throw new NexoBotError(
           'Missing required parameters',
           ErrorTypes.VALIDATION,
-          'Guild, member, and moderator are required'
+          'Server, Mitglied und Moderator sind erforderlich.'
         );
       }
 
-      this.assertModerationHierarchy(moderator, member, 'remove the timeout from');
+      this.assertModerationHierarchy(moderator, member, 'untimeout');
 
       if (!member.moderatable) {
         const targetLabel = getTargetLabel(member);
         throw new NexoBotError(
           'Cannot modify member',
           ErrorTypes.PERMISSION,
-          `I cannot modify **${targetLabel}**. They may have **Administrator** permission or a managed/integration role. ` +
-          'Ensure my bot role is above theirs in **Server Settings → Roles**.'
+          `Ich kann **${targetLabel}** nicht bearbeiten. Eventuell hat das Mitglied die Berechtigung **Administrator** oder eine verwaltete/Integrationsrolle. ` +
+          'Stell sicher, dass meine Bot-Rolle unter **Servereinstellungen → Rollen** darüber liegt.'
         );
       }
 
@@ -394,7 +407,7 @@ export class ModerationService {
         throw new NexoBotError(
           'User not timed out',
           ErrorTypes.VALIDATION,
-          `${member.user.tag} is not currently timed out`
+          `${member.user.tag} ist derzeit nicht im Timeout`
         );
       }
 
@@ -430,7 +443,7 @@ export class ModerationService {
     guild,
     user,
     moderator,
-    reason = 'No reason provided'
+    reason = 'Kein Grund angegeben'
   }: {
     guild: Guild;
     user: User;
@@ -442,7 +455,7 @@ export class ModerationService {
         throw new NexoBotError(
           'Missing required parameters',
           ErrorTypes.VALIDATION,
-          'Guild, user, and moderator are required'
+          'Server, Nutzer und Moderator sind erforderlich.'
         );
       }
 
@@ -453,7 +466,7 @@ export class ModerationService {
         throw new NexoBotError(
           'User not banned',
           ErrorTypes.VALIDATION,
-          `${user.tag} is not currently banned from this server`
+          `${user.tag} ist auf diesem Server derzeit nicht gebannt`
         );
       }
 

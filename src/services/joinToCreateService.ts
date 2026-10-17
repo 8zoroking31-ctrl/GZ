@@ -56,7 +56,7 @@ export function validateChannelNameTemplate(template: unknown): boolean {
         throw new NexoBotError(
             'Invalid channel template: must be a non-empty string',
             ErrorTypes.VALIDATION,
-            'Channel name template must be valid text.'
+            'Die Vorlage für den Kanalnamen muss gültiger Text sein.'
         );
     }
 
@@ -66,7 +66,7 @@ export function validateChannelNameTemplate(template: unknown): boolean {
         throw new NexoBotError(
             'Channel template exceeds maximum length',
             ErrorTypes.VALIDATION,
-            `Channel name template cannot exceed ${CHANNEL_NAME_MAX_LENGTH} characters.`
+            `Die Vorlage für den Kanalnamen darf höchstens ${CHANNEL_NAME_MAX_LENGTH} Zeichen lang sein.`
         );
     }
 
@@ -74,7 +74,7 @@ export function validateChannelNameTemplate(template: unknown): boolean {
         throw new NexoBotError(
             'Channel template contains forbidden characters',
             ErrorTypes.VALIDATION,
-            'Channel template cannot contain @, #, :, or backtick characters.'
+            'Die Kanalvorlage darf keine @, #, : oder Backticks enthalten.'
         );
     }
 
@@ -84,7 +84,7 @@ export function validateChannelNameTemplate(template: unknown): boolean {
             throw new NexoBotError(
                 'Channel template contains unknown placeholders',
                 ErrorTypes.VALIDATION,
-                `Unknown placeholder: ${placeholder}. Allowed placeholders are ${Array.from(ALLOWED_TEMPLATE_PLACEHOLDERS).join(', ')}`
+                `Unbekannter Platzhalter: ${placeholder}. Erlaubte Platzhalter: ${Array.from(ALLOWED_TEMPLATE_PLACEHOLDERS).join(', ')}`
             );
         }
     }
@@ -99,7 +99,7 @@ export function validateBitrate(bitrate: string | number): boolean {
         throw new NexoBotError(
             'Bitrate must be a valid number',
             ErrorTypes.VALIDATION,
-            'Please enter a valid number for bitrate.'
+            'Bitte gib eine gültige Zahl für die Bitrate ein.'
         );
     }
 
@@ -107,7 +107,7 @@ export function validateBitrate(bitrate: string | number): boolean {
         throw new NexoBotError(
             'Bitrate out of valid range',
             ErrorTypes.VALIDATION,
-            'Bitrate must be between 8 and 384 kbps.'
+            'Die Bitrate muss zwischen 8 und 384 kbps liegen.'
         );
     }
 
@@ -121,7 +121,7 @@ export function validateUserLimit(limit: string | number): boolean {
         throw new NexoBotError(
             'User limit must be a valid number',
             ErrorTypes.VALIDATION,
-            'Please enter a valid number for user limit.'
+            'Bitte gib eine gültige Zahl für das Nutzerlimit ein.'
         );
     }
 
@@ -129,7 +129,7 @@ export function validateUserLimit(limit: string | number): boolean {
         throw new NexoBotError(
             'User limit out of valid range',
             ErrorTypes.VALIDATION,
-            'User limit must be between 0 (no limit) and 99.'
+            'Das Nutzerlimit muss zwischen 0 (kein Limit) und 99 liegen.'
         );
     }
 
@@ -152,7 +152,7 @@ export function formatChannelName(template: string, variables: ChannelNameVariab
         const entries: [string, unknown][] = Object.entries(variables);
         for (const [key, value] of entries) {
             if (value === null || value === undefined) {
-                sanitized[key] = 'Unknown';
+                sanitized[key] = 'Unbekannt';
             } else {
                 
                 sanitized[key] = String(value)
@@ -165,14 +165,14 @@ export function formatChannelName(template: string, variables: ChannelNameVariab
         }
 
         const replacements = {
-            '{username}': sanitized.username || 'User',
-            '{user_tag}': sanitized.userTag || 'User#0000',
-            '{displayName}': sanitized.displayName || 'User',
-            '{display_name}': sanitized.displayName || 'User',
+            '{username}': sanitized.username || 'Nutzer',
+            '{user_tag}': sanitized.userTag || 'Nutzer#0000',
+            '{displayName}': sanitized.displayName || 'Nutzer',
+            '{display_name}': sanitized.displayName || 'Nutzer',
             '{guildName}': sanitized.guildName || 'Server',
             '{guild_name}': sanitized.guildName || 'Server',
-            '{channelName}': sanitized.channelName || 'Voice Channel',
-            '{channel_name}': sanitized.channelName || 'Voice Channel',
+            '{channelName}': sanitized.channelName || 'Sprachkanal',
+            '{channel_name}': sanitized.channelName || 'Sprachkanal',
         };
 
         let formatted = safeTemplate;
@@ -188,7 +188,7 @@ export function formatChannelName(template: string, variables: ChannelNameVariab
             .trim();
 
         if (formatted.length === 0) {
-            formatted = 'Voice Channel';
+            formatted = 'Sprachkanal';
         } else if (formatted.length > CHANNEL_NAME_MAX_LENGTH) {
             formatted = formatted.substring(0, CHANNEL_NAME_MAX_LENGTH);
         }
@@ -213,7 +213,7 @@ export async function initializeJoinToCreate(
             throw new NexoBotError(
                 'Database service not available',
                 ErrorTypes.DATABASE,
-                'System error occurred. Please try again.'
+                'Ein Systemfehler ist aufgetreten. Bitte versuch es erneut.'
             );
         }
 
@@ -221,7 +221,7 @@ export async function initializeJoinToCreate(
             throw new NexoBotError(
                 'Missing required guild or channel ID',
                 ErrorTypes.VALIDATION,
-                'Invalid guild or channel information provided.'
+                'Ungültige Server- oder Kanalangaben.'
             );
         }
 
@@ -241,7 +241,7 @@ export async function initializeJoinToCreate(
             throw new NexoBotError(
                 'Channel already configured as Join to Create trigger',
                 ErrorTypes.VALIDATION,
-                'This channel is already set up as a Join to Create trigger.'
+                'Dieser Kanal ist bereits als Join-to-Create-Auslöser eingerichtet.'
             );
         }
 
@@ -249,7 +249,7 @@ export async function initializeJoinToCreate(
             throw new NexoBotError(
                 'Guild already has a Join to Create trigger configured',
                 ErrorTypes.VALIDATION,
-                'This server already has a Join to Create channel configured. Use `/jointocreate dashboard` to modify it, or remove it before creating a new one.',
+                'Dieser Server hat bereits einen Join-to-Create-Kanal. Nutze `/jointocreate dashboard`, um ihn zu bearbeiten, oder entferne ihn, bevor du einen neuen erstellst.',
                 {
                     guildId,
                     existingTriggerChannelId: config.triggerChannels[0],
@@ -281,7 +281,7 @@ export async function initializeJoinToCreate(
             throw new NexoBotError(
                 'Failed to save Join to Create configuration',
                 ErrorTypes.DATABASE,
-                'Failed to set up Join to Create system. Please try again.'
+                'Join-to-Create konnte nicht eingerichtet werden. Bitte versuch es erneut.'
             );
         }
 
@@ -296,7 +296,7 @@ export async function initializeJoinToCreate(
         throw new NexoBotError(
             `Failed to initialize Join to Create: ${(error as Error).message}`,
             ErrorTypes.DATABASE,
-            'Failed to set up Join to Create system.'
+            'Join-to-Create konnte nicht eingerichtet werden.'
         );
     }
 }
@@ -312,7 +312,7 @@ export async function updateChannelConfig(
             throw new NexoBotError(
                 'Database service not available',
                 ErrorTypes.DATABASE,
-                'Database service is currently unavailable. Please try again later.'
+                'Die Datenbank ist gerade nicht erreichbar. Bitte versuch es später erneut.'
             );
         }
 
@@ -322,7 +322,7 @@ export async function updateChannelConfig(
             throw new NexoBotError(
                 'Channel is not configured as a Join to Create trigger',
                 ErrorTypes.VALIDATION,
-                'This channel is not set up as a Join to Create trigger.'
+                'Dieser Kanal ist nicht als Join-to-Create-Auslöser eingerichtet.'
             );
         }
 
@@ -362,7 +362,7 @@ export async function updateChannelConfig(
         throw new NexoBotError(
             `Failed to update channel config: ${(error as Error).message}`,
             ErrorTypes.DATABASE,
-            'Failed to update configuration.'
+            'Die Konfiguration konnte nicht aktualisiert werden.'
         );
     }
 }
@@ -373,7 +373,7 @@ export async function removeTriggerChannel(client: NexoClient, guildId: string, 
             throw new NexoBotError(
                 'Database service not available',
                 ErrorTypes.DATABASE,
-                'Database service is currently unavailable. Please try again later.'
+                'Die Datenbank ist gerade nicht erreichbar. Bitte versuch es später erneut.'
             );
         }
 
@@ -384,7 +384,7 @@ export async function removeTriggerChannel(client: NexoClient, guildId: string, 
             throw new NexoBotError(
                 'Channel not found in Join to Create triggers',
                 ErrorTypes.VALIDATION,
-                'This channel is not configured as a Join to Create trigger.'
+                'Dieser Kanal ist nicht als Join-to-Create-Auslöser eingerichtet.'
             );
         }
 
@@ -416,7 +416,7 @@ export async function removeTriggerChannel(client: NexoClient, guildId: string, 
         throw new NexoBotError(
             `Failed to remove trigger channel: ${(error as Error).message}`,
             ErrorTypes.DATABASE,
-            'Failed to remove trigger channel.'
+            'Der Auslöser-Kanal konnte nicht entfernt werden.'
         );
     }
 }
@@ -427,7 +427,7 @@ export async function getConfiguration(client: NexoClient, guildId: string): Pro
             throw new NexoBotError(
                 'Database service not available',
                 ErrorTypes.DATABASE,
-                'Database service is currently unavailable. Please try again later.'
+                'Die Datenbank ist gerade nicht erreichbar. Bitte versuch es später erneut.'
             );
         }
 
@@ -440,7 +440,7 @@ export async function getConfiguration(client: NexoClient, guildId: string): Pro
         throw new NexoBotError(
             `Failed to retrieve configuration: ${(error as Error).message}`,
             ErrorTypes.DATABASE,
-            'Failed to retrieve settings.'
+            'Die Einstellungen konnten nicht geladen werden.'
         );
     }
 }
@@ -463,7 +463,7 @@ export async function getChannelConfiguration(client: NexoClient, guildId: strin
             throw new NexoBotError(
                 'Channel is not a valid Join to Create trigger',
                 ErrorTypes.VALIDATION,
-                'This channel is not set up as a Join to Create trigger.'
+                'Dieser Kanal ist nicht als Join-to-Create-Auslöser eingerichtet.'
             );
         }
 
@@ -479,7 +479,7 @@ export async function getChannelConfiguration(client: NexoClient, guildId: strin
         throw new NexoBotError(
             `Failed to get channel configuration: ${(error as Error).message}`,
             ErrorTypes.DATABASE,
-            'Failed to retrieve channel configuration. Please try again.'
+            'Die Kanalkonfiguration konnte nicht geladen werden. Bitte versuch es erneut.'
         );
     }
 }
@@ -503,9 +503,9 @@ export async function logConfigurationChange(client: NexoClient, guildId: string
             guildId,
             eventType: EVENT_TYPES.COUNTER_CONFIG,
             data: {
-                title: 'Join to Create Updated',
+                title: 'Join-to-Create aktualisiert',
                 lines: [
-                    formatLogLine('Action', action),
+                    formatLogLine('Aktion', action),
                     formatLogLine('Details', typeof details === 'string' ? details : JSON.stringify(details)),
                 ],
                 userId,
@@ -546,7 +546,7 @@ export async function createTemporaryChannel(
             validateBitrate(bitrate / 1000);
         }
 
-        const channelName = formatChannelName(nameTemplate || '{username}\'s Room', {
+        const channelName = formatChannelName(nameTemplate || 'Raum von {username}', {
             username: member.user.username,
             displayName: member.displayName,
             userTag: member.user.tag,
@@ -586,7 +586,7 @@ export async function createTemporaryChannel(
         throw new NexoBotError(
             `Failed to create temporary channel: ${(error as Error).message}`,
             ErrorTypes.DISCORD_API,
-            'Failed to create your temporary voice channel. Please contact an administrator.'
+            'Dein temporärer Sprachkanal konnte nicht erstellt werden. Bitte wende dich an einen Administrator.'
         );
     }
 }

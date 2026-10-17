@@ -7,10 +7,10 @@ import type { Command } from '../../../types/index.js';
 export default {
     data: new SlashCommandBuilder()
         .setName('time')
-        .setDescription('Get the current time in different timezones')
+        .setDescription('Zeigt die aktuelle Uhrzeit in verschiedenen Zeitzonen')
         .addStringOption(option =>
             option.setName('timezone')
-                .setDescription('The timezone to display (e.g., UTC, America/New_York)')
+                .setDescription('Die anzuzeigende Zeitzone (z. B. UTC, Europe/Berlin)')
                 .setRequired(false)),
 
     async execute(interaction) {
@@ -21,7 +21,7 @@ export default {
 
                 let timeString;
                 try {
-                    timeString = new Date().toLocaleString('en-US', {
+                    timeString = new Date().toLocaleString('de-DE', {
                         timeZone: timezone,
                         weekday: 'long',
                         year: 'numeric',
@@ -36,7 +36,7 @@ export default {
                     logger.warn(`Invalid timezone requested: ${timezone}`);
                     await replyUserError(interaction, {
                         type: ErrorTypes.VALIDATION,
-                        message: 'Invalid timezone. Please use a valid timezone identifier (e.g., UTC, America/New_York, Europe/London)',
+                        message: 'Ungültige Zeitzone. Bitte nutze eine gültige Zeitzonen-ID (z. B. UTC, Europe/Berlin, America/New_York)',
                     });
                     return;
                 }
@@ -45,15 +45,15 @@ export default {
                 const unixTimestamp = Math.floor(now.getTime() / 1000);
 
                 const embed = successEmbed(
-                    '🕒 Current Time',
+                    '🕒 Aktuelle Uhrzeit',
                     `**${timezone}:** ${timeString}\n` +
-                    `**Unix Timestamp:** \`${unixTimestamp}\`\n` +
-                    `**ISO String:** \`${now.toISOString()}\``
+                    `**Unix-Zeitstempel:** \`${unixTimestamp}\`\n` +
+                    `**ISO-String:** \`${now.toISOString()}\``
                 );
 
                 await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
             },
-            'Failed to get current time. Please try again.',
+            'Die aktuelle Uhrzeit konnte nicht abgerufen werden. Versuch es noch mal.',
             {
                 autoDefer: true,
                 deferOptions: { flags: MessageFlags.Ephemeral }

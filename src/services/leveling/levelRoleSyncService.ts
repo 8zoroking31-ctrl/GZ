@@ -31,7 +31,7 @@ async function tryAwardRole(member: GuildMember, roleId: string, level: number):
     const role = member.guild.roles.cache.get(roleId) || (await member.guild.roles.fetch(roleId).catch(() => null));
     if (!role || member.roles.cache.has(roleId)) return false;
 
-    await member.roles.add(role, `Level ${level} reward (startup sync)`);
+    await member.roles.add(role, `Belohnung für Level ${level} (Sync beim Start)`);
     return true;
 }
 

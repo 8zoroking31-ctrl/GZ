@@ -14,21 +14,21 @@ export function validateBirthday(month: unknown, day: unknown): BirthdayValidati
   if (typeof month !== 'number' || typeof day !== 'number') {
     return {
       isValid: false,
-      error: 'Month and day must be numbers'
+      error: 'Monat und Tag müssen Zahlen sein.'
     };
   }
 
   if (month < 1 || month > 12) {
     return {
       isValid: false,
-      error: 'Month must be between 1 and 12'
+      error: 'Der Monat muss zwischen 1 und 12 liegen.'
     };
   }
 
   if (day < 1 || day > 31) {
     return {
       isValid: false,
-      error: 'Day must be between 1 and 31'
+      error: 'Der Tag muss zwischen 1 und 31 liegen.'
     };
   }
 
@@ -38,7 +38,7 @@ export function validateBirthday(month: unknown, day: unknown): BirthdayValidati
   if (isNaN(date.getTime()) || date.getMonth() !== month - 1 || date.getDate() !== day) {
     return {
       isValid: false,
-      error: 'Invalid date. Please check the month and day combination (e.g., February 29th only exists in leap years)'
+      error: 'Ungültiges Datum. Bitte prüfe die Kombination aus Monat und Tag (z. B. gibt es den 29. Februar nur in Schaltjahren).'
     };
   }
 
@@ -72,7 +72,7 @@ export async function setBirthday(client: NexoClient, guildId: string, userId: s
       throw new NexoBotError(
         'Failed to save birthday to database',
         ErrorTypes.DATABASE,
-        'Failed to set your birthday. Please try again later.',
+        'Dein Geburtstag konnte nicht gespeichert werden. Bitte versuch es später erneut.',
         { userId, guildId, month, day }
       );
     }
@@ -177,7 +177,7 @@ export async function deleteBirthday(client: NexoClient, guildId: string, userId
       throw new NexoBotError(
         'Failed to delete birthday from database',
         ErrorTypes.DATABASE,
-        'Failed to remove your birthday. Please try again.',
+        'Dein Geburtstag konnte nicht entfernt werden. Bitte versuch es erneut.',
         { userId, guildId }
       );
     }
@@ -317,7 +317,7 @@ export async function checkBirthdays(client: NexoClient): Promise<void> {
           if (birthdayRoleId) {
             const member = await guild.members.fetch(userId).catch(() => null);
             if (member && member.roles.cache.has(birthdayRoleId)) {
-              await member.roles.remove(birthdayRoleId, "Birthday role expired");
+              await member.roles.remove(birthdayRoleId, "Geburtstagsrolle abgelaufen");
             }
           }
           delete updatedTrackingData[userId];
@@ -340,7 +340,7 @@ export async function checkBirthdays(client: NexoClient): Promise<void> {
             birthdayMembers.push(member);
             if (birthdayRoleId) {
               try {
-                await member.roles.add(birthdayRoleId, "Happy Birthday! 🎉");
+                await member.roles.add(birthdayRoleId, "Alles Gute zum Geburtstag! 🎉");
                 updatedTrackingData[userId] = true;
               } catch (error) {
                   logger.error(`Error adding birthday role to ${member.user.tag}:`, error);
@@ -356,10 +356,10 @@ export async function checkBirthdays(client: NexoClient): Promise<void> {
         
         await channel.send({
           embeds: [{
-            title: '🎉 Happy Birthday! 🎂',
-            description: `A very happy birthday to ${mentionList}! Wishing you an amazing day! 🎈`,
+            title: '🎉 Alles Gute zum Geburtstag! 🎂',
+            description: `Alles Liebe zum Geburtstag, ${mentionList}! Auf einen großartigen Tag! 🎈`,
             color: 0xff69b4,
-            footer: { text: 'Birthday Bot' },
+            footer: { text: 'Nexo Geburtstage' },
             timestamp: new Date().toISOString()
           }]
         });

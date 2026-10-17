@@ -161,9 +161,9 @@ export function createMockInteraction(
 
         return {
           id,
-          username: 'Unknown',
+          username: 'Unbekannt',
           bot: false,
-          tag: 'Unknown#0000',
+          tag: 'Unbekannt#0000',
         };
       },
       getMember: (name: string) => {

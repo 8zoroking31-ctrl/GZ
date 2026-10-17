@@ -9,11 +9,11 @@ import { InteractionHelper } from '../../../utils/interactionHelper.js';
 export default {
     data: new SlashCommandBuilder()
         .setName("untimeout")
-        .setDescription("Remove timeout from a user")
+        .setDescription("Den Timeout eines Nutzers aufheben")
         .addUserOption((option) =>
             option
                 .setName("target")
-                .setDescription("User to untimeout")
+                .setDescription("Nutzer, dessen Timeout aufgehoben werden soll")
                 .setRequired(true),
         )
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
@@ -37,7 +37,7 @@ export default {
             throw new NexoBotError(
                 'Missing target user',
                 ErrorTypes.USER_INPUT,
-                'You must specify a user to untimeout.',
+                'Du musst einen Nutzer angeben, dessen Timeout aufgehoben werden soll.',
                 { subtype: 'invalid_user' },
             );
         }
@@ -46,7 +46,7 @@ export default {
             throw new NexoBotError(
                 "Target not found",
                 ErrorTypes.USER_INPUT,
-                "The target user is not currently in this server.",
+                "Der Nutzer ist gerade nicht auf diesem Server.",
             );
         }
 
@@ -59,7 +59,7 @@ export default {
         await InteractionHelper.safeEditReply(interaction, {
             embeds: [
                 successEmbed(
-                    `🔓 **Removed timeout** from ${targetUser.tag}`,
+                    `🔓 **Timeout aufgehoben** für ${targetUser.tag}`,
                 ),
             ],
         });

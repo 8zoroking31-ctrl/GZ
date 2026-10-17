@@ -9,22 +9,22 @@ export default {
     slashOnly: true,
     data: new SlashCommandBuilder()
         .setName('wipedata')
-        .setDescription('Delete all your personal data from the bot (irreversible)'),
+        .setDescription('Lösche alle deine persönlichen Daten aus dem Bot (unwiderruflich)'),
 
     async execute(interaction, guildConfig, client) {
         const warningMessage = 
-            `⚠️ **THIS ACTION IS IRREVERSIBLE!** ⚠️\n\n` +
-            `This will permanently delete **ALL** your data from this server including:\n` +
-            `• 💰 Economy balance (wallet & bank)\n` +
-            `• 📊 Levels and XP\n` +
-            `• 🎒 Inventory items\n` +
-            `• 🛍️ Shop purchases\n` +
-            `• 🎂 Birthday information\n` +
-            `• 🔢 Counter data\n` +
-            `• 📋 All other personal data\n\n` +
-            `**This cannot be undone. Are you absolutely sure?**`;
+            `⚠️ **DIESE AKTION KANN NICHT RÜCKGÄNGIG GEMACHT WERDEN!** ⚠️\n\n` +
+            `Damit werden **ALLE** deine Daten auf diesem Server dauerhaft gelöscht, darunter:\n` +
+            `• 💰 Kontostand (Geldbörse & Bank)\n` +
+            `• 📊 Level und XP\n` +
+            `• 🎒 Items im Inventar\n` +
+            `• 🛍️ Shop-Käufe\n` +
+            `• 🎂 Geburtstagsdaten\n` +
+            `• 🔢 Zählerdaten\n` +
+            `• 📋 Alle weiteren persönlichen Daten\n\n` +
+            `**Das lässt sich nicht rückgängig machen. Bist du dir ganz sicher?**`;
 
-        const embed = warningEmbed('Wipe All Data', warningMessage);
+        const embed = warningEmbed('Alle Daten löschen', warningMessage);
 
         const confirmButtons = getConfirmationButtons('wipedata');
 

@@ -31,7 +31,7 @@ function parseValue(key: string, rawValue: string): string | boolean | null {
         }
         const id = extractId(value);
         if (!id) {
-            throw new Error('Please provide a valid mention or ID.');
+            throw new Error('Bitte gib eine gültige Erwähnung oder ID an.');
         }
         return id;
     }
@@ -43,12 +43,12 @@ function parseValue(key: string, rawValue: string): string | boolean | null {
         if (['no', 'false', 'disabled', 'disable'].includes(value.toLowerCase())) {
             return false;
         }
-        throw new Error('Please enter either yes or no.');
+        throw new Error('Bitte gib entweder „yes“ oder „no“ ein.');
     }
 
     if (key === 'prefix') {
         if (value.length < 1 || value.length > 10 || /\s/.test(value)) {
-            throw new Error('Prefix must be 1-10 characters with no spaces.');
+            throw new Error('Der Präfix muss 1–10 Zeichen lang sein und darf keine Leerzeichen enthalten.');
         }
         return value;
     }
@@ -60,7 +60,7 @@ function resolveModalValue(key: string, interaction: ModalSubmitInteraction): st
     if (key === 'logChannelId') {
         const channelId = (interaction.fields.getField('log_channel') as SelectMenuModalData)?.values?.[0];
         if (!channelId) {
-            throw new Error('Please select a log channel.');
+            throw new Error('Bitte wähl einen Log-Kanal aus.');
         }
         return channelId;
     }
@@ -68,7 +68,7 @@ function resolveModalValue(key: string, interaction: ModalSubmitInteraction): st
     if (key === 'modRole') {
         const roleId = (interaction.fields.getField('mod_role') as SelectMenuModalData)?.values?.[0];
         if (!roleId) {
-            throw new Error('Please select a moderator role.');
+            throw new Error('Bitte wähl eine Moderator-Rolle aus.');
         }
         return roleId;
     }
@@ -80,15 +80,15 @@ function resolveModalValue(key: string, interaction: ModalSubmitInteraction): st
 function buildSuccessMessage(key: string, value: string | boolean | null, guild: Guild | null): string {
     if (key === 'logChannelId') {
         const channel = guild?.channels?.cache?.get(String(value));
-        return `Log channel set to ${channel ?? `<#${value}>`}.`;
+        return `Log-Kanal auf ${channel ?? `<#${value}>`} gesetzt.`;
     }
 
     if (key === 'modRole') {
         const role = guild?.roles?.cache?.get(String(value));
-        return `Moderator role set to ${role ?? `<@&${value}>`}.`;
+        return `Moderator-Rolle auf ${role ?? `<@&${value}>`} gesetzt.`;
     }
 
-    return `The setting \`${key}\` has been updated successfully.`;
+    return `Die Einstellung \`${key}\` wurde erfolgreich aktualisiert.`;
 }
 
 export default {
@@ -101,12 +101,12 @@ export default {
             await ConfigService.updateSetting(interaction.client, guildId, key, value, interaction.user.id);
 
             await interaction.reply({
-                embeds: [successEmbed('Configuration Updated', buildSuccessMessage(key, value, interaction.guild))],
+                embeds: [successEmbed('Konfiguration aktualisiert', buildSuccessMessage(key, value, interaction.guild))],
                 flags: MessageFlags.Ephemeral,
             });
         } catch (error) {
             logger.error('Config modal handler error:', error);
-            await replyUserError(interaction, { type: ErrorTypes.CONFIGURATION, message: (error instanceof Error && error.message) || 'Please try again.' });
+            await replyUserError(interaction, { type: ErrorTypes.CONFIGURATION, message: (error instanceof Error && error.message) || 'Bitte versuch es erneut.' });
         }
     },
 } satisfies ModalHandler;

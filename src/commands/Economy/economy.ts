@@ -5,7 +5,7 @@ import shopConfigCommand from './modules/shop-config.js';
 
 export default createRouterCommand({
   name: 'economy',
-  description: 'Configure the economy system',
+  description: 'Wirtschaftssystem konfigurieren',
   category: 'Economy',
   defaultMemberPermissions: PermissionFlagsBits.ManageGuild,
   routes: [

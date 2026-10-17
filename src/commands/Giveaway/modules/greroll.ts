@@ -16,11 +16,11 @@ import { InteractionHelper } from '../../../utils/interactionHelper.js';
 export default {
     data: new SlashCommandBuilder()
         .setName("greroll")
-        .setDescription("Rerolls the winner(s) for an ended giveaway.")
+        .setDescription("Zieht neue Gewinner für ein beendetes Giveaway.")
         .addStringOption((option) =>
             option
                 .setName("messageid")
-                .setDescription("The message ID of the ended giveaway.")
+                .setDescription("Die Nachrichten-ID des beendeten Giveaways.")
                 .setRequired(true),
         )
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
@@ -30,7 +30,7 @@ export default {
             throw new NexoBotError(
                 'Giveaway command used outside guild',
                 ErrorTypes.VALIDATION,
-                'This command can only be used in a server.',
+                'Dieser Command kann nur auf einem Server genutzt werden.',
                 { userId: interaction.user.id }
             );
         }
@@ -39,7 +39,7 @@ export default {
             throw new NexoBotError(
                 'User lacks ManageGuild permission',
                 ErrorTypes.PERMISSION,
-                "You need the 'Manage Server' permission to reroll a giveaway.",
+                "Du brauchst die Berechtigung „Server verwalten“, um neue Gewinner zu ziehen.",
                 { userId: interaction.user.id, guildId: interaction.guildId }
             );
         }
@@ -52,7 +52,7 @@ export default {
             throw new NexoBotError(
                 'Invalid message ID format',
                 ErrorTypes.VALIDATION,
-                'Please provide a valid message ID.',
+                'Bitte gib eine gültige Nachrichten-ID an.',
                 { providedId: messageId }
             );
         }
@@ -68,7 +68,7 @@ export default {
             throw new NexoBotError(
                 `Giveaway not found: ${messageId}`,
                 ErrorTypes.VALIDATION,
-                "No giveaway was found with that message ID in the database.",
+                "In der Datenbank wurde kein Giveaway mit dieser Nachrichten-ID gefunden.",
                 { messageId, guildId: interaction.guildId }
             );
         }
@@ -77,7 +77,7 @@ export default {
             throw new NexoBotError(
                 `Giveaway still active: ${messageId}`,
                 ErrorTypes.VALIDATION,
-                "This giveaway is still active. Please use `/giveaway end` to end it first.",
+                "Dieses Giveaway läuft noch. Beende es zuerst mit `/giveaway end`.",
                 { messageId, status: 'active' }
             );
         }
@@ -88,7 +88,7 @@ export default {
             throw new NexoBotError(
                 `Insufficient participants for reroll: ${participants.length} < ${giveaway.winnerCount}`,
                 ErrorTypes.VALIDATION,
-                "Not enough entries to pick the required number of winners.",
+                "Nicht genug Teilnahmen, um die nötige Anzahl an Gewinnern zu ziehen.",
                 { participantsCount: participants.length, winnersNeeded: giveaway.winnerCount }
             );
         }
@@ -125,8 +125,8 @@ export default {
             return InteractionHelper.safeReply(interaction, {
                 embeds: [
                     successEmbed(
-                        "Reroll Complete",
-                        "The new winners have been selected and saved to the database. Could not find channel to announce.",
+                        "Neu gezogen",
+                        "Die neuen Gewinner wurden gezogen und gespeichert. Der Kanal für die Ankündigung wurde nicht gefunden.",
                     ),
                 ],
                 flags: MessageFlags.Ephemeral,
@@ -157,11 +157,11 @@ export default {
                 : null;
             if (existingPingMsg) {
                 await existingPingMsg.edit({
-                    content: `🔄 **GIVEAWAY REROLL** 🔄 New winners for **${giveaway.prize}**: ${winnerMentions}!`,
+                    content: `🔄 **GIVEAWAY NEU GEZOGEN** 🔄 Neue Gewinner für **${giveaway.prize}**: ${winnerMentions}!`,
                 });
             } else {
                 const newPingMsg = await (channel as SendableChannels).send({
-                    content: `🔄 **GIVEAWAY REROLL** 🔄 New winners for **${giveaway.prize}**: ${winnerMentions}!`,
+                    content: `🔄 **GIVEAWAY NEU GEZOGEN** 🔄 Neue Gewinner für **${giveaway.prize}**: ${winnerMentions}!`,
                 });
                 updatedGiveaway.winnerPingMessageId = newPingMsg.id;
             }
@@ -174,22 +174,22 @@ export default {
                     guildId: interaction.guildId,
                     eventType: EVENT_TYPES.GIVEAWAY_REROLL,
                     data: {
-                        description: `Giveaway rerolled: ${giveaway.prize}`,
+                        description: `Giveaway neu gezogen: ${giveaway.prize}`,
                         channelId: giveaway.channelId,
                         userId: interaction.user.id,
                         fields: [
                             {
-                                name: 'Prize',
-                                value: giveaway.prize || 'Mystery Prize!',
+                                name: 'Preis',
+                                value: giveaway.prize || 'Überraschungspreis!',
                                 inline: true
                             },
                             {
-                                name: 'New Winners',
+                                name: 'Neue Gewinner',
                                 value: winnerMentions,
                                 inline: false
                             },
                             {
-                                name: 'Total Entries',
+                                name: 'Teilnahmen gesamt',
                                 value: participants.length.toString(),
                                 inline: true
                             }
@@ -203,8 +203,8 @@ export default {
             return InteractionHelper.safeReply(interaction, {
                 embeds: [
                     successEmbed(
-                        "Reroll Complete",
-                        `The new winners have been announced in ${channel}. (Original message not found).`,
+                        "Neu gezogen",
+                        `Die neuen Gewinner wurden in ${channel} bekannt gegeben. (Ursprüngliche Nachricht nicht gefunden.)`,
                     ),
                 ],
                 flags: MessageFlags.Ephemeral,
@@ -221,7 +221,7 @@ export default {
         const newRow = createGiveawayButtons(true);
 
         await message.edit({
-            content: "🔄 **GIVEAWAY REROLLED** 🔄",
+            content: "🔄 **GIVEAWAY NEU GEZOGEN** 🔄",
             embeds: [newEmbed],
             components: [newRow],
         });
@@ -235,11 +235,11 @@ export default {
             : null;
         if (existingPingMsg) {
             await existingPingMsg.edit({
-                content: `🔄 **REROLL WINNERS** 🔄 CONGRATULATIONS ${winnerMentions}! You are the new winner(s) for the **${giveaway.prize}** giveaway! Please contact the host <@${giveaway.hostId}> to claim your prize.`,
+                content: `🔄 **NEUE GEWINNER** 🔄 HERZLICHEN GLÜCKWUNSCH ${winnerMentions}! Du hast das Giveaway **${giveaway.prize}** gewonnen! Melde dich beim Host <@${giveaway.hostId}>, um deinen Preis abzuholen.`,
             });
         } else {
             const newPingMsg = await (channel as SendableChannels).send({
-                content: `🔄 **REROLL WINNERS** 🔄 CONGRATULATIONS ${winnerMentions}! You are the new winner(s) for the **${giveaway.prize}** giveaway! Please contact the host <@${giveaway.hostId}> to claim your prize.`,
+                content: `🔄 **NEUE GEWINNER** 🔄 HERZLICHEN GLÜCKWUNSCH ${winnerMentions}! Du hast das Giveaway **${giveaway.prize}** gewonnen! Melde dich beim Host <@${giveaway.hostId}>, um deinen Preis abzuholen.`,
             });
             updatedGiveaway.winnerPingMessageId = newPingMsg.id;
         }
@@ -252,22 +252,22 @@ export default {
                 guildId: interaction.guildId,
                 eventType: EVENT_TYPES.GIVEAWAY_REROLL,
                 data: {
-                    description: `Giveaway rerolled: ${giveaway.prize}`,
+                    description: `Giveaway neu gezogen: ${giveaway.prize}`,
                     channelId: giveaway.channelId,
                     userId: interaction.user.id,
                     fields: [
                         {
-                            name: 'Prize',
-                            value: giveaway.prize || 'Mystery Prize!',
+                            name: 'Preis',
+                            value: giveaway.prize || 'Überraschungspreis!',
                             inline: true
                         },
                         {
-                            name: 'New Winners',
+                            name: 'Neue Gewinner',
                             value: winnerMentions,
                             inline: false
                         },
                         {
-                            name: 'Total Entries',
+                            name: 'Teilnahmen gesamt',
                             value: participants.length.toString(),
                             inline: true
                         }
@@ -281,8 +281,8 @@ export default {
         return InteractionHelper.safeReply(interaction, {
             embeds: [
                 successEmbed(
-                    "Reroll Successful ✅",
-                    `Successfully rerolled the giveaway for **${giveaway.prize}** in ${channel}. Selected ${newWinners.length} new winner(s).`,
+                    "Erfolgreich neu gezogen ✅",
+                    `Für das Giveaway **${giveaway.prize}** in ${channel} wurden ${newWinners.length} neue Gewinner gezogen.`,
                 ),
             ],
             flags: MessageFlags.Ephemeral,

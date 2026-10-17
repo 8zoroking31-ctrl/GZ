@@ -99,7 +99,7 @@ export function buildCommandRegistry(client: NexoClient): Map<string, CommandReg
     // Add the main command
     categories.get(categoryKey)!.commands.push({
       name: command.data.name,
-      description: (command.data as CommandData & { description?: string }).description || 'No description',
+      description: (command.data as CommandData & { description?: string }).description || 'Keine Beschreibung',
       protected: PROTECTED_COMMANDS.has(command.data.name.toLowerCase()),
       isSubcommand: false,
     });
@@ -112,7 +112,7 @@ export function buildCommandRegistry(client: NexoClient): Map<string, CommandReg
         const subcommandName = `${command.data.name} ${option.name}`;
         categories.get(categoryKey)!.commands.push({
           name: subcommandName,
-          description: option.description || 'No description',
+          description: option.description || 'Keine Beschreibung',
           protected: false,
           isSubcommand: true,
           parentCommand: command.data.name,
@@ -125,7 +125,7 @@ export function buildCommandRegistry(client: NexoClient): Map<string, CommandReg
             const subcommandName = `${command.data.name} ${option.name} ${sub.name}`;
             categories.get(categoryKey)!.commands.push({
               name: subcommandName,
-              description: sub.description || 'No description',
+              description: sub.description || 'Keine Beschreibung',
               protected: false,
               isSubcommand: true,
               parentCommand: command.data.name,
@@ -284,12 +284,12 @@ export async function disableCommand(client: NexoClient, guildId: string, comman
   const target = resolveCommandTarget(client, normalizedName);
 
   if (!target) {
-    throw new Error(`Unknown command: \`${normalizedName}\`.`);
+    throw new Error(`Unbekannter Command: \`${normalizedName}\`.`);
   }
 
   const isProtectedTarget = isProtectedCommand(normalizedName) || (target.isSubcommand && isProtectedCommand(target.parentCommand));
   if (isProtectedTarget) {
-    throw new Error(`The \`${normalizedName}\` command cannot be disabled.`);
+    throw new Error(`Der Command \`${normalizedName}\` kann nicht deaktiviert werden.`);
   }
 
   const config = await getGuildConfig(client, guildId, context);
@@ -305,7 +305,7 @@ export async function enableCommand(client: NexoClient, guildId: string, command
   const target = resolveCommandTarget(client, normalizedName);
 
   if (!target) {
-    throw new Error(`Unknown command: \`${normalizedName}\`.`);
+    throw new Error(`Unbekannter Command: \`${normalizedName}\`.`);
   }
 
   const config = await getGuildConfig(client, guildId, context);
@@ -321,7 +321,7 @@ export async function disableCategory(client: NexoClient, guildId: string, categ
   const category = getCategoryRegistry(client, normalizedKey);
 
   if (!category) {
-    throw new Error(`Unknown category: \`${categoryKey}\`.`);
+    throw new Error(`Unbekannte Kategorie: \`${categoryKey}\`.`);
   }
 
   const config = await getGuildConfig(client, guildId, context);
@@ -337,7 +337,7 @@ export async function enableCategory(client: NexoClient, guildId: string, catego
   const category = getCategoryRegistry(client, normalizedKey);
 
   if (!category) {
-    throw new Error(`Unknown category: \`${categoryKey}\`.`);
+    throw new Error(`Unbekannte Kategorie: \`${categoryKey}\`.`);
   }
 
   const config = await getGuildConfig(client, guildId, context);
@@ -353,7 +353,7 @@ export async function resetCategoryCommands(client: NexoClient, guildId: string,
   const category = getCategoryRegistry(client, normalizedKey);
 
   if (!category) {
-    throw new Error(`Unknown category: \`${categoryKey}\`.`);
+    throw new Error(`Unbekannte Kategorie: \`${categoryKey}\`.`);
   }
 
   const config = await getGuildConfig(client, guildId, context);

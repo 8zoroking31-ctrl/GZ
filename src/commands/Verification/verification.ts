@@ -4,7 +4,7 @@ import autoverifyCommand from './modules/autoVerify.js';
 
 export default createRouterCommand({
   name: 'verification',
-  description: 'Manage member verification',
+  description: 'Verifizierung von Mitgliedern verwalten',
   category: 'Verification',
   routes: [
     { legacyName: 'verification', module: verificationCommand, spread: true },

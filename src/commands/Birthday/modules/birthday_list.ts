@@ -16,8 +16,8 @@ export default {
         if (sortedBirthdays.length === 0) {
             const embed = new EmbedBuilder()
                 .setColor(0xFF0000)
-                .setTitle('No Birthdays')
-                .setDescription('No birthdays have been set in this server yet.');
+                .setTitle('Keine Geburtstage')
+                .setDescription('Auf diesem Server wurden noch keine Geburtstage eingetragen.');
             return await InteractionHelper.safeEditReply(interaction, {
                 embeds: [embed]
             });
@@ -36,7 +36,7 @@ export default {
                 continue;
             }
             displayIndex++;
-            birthdayList += `${displayIndex}. <@${birthday.userId}> - ${birthday.monthName} ${birthday.day}\n`;
+            birthdayList += `${displayIndex}. <@${birthday.userId}> - ${birthday.day}. ${birthday.monthName}\n`;
         }
 
         if (fetchedMembers && staleUserIds.length > 0) {
@@ -48,19 +48,19 @@ export default {
         if (displayIndex === 0) {
             const embed = new EmbedBuilder()
                 .setColor(0xFF0000)
-                .setTitle('No Birthdays')
-                .setDescription('No birthdays have been set by current server members.');
+                .setTitle('Keine Geburtstage')
+                .setDescription('Keines der aktuellen Mitglieder hat einen Geburtstag eingetragen.');
             return await InteractionHelper.safeEditReply(interaction, {
                 embeds: [embed]
             });
         }
 
-        birthdayList = `**${displayIndex} birthday${displayIndex !== 1 ? 's' : ''} in ${interaction.guild!.name}**\n\n` + birthdayList;
+        birthdayList = `**${displayIndex} Geburtstag${displayIndex !== 1 ? 'e' : ''} auf ${interaction.guild!.name}**\n\n` + birthdayList;
 
         const embed = new EmbedBuilder()
             .setColor(0x00FF00)
-            .setTitle('Server Birthdays')
-            .setDescription(`${birthdayList}\n\nTotal: ${displayIndex} birthday${displayIndex !== 1 ? 's' : ''}`);
+            .setTitle('Geburtstage auf dem Server')
+            .setDescription(`${birthdayList}\n\nGesamt: ${displayIndex} Geburtstag${displayIndex !== 1 ? 'e' : ''}`);
 
         await InteractionHelper.safeEditReply(interaction, {
             embeds: [embed]

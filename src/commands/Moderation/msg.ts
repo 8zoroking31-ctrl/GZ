@@ -7,7 +7,7 @@ import usernotesCommand from './modules/usernotes.js';
 
 export default createRouterCommand({
   name: 'msg',
-  description: 'Purge, send and build messages, user notes',
+  description: 'Nachrichten löschen, senden und erstellen, Nutzernotizen',
   category: 'Moderation',
   defaultMemberPermissions: PermissionFlagsBits.ManageMessages,
   routes: [

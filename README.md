@@ -54,7 +54,7 @@ npm run build
 npm start
 ```
 
-Für die Entwicklung startet `npm run dev` den Bot mit automatischem Neuladen direkt aus den TypeScript-Quellen. `npm run typecheck` prüft die Typen ohne Build.
+Für die Entwicklung startet `npm run dev` den Bot mit automatischem Neuladen direkt aus den TypeScript-Quellen. `npm run typecheck` prüft die Typen ohne Build. `npm test` führt die Tests aus.
 
 Eine lokale Datenbank lässt sich am einfachsten per Docker starten:
 

@@ -45,7 +45,7 @@ function validateGuildId(guildId: string): void {
         throw createError(
             `Invalid guild ID: ${guildId}`,
             ErrorTypes.VALIDATION,
-            'Invalid server ID provided.',
+            'Ungültige Server-ID angegeben.',
             { guildId }
         );
     }
@@ -56,7 +56,7 @@ function validateMessageId(messageId: string): void {
         throw createError(
             `Invalid message ID: ${messageId}`,
             ErrorTypes.VALIDATION,
-            'Invalid message ID provided.',
+            'Ungültige Nachrichten-ID angegeben.',
             { messageId }
         );
     }
@@ -67,7 +67,7 @@ function validateRoleId(roleId: string): void {
         throw createError(
             `Invalid role ID: ${roleId}`,
             ErrorTypes.VALIDATION,
-            'Invalid role ID provided.',
+            'Ungültige Rollen-ID angegeben.',
             { roleId }
         );
     }
@@ -90,7 +90,7 @@ async function validateRoleSafety(client: NexoClient, guildId: string, roleId: s
         throw createError(
             `Guild not found for role validation: ${guildId}`,
             ErrorTypes.VALIDATION,
-            'Server not found while validating reaction roles.',
+            'Beim Prüfen der Reaktionsrollen wurde der Server nicht gefunden.',
             { guildId, roleId }
         );
     }
@@ -100,7 +100,7 @@ async function validateRoleSafety(client: NexoClient, guildId: string, roleId: s
         throw createError(
             `Role not found: ${roleId}`,
             ErrorTypes.VALIDATION,
-            'One or more selected roles no longer exist.',
+            'Eine oder mehrere ausgewählte Rollen existieren nicht mehr.',
             { guildId, roleId }
         );
     }
@@ -109,7 +109,7 @@ async function validateRoleSafety(client: NexoClient, guildId: string, roleId: s
         throw createError(
             `Dangerous role permission detected: ${roleId}`,
             ErrorTypes.PERMISSION,
-            'For security reasons, high-privilege roles cannot be assigned through reaction roles.',
+            'Aus Sicherheitsgründen können Rollen mit weitreichenden Berechtigungen nicht über Reaktionsrollen vergeben werden.',
             { guildId, roleId, roleName: role.name, dangerousPermissions: DANGEROUS_PERMISSIONS }
         );
     }
@@ -119,7 +119,7 @@ async function validateRoleSafety(client: NexoClient, guildId: string, roleId: s
         throw createError(
             `Role above bot hierarchy: ${roleId}`,
             ErrorTypes.PERMISSION,
-            'I cannot assign this role because it is equal to or above my highest role.',
+            'Ich kann diese Rolle nicht vergeben, weil sie gleich hoch oder höher als meine höchste Rolle ist.',
             { guildId, roleId, rolePosition: role.position, botRolePosition: botHighestRole?.position }
         );
     }
@@ -141,7 +141,7 @@ export async function getReactionRoleMessage(client: NexoClient, guildId: string
         throw createError(
             `Database error retrieving reaction role message`,
             ErrorTypes.DATABASE,
-            'Failed to retrieve reaction role data. Please try again.',
+            'Die Reaktionsrollen-Daten konnten nicht geladen werden. Bitte versuch es erneut.',
             { guildId, messageId, originalError: (error as Error).message }
         );
     }
@@ -162,7 +162,7 @@ export async function createReactionRoleMessage(
             throw createError(
                 `Invalid channel ID: ${channelId}`,
                 ErrorTypes.VALIDATION,
-                'Invalid channel ID provided.',
+                'Ungültige Kanal-ID angegeben.',
                 { channelId }
             );
         }
@@ -171,7 +171,7 @@ export async function createReactionRoleMessage(
             throw createError(
                 'No roles provided',
                 ErrorTypes.VALIDATION,
-                'You must provide at least one role.',
+                'Du musst mindestens eine Rolle angeben.',
                 { roleIds }
             );
         }
@@ -180,7 +180,7 @@ export async function createReactionRoleMessage(
             throw createError(
                 `Too many roles: ${roleIds.length}`,
                 ErrorTypes.VALIDATION,
-                `You can only add up to ${MAX_ROLES_PER_MESSAGE} roles per reaction role message.`,
+                `Du kannst höchstens ${MAX_ROLES_PER_MESSAGE} Rollen pro Reaktionsrollen-Nachricht hinzufügen.`,
                 { roleIds, limit: MAX_ROLES_PER_MESSAGE }
             );
         }
@@ -211,7 +211,7 @@ export async function createReactionRoleMessage(
         throw createError(
             `Database error creating reaction role message`,
             ErrorTypes.DATABASE,
-            'Failed to save reaction role data. Please try again.',
+            'Die Reaktionsrollen-Daten konnten nicht gespeichert werden. Bitte versuch es erneut.',
             { guildId, messageId, originalError: (error as Error).message }
         );
     }
@@ -245,7 +245,7 @@ export async function addReactionRole(client: NexoClient, guildId: string, messa
         throw createError(
             `Database error adding reaction role`,
             ErrorTypes.DATABASE,
-            'Failed to add reaction role. Please try again.',
+            'Die Reaktionsrolle konnte nicht hinzugefügt werden. Bitte versuch es erneut.',
             { guildId, messageId, originalError: (error as Error).message }
         );
     }
@@ -276,7 +276,7 @@ export async function deleteReactionRoleMessage(client: NexoClient, guildId: str
         throw createError(
             `Database error deleting reaction role message`,
             ErrorTypes.DATABASE,
-            'Failed to delete reaction role message. Please try again.',
+            'Die Reaktionsrollen-Nachricht konnte nicht gelöscht werden. Bitte versuch es erneut.',
             { guildId, messageId, originalError: (error as Error).message }
         );
     }
@@ -313,7 +313,7 @@ export async function removeReactionRole(client: NexoClient, guildId: string, me
         throw createError(
             `Database error removing reaction role`,
             ErrorTypes.DATABASE,
-            'Failed to remove reaction role. Please try again.',
+            'Die Reaktionsrolle konnte nicht entfernt werden. Bitte versuch es erneut.',
             { guildId, messageId, originalError: (error as Error).message }
         );
     }
@@ -354,7 +354,7 @@ export async function getAllReactionRoleMessages(client: NexoClient, guildId: st
             throw createError(
                 'Database error listing reaction roles',
                 ErrorTypes.DATABASE,
-                'Failed to retrieve reaction role list. Please try again.',
+                'Die Liste der Reaktionsrollen konnte nicht geladen werden. Bitte versuch es erneut.',
                 { guildId, originalError: (listError as Error).message }
             );
         }
@@ -400,7 +400,7 @@ export async function getAllReactionRoleMessages(client: NexoClient, guildId: st
         throw createError(
             'Database error retrieving reaction roles',
             ErrorTypes.DATABASE,
-            'Failed to retrieve reaction role messages. Please try again.',
+            'Die Reaktionsrollen-Nachrichten konnten nicht geladen werden. Bitte versuch es erneut.',
             { guildId, originalError: (error as Error).message }
         );
     }
@@ -415,7 +415,7 @@ export async function setReactionRoleChannel(client: NexoClient, guildId: string
             throw createError(
                 `Invalid channel ID: ${channelId}`,
                 ErrorTypes.VALIDATION,
-                'Invalid channel ID provided.',
+                'Ungültige Kanal-ID angegeben.',
                 { channelId }
             );
         }
@@ -440,7 +440,7 @@ export async function setReactionRoleChannel(client: NexoClient, guildId: string
         throw createError(
             `Database error setting reaction role channel`,
             ErrorTypes.DATABASE,
-            'Failed to update reaction role channel. Please try again.',
+            'Der Reaktionsrollen-Kanal konnte nicht aktualisiert werden. Bitte versuch es erneut.',
             { guildId, messageId, channelId, originalError: (error as Error).message }
         );
     }

@@ -20,7 +20,7 @@ export async function handleList(interaction: ChatInputCommandInteraction, clien
     }
 
     if (!(interaction.member as GuildMember).permissions.has(PermissionFlagsBits.ManageChannels)) {
-        await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'You need **Manage Channels** permission to view counters.' }).catch(logger.error);
+        await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'Du brauchst die Berechtigung **Kanäle verwalten**, um Zähler anzusehen.' }).catch(logger.error);
         return;
     }
 
@@ -48,25 +48,25 @@ export async function handleList(interaction: ChatInputCommandInteraction, clien
 
         if (validCounters.length === 0) {
             const embed = createEmbed({
-                title: "Server Counters",
-                description: "No counters have been set up for this server yet.\n\nUse `/serverstats create` to set up your first counter!",
+                title: "Server-Zähler",
+                description: "Für diesen Server wurden noch keine Zähler eingerichtet.\n\nNutze `/serverstats create`, um deinen ersten Zähler einzurichten!",
                 color: getColor('warning')
             });
 
             embed.addFields({
-                name: "**Available Counter Types**",
-                value: "**Members + Bots** - Total server members\n **Members Only** - Human members only\n **Bots Only** - Bot members only",
+                name: "**Verfügbare Zählertypen**",
+                value: "**Mitglieder + Bots** - Alle Servermitglieder\n **Nur Mitglieder** - Nur menschliche Mitglieder\n **Nur Bots** - Nur Bot-Mitglieder",
                 inline: false
             });
 
             embed.addFields({
-                name: "**Usage Examples**",
+                name: "**Beispiele**",
                 value: "`/serverstats create type:members channel_type:voice category:Stats`\n`/serverstats create type:bots channel_type:text category:Server Info`\n`/serverstats list`",
                 inline: false
             });
 
             embed.setFooter({ 
-                text: "Counter System • Automatic updates every 15 minutes" 
+                text: "Zählersystem • Automatische Aktualisierung alle 15 Minuten" 
             });
 
             await InteractionHelper.safeEditReply(interaction, { embeds: [embed] }).catch(logger.error);
@@ -74,8 +74,8 @@ export async function handleList(interaction: ChatInputCommandInteraction, clien
         }
 
         const embed = createEmbed({
-            title: `Server Counters (${validCounters.length})`,
-            description: "Here are all the active counters for this server.\n\nCounters automatically update every 15 minutes.",
+            title: `Server-Zähler (${validCounters.length})`,
+            description: "Hier sind alle aktiven Zähler dieses Servers.\n\nZähler werden automatisch alle 15 Minuten aktualisiert.",
             color: getColor('info')
         });
 
@@ -90,32 +90,32 @@ export async function handleList(interaction: ChatInputCommandInteraction, clien
             }
 
             const currentCount = getCurrentCount(stats, counter.type);
-            const status = channel.name.includes(':') ? '✅ Active' : '⚠️ Not Updated';
+            const status = channel.name.includes(':') ? '✅ Aktiv' : '⚠️ Nicht aktualisiert';
             
             embed.addFields({
-                name: `${getCounterTypeEmoji(counter.type)} Counter #${i + 1} - ${channel.name}`,
-                value: `**ID:** \`${counter.id}\`\n**Type:** ${getCounterTypeDisplay(counter.type)}\n**Channel:** ${channel}\n**Current Count:** ${currentCount}\n**Status:** ${status}\n**Created:** ${new Date(counter.createdAt).toLocaleDateString()}`,
+                name: `${getCounterTypeEmoji(counter.type)} Zähler #${i + 1} - ${channel.name}`,
+                value: `**ID:** \`${counter.id}\`\n**Typ:** ${getCounterTypeDisplay(counter.type)}\n**Kanal:** ${channel}\n**Aktueller Stand:** ${currentCount}\n**Status:** ${status}\n**Erstellt:** ${new Date(counter.createdAt).toLocaleDateString()}`,
                 inline: false
             });
         }
 
         embed.addFields({
-            name: "**Statistics**",
-            value: `**Total Counters:** ${validCounters.length}\n**Active Counters:** ${validCounters.filter(c => {
+            name: "**Statistiken**",
+            value: `**Zähler gesamt:** ${validCounters.length}\n**Aktive Zähler:** ${validCounters.filter(c => {
                 const channel = guild.channels.cache.get(c.channelId);
                 return channel && channel.name.includes(':');
-            }).length}\n**Next Update:** <t:${Math.floor(Date.now() / 1000) + 900}:R>`,
+            }).length}\n**Nächste Aktualisierung:** <t:${Math.floor(Date.now() / 1000) + 900}:R>`,
             inline: false
         });
 
         embed.addFields({
-            name: "**Management Commands**",
-            value: "`/serverstats create` - Create new counter\n`/serverstats update` - Update existing counter\n`/serverstats delete` - Delete counter",
+            name: "**Verwaltungs-Commands**",
+            value: "`/serverstats create` - Neuen Zähler erstellen\n`/serverstats update` - Bestehenden Zähler aktualisieren\n`/serverstats delete` - Zähler löschen",
             inline: false
         });
 
         embed.setFooter({ 
-            text: "Counter System • Automatic updates every 15 minutes" 
+            text: "Zählersystem • Automatische Aktualisierung alle 15 Minuten" 
         });
         embed.setTimestamp();
 
@@ -123,7 +123,7 @@ export async function handleList(interaction: ChatInputCommandInteraction, clien
 
     } catch (error) {
         logger.error("Error displaying counters:", error);
-        await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'An error occurred while fetching counters. Please try again.' }).catch(logger.error);
+        await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Beim Abrufen der Zähler ist ein Fehler aufgetreten. Bitte versuche es erneut.' }).catch(logger.error);
     }
 }
 

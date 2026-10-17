@@ -7,9 +7,9 @@ import { logger } from '../../../utils/logger.js';
 
 import { replyUserError, ErrorTypes } from '../../../utils/errorHandler.js';
 const DESTINATION_LABELS: Record<string, string> = {
-  audit: 'Audit Log',
-  applications: 'Applications',
-  reports: 'Reports',
+  audit: 'Audit-Log',
+  applications: 'Bewerbungen',
+  reports: 'Meldungen',
 };
 
 export default {
@@ -17,7 +17,7 @@ export default {
   async execute(interaction, config, client) {
     try {
       if (!(interaction.member as GuildMember).permissions.has(PermissionsBitField.Flags.ManageGuild)) {
-        return await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'You need **Manage Server** permissions to configure logging channels.' });
+        return await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'Du brauchst die Berechtigung **Server verwalten**, um Log-Kanäle einzustellen.' });
       }
 
       await InteractionHelper.safeDefer(interaction, { ephemeral: true });
@@ -30,32 +30,32 @@ export default {
         await setLogChannel(client, interaction.guildId!, destination, null);
         return InteractionHelper.safeEditReply(interaction, {
           embeds: [successEmbed(
-            'Channel Cleared',
-            `The **${DESTINATION_LABELS[destination]}** channel has been removed.`,
+            'Kanal entfernt',
+            `Der Kanal für **${DESTINATION_LABELS[destination]}** wurde entfernt.`,
           )],
         });
       }
 
       if (!channel || channel.type !== ChannelType.GuildText) {
-        return await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'Please provide a valid text channel.' });
+        return await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'Bitte gib einen gültigen Textkanal an.' });
       }
 
       const botPerms = (channel as TextChannel).permissionsFor(interaction.guild!.members.me!);
       if (!botPerms?.has(['ViewChannel', 'SendMessages', 'EmbedLinks'])) {
-        return await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: `I need **View Channel**, **Send Messages**, and **Embed Links** in ${channel}.` });
+        return await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: `Ich brauche **Kanal ansehen**, **Nachrichten senden** und **Links einbetten** in ${channel}.` });
       }
 
       await setLogChannel(client, interaction.guildId!, destination, channel.id);
 
       return InteractionHelper.safeEditReply(interaction, {
         embeds: [successEmbed(
-          'Channel Updated',
-          `**${DESTINATION_LABELS[destination]}** logs will be sent to ${channel}.\nUse \`/logging dashboard\` to toggle event categories.`,
+          'Kanal aktualisiert',
+          `Logs für **${DESTINATION_LABELS[destination]}** werden an ${channel} gesendet.\nNutze \`/logging dashboard\`, um Event-Kategorien umzuschalten.`,
         )],
       });
     } catch (error) {
       logger.error('logging_channel error:', error);
-      await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Failed to update the log channel.' });
+      await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Der Log-Kanal konnte nicht aktualisiert werden.' });
     }
   },
 } satisfies SubcommandModule & Pick<Command, 'prefixOnly'>;

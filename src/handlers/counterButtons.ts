@@ -20,25 +20,25 @@ export const counterDeleteActionHandler = {
       const [action, counterId, ownerId] = args;
 
       if (!interaction.inGuild()) {
-        await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'This action can only be used in a server.' }).catch(logger.error);
+        await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Diese Aktion kannst du nur auf einem Server nutzen.' }).catch(logger.error);
         return;
       }
 
       if (!action || !counterId) {
-        await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'Counter delete action data is missing.' }).catch(logger.error);
+        await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'Die Daten zum Löschen des Zählers fehlen.' }).catch(logger.error);
         return;
       }
 
       if (ownerId && interaction.user.id !== ownerId) {
-        await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Only the user who initiated this deletion can use these buttons.' }).catch(logger.error);
+        await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Nur der Nutzer, der das Löschen gestartet hat, kann diese Buttons nutzen.' }).catch(logger.error);
         return;
       }
 
       if (action === 'cancel') {
         await interaction.editReply({
           embeds: [createEmbed({
-            title: '❌ Cancelled',
-            description: 'Counter deletion cancelled.',
+            title: '❌ Abgebrochen',
+            description: 'Löschen des Zählers abgebrochen.',
             color: 'error'
           })],
           components: []
@@ -47,7 +47,7 @@ export const counterDeleteActionHandler = {
       }
 
       if (action !== 'confirm') {
-        await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'Unknown counter delete action.' }).catch(logger.error);
+        await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'Unbekannte Aktion zum Löschen des Zählers.' }).catch(logger.error);
         return;
       }
 

@@ -17,14 +17,14 @@ async function calculateModalHandler(interaction: ModalSubmitInteraction, client
         const contextKey = operandInput?.customId?.split(':')[1];
         
         if (!contextKey) {
-            return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Failed to retrieve calculation context.' });
+            return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Der Rechenkontext konnte nicht geladen werden.' });
         }
 
         const { calculationContexts } = await import('../commands/Tools/modules/calculate.js');
         const context = calculationContexts.get(contextKey);
         
         if (!context) {
-            return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'This calculation has expired. Please start a new calculation.' });
+            return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Diese Berechnung ist abgelaufen. Bitte starte eine neue.' });
         }
 
         await interaction.deferReply({ ephemeral: false });
@@ -32,7 +32,7 @@ async function calculateModalHandler(interaction: ModalSubmitInteraction, client
         const operand = interaction.fields.getTextInputValue(operandInput.customId);
         
         if (!operand || isNaN(Number(operand))) {
-            return await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'Please provide a valid number.' });
+            return await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'Bitte gib eine gültige Zahl ein.' });
         }
 
         const { expression, formattedResult, operator } = context;
@@ -59,10 +59,10 @@ async function calculateModalHandler(interaction: ModalSubmitInteraction, client
             }
 
             const updatedEmbed = successEmbed(
-                "🧮 Calculation Result",
-                `**Expression:** \`${newExpression.replace(/`/g, "\`")}\`\n` +
-                    `**Result:** \`${formattedNewResult}\`\n\n` +
-                    `*Use the buttons in the channel message to perform more operations.*`,
+                "🧮 Rechenergebnis",
+                `**Ausdruck:** \`${newExpression.replace(/`/g, "\`")}\`\n` +
+                    `**Ergebnis:** \`${formattedNewResult}\`\n\n` +
+                    `*Nutze die Buttons in der Kanal-Nachricht für weitere Rechenschritte.*`,
             );
 
             try {
@@ -80,20 +80,20 @@ async function calculateModalHandler(interaction: ModalSubmitInteraction, client
             calculationContexts.delete(contextKey);
 
             await interaction.editReply({
-                embeds: [successEmbed('✅ Calculated', `\`${newExpression}\` = \`${formattedNewResult}\``)],
+                embeds: [successEmbed('✅ Berechnet', `\`${newExpression}\` = \`${formattedNewResult}\``)],
             });
 
         } catch (calcError) {
             logger.error('Calculate evaluation error:', calcError);
-            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Failed to evaluate the expression.' });
+            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Der Ausdruck konnte nicht berechnet werden.' });
         }
     } catch (error) {
         logger.error('Calculate modal handler error:', error);
         try {
             if (!interaction.replied && !interaction.deferred) {
-                await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'An error occurred processing your calculation.' });
+                await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Bei deiner Berechnung ist ein Fehler aufgetreten.' });
             } else {
-                await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'An error occurred processing your calculation.' });
+                await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Bei deiner Berechnung ist ein Fehler aufgetreten.' });
             }
         } catch (err) {
             logger.error('Failed to send error message:', err);

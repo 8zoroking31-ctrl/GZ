@@ -29,17 +29,21 @@ Before starting large features, open an issue on [GitHub](https://github.com/Rob
    ```bash
    cp .env.example .env
    ```
-   At minimum, set `DISCORD_TOKEN`, `CLIENT_ID`, and `GUILD_ID` for single-server development. See [README.md](README.md#manual-installation-steps) for full configuration options.
-4. Verify your database setup (when using PostgreSQL):
+   At minimum, set `DISCORD_TOKEN`, `CLIENT_ID`, and `GUILD_ID` for single-server development. See [README.md](README.md#umgebungsvariablen) for full configuration options.
+4. Build and verify your database setup (when using PostgreSQL):
    ```bash
+   npm run build
    npm run migrate:check
    ```
-5. Start the bot:
+5. Start the bot in watch mode (runs the TypeScript sources via tsx):
    ```bash
-   npm start
+   npm run dev
    ```
+   Production-style start: `npm run build && npm start`.
 
-For Docker-based setup, see [README.md](README.md#docker-deployment-recommended).
+Before opening a pull request, run `npm run typecheck`, `npm test` and `npm run build`.
+
+For Docker-based setup, see [README.md](README.md#docker).
 
 ## Development Workflow
 
@@ -71,7 +75,9 @@ Test features that read or write guild data with **both** PostgreSQL and the mem
 
 ## Code Guidelines
 
-- **Match existing style** — ES modules (`import`/`export`), async/await, and the conventions used in neighboring files.
+- **Match existing style** — strict TypeScript (no `any`), ES modules with `.js` import specifiers, async/await, and the conventions used in neighboring files.
+- **Commands** — top-level commands live in `src/commands/<Category>/`, subcommand implementations in `modules/`. Consolidated commands are built with `createRouterCommand`; moved command names go into `src/config/commands/legacyCommandMap.ts`.
+- **Language** — user-facing texts are German (informal "du"); code, comments and logs are English.
 - **Handle errors gracefully** — catch failures, log with context, and send user-friendly embed replies where appropriate.
 - **Avoid breaking guild isolation** — guild-specific config and data must stay scoped per server (`guild:{guildId}:...` keys, `interaction.guildId`).
 - **Keep changes minimal** — prefer extending existing utilities and services over duplicating logic.

@@ -5,7 +5,7 @@ import priorityCommand from './modules/priority.js';
 
 export default createRouterCommand({
   name: 'tickets',
-  description: 'Ticket actions inside a ticket channel',
+  description: 'Ticket-Aktionen in einem Ticket-Kanal',
   category: 'Ticket',
   routes: [
     { legacyName: 'claim', module: claimCommand },

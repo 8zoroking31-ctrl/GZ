@@ -24,7 +24,7 @@ async function handleMusicButton(interaction: ButtonInteraction, client: NexoCli
 
     if (customId === MUSIC_BUTTON_IDS.QUEUE) {
         if (!player?.current) {
-            return replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: 'Nothing is playing right now.' });
+            return replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: 'Gerade läuft nichts.' });
         }
         if (!canControlMusic(interaction.member as GuildMember, player)) {
             return replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: VOICE_CHANNEL_DENIAL });
@@ -47,7 +47,7 @@ async function handleMusicButton(interaction: ButtonInteraction, client: NexoCli
 
     if (queuePaginationIds.includes(customId)) {
         if (!player?.current) {
-            return replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: 'Nothing is playing right now.' });
+            return replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: 'Gerade läuft nichts.' });
         }
         if (!canControlMusic(interaction.member as GuildMember, player)) {
             return replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: VOICE_CHANNEL_DENIAL });
@@ -84,7 +84,7 @@ async function handleMusicButton(interaction: ButtonInteraction, client: NexoCli
     }
 
     if (!player) {
-        return replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: 'No music is playing. Use `/music play` first.' });
+        return replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: 'Es läuft keine Musik. Nutze zuerst `/music play`.' });
     }
 
     if (!canControlMusic(interaction.member as GuildMember, player)) {
@@ -151,7 +151,7 @@ export const musicButtonHandler = {
     async execute(interaction: ButtonInteraction, client: NexoClient): Promise<unknown> {
         try {
             if (!client.riffy) {
-                return replyUserError(interaction, { type: ErrorTypes.CONFIGURATION, message: 'Music is unavailable — Lavalink is not configured.' });
+                return replyUserError(interaction, { type: ErrorTypes.CONFIGURATION, message: 'Musik ist nicht verfügbar – Lavalink ist nicht konfiguriert.' });
             }
             await handleMusicButton(interaction, client);
         } catch (error) {

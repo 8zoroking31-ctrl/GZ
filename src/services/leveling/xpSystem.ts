@@ -69,12 +69,12 @@ export const addXp = wrapServiceBoundary(async function addXp(client: NexoClient
           guildId: guild.id,
           eventType: EVENT_TYPES.LEVELING_LEVELUP,
           data: {
-            title: 'Level Up',
+            title: 'Level-Up',
             lines: [
-              formatLogLine('Member', `${member.user.tag} (\`${member.user.id}\`)`),
-              formatLogLine('New Level', levelData.level.toString()),
-              formatLogLine('Levels Gained', (levelData.level - initialLevel).toString()),
-              formatLogLine('Total XP', levelData.totalXp.toString()),
+              formatLogLine('Mitglied', `${member.user.tag} (\`${member.user.id}\`)`),
+              formatLogLine('Neues Level', levelData.level.toString()),
+              formatLogLine('Gewonnene Level', (levelData.level - initialLevel).toString()),
+              formatLogLine('Gesamt-XP', levelData.totalXp.toString()),
             ],
             userId: member.user.id,
           },
@@ -97,7 +97,7 @@ export const addXp = wrapServiceBoundary(async function addXp(client: NexoClient
 }, {
   service: 'xpSystem',
   operation: 'addXp',
-  userMessage: 'Failed to award XP. Please try again.',
+  userMessage: 'XP konnten nicht vergeben werden. Bitte versuch es erneut.',
 });
 
 async function awardRoleReward(guild: Guild, member: GuildMember, roleId: string, level: number): Promise<void> {
@@ -113,7 +113,7 @@ async function awardRoleReward(guild: Guild, member: GuildMember, roleId: string
       return;
     }
 
-    await member.roles.add(role, `Level ${level} reward`);
+    await member.roles.add(role, `Belohnung für Level ${level}`);
     logger.info(`✅ Awarded role ${role.name} to ${member.user.tag} for reaching level ${level}`);
   } catch (error) {
     logger.error(`Failed to award role reward to ${member.user.id}:`, error);

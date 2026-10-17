@@ -52,7 +52,7 @@ export function getXpForLevel(level: number): number {
     throw new NexoBotError(
       `Invalid level: ${level}. Must be between ${MIN_LEVEL} and ${MAX_LEVEL}`,
       ErrorTypes.VALIDATION,
-      'The level must be a valid number.'
+      'Das Level muss eine gültige Zahl sein.'
     );
   }
   return 5 * Math.pow(level, 2) + 50 * level + 50;
@@ -63,7 +63,7 @@ export function getLevelFromXp(xp: number): { level: number; currentXp: number; 
     throw new NexoBotError(
       `Invalid XP: ${xp}`,
       ErrorTypes.VALIDATION,
-      'XP must be a non-negative number.'
+      'XP müssen eine nicht-negative Zahl sein.'
     );
   }
 
@@ -98,7 +98,7 @@ export async function getLeaderboard(client: NexoClient, guildId: string, limit 
       throw new NexoBotError(
         'Invalid guild ID',
         ErrorTypes.VALIDATION,
-        'Guild ID is required.'
+        'Eine Server-ID ist erforderlich.'
       );
     }
 
@@ -147,19 +147,19 @@ export async function getLeaderboard(client: NexoClient, guildId: string, limit 
     throw new NexoBotError(
       `Failed to fetch leaderboard: ${error instanceof Error ? error.message : String(error)}`,
       ErrorTypes.DATABASE,
-      'Could not fetch the leaderboard at this time.'
+      'Die Bestenliste konnte gerade nicht geladen werden.'
     );
   }
 }
 
 export function createLeaderboardEmbed(leaderboard: LeaderboardEntry[] | null | undefined, guild: Guild): EmbedBuilder {
   const embed = new EmbedBuilder()
-    .setTitle(`🏆 ${guild.name} Leaderboard`)
+    .setTitle(`🏆 Bestenliste von ${guild.name}`)
     .setColor('#2ecc71')
     .setTimestamp();
     
   if (!leaderboard || leaderboard.length === 0) {
-    embed.setDescription('No users on the leaderboard yet!');
+    embed.setDescription('Noch keine Nutzer auf der Bestenliste!');
     return embed;
   }
   
@@ -176,7 +176,7 @@ export function createLeaderboardEmbed(leaderboard: LeaderboardEntry[] | null | 
   }).join('\n');
   
   embed.setDescription(
-    `**Top Members**\n${top3Text}${restText ? '\n\n' + restText : ''}`
+    `**Top-Mitglieder**\n${top3Text}${restText ? '\n\n' + restText : ''}`
   );
   
   return embed;
@@ -189,7 +189,7 @@ export async function getLevelingConfig(client: NexoClient, guildId: string): Pr
       enabled: true,
       xpPerMessage: { min: 15, max: 25 },
       xpCooldown: 20,
-      levelUpMessage: '{user} has leveled up to level {level}!',
+      levelUpMessage: '{user} ist auf Level {level} aufgestiegen!',
       levelUpChannel: null,
       ignoredChannels: [],
       ignoredRoles: [],
@@ -204,7 +204,7 @@ export async function getLevelingConfig(client: NexoClient, guildId: string): Pr
       enabled: true,
       xpPerMessage: { min: 15, max: 25 },
       xpCooldown: 20,
-      levelUpMessage: '{user} has leveled up to level {level}!',
+      levelUpMessage: '{user} ist auf Level {level} aufgestiegen!',
       levelUpChannel: null,
       ignoredChannels: [],
       ignoredRoles: [],
@@ -251,7 +251,7 @@ export async function getUserLevelData(client: NexoClient, guildId: string, user
     throw new NexoBotError(
       `Failed to fetch user data: ${error instanceof Error ? error.message : String(error)}`,
       ErrorTypes.DATABASE,
-      'Could not fetch level data at this time.'
+      'Die Level-Daten konnten gerade nicht geladen werden.'
     );
   }
 }
@@ -288,7 +288,7 @@ export async function saveUserLevelData(client: NexoClient, guildId: string, use
     throw new NexoBotError(
       `Failed to save user data: ${error instanceof Error ? error.message : String(error)}`,
       ErrorTypes.DATABASE,
-      'Could not save level data at this time.'
+      'Die Level-Daten konnten gerade nicht gespeichert werden.'
     );
   }
 }
@@ -308,7 +308,7 @@ export async function saveLevelingConfig(client: NexoClient, guildId: string, co
       throw new NexoBotError(
         'XP cooldown must be between 0 and 3600 seconds',
         ErrorTypes.VALIDATION,
-        'Cooldown must be between 0 and 3600 seconds.'
+        'Der Cooldown muss zwischen 0 und 3600 Sekunden liegen.'
       );
     }
 
@@ -316,7 +316,7 @@ export async function saveLevelingConfig(client: NexoClient, guildId: string, co
       throw new NexoBotError(
         'Invalid XP range configuration',
         ErrorTypes.VALIDATION,
-        'Minimum XP must be less than maximum XP, and both must be positive.'
+        'Die minimalen XP müssen kleiner als die maximalen XP sein, und beide müssen positiv sein.'
       );
     }
 
@@ -330,7 +330,7 @@ export async function saveLevelingConfig(client: NexoClient, guildId: string, co
     throw new NexoBotError(
       `Failed to save config: ${error instanceof Error ? error.message : String(error)}`,
       ErrorTypes.DATABASE,
-      'Could not save configuration at this time.'
+      'Die Konfiguration konnte gerade nicht gespeichert werden.'
     );
   }
 }
@@ -342,7 +342,7 @@ export async function addLevels(client: NexoClient, guildId: string, userId: str
       throw new NexoBotError(
         'Leveling system is disabled on this server',
         ErrorTypes.CONFIGURATION,
-        'The leveling system is currently disabled on this server.'
+        'Das Levelsystem ist auf diesem Server derzeit deaktiviert.'
       );
     }
 
@@ -350,7 +350,7 @@ export async function addLevels(client: NexoClient, guildId: string, userId: str
       throw new NexoBotError(
         `Invalid level amount: ${levels}`,
         ErrorTypes.VALIDATION,
-        'You must add a positive number of levels.'
+        'Du musst eine positive Anzahl an Leveln hinzufügen.'
       );
     }
 
@@ -361,7 +361,7 @@ export async function addLevels(client: NexoClient, guildId: string, userId: str
       throw new NexoBotError(
         `Level ${newLevel} exceeds maximum level ${MAX_LEVEL}`,
         ErrorTypes.VALIDATION,
-        `Maximum level is ${MAX_LEVEL}.`
+        `Das maximale Level ist ${MAX_LEVEL}.`
       );
     }
 
@@ -382,7 +382,7 @@ export async function addLevels(client: NexoClient, guildId: string, userId: str
     throw new NexoBotError(
       `Failed to add levels: ${error instanceof Error ? error.message : String(error)}`,
       ErrorTypes.DATABASE,
-      'Could not add levels at this time.'
+      'Level konnten gerade nicht hinzugefügt werden.'
     );
   }
 }
@@ -394,7 +394,7 @@ export async function removeLevels(client: NexoClient, guildId: string, userId: 
       throw new NexoBotError(
         'Leveling system is disabled on this server',
         ErrorTypes.CONFIGURATION,
-        'The leveling system is currently disabled on this server.'
+        'Das Levelsystem ist auf diesem Server derzeit deaktiviert.'
       );
     }
 
@@ -402,7 +402,7 @@ export async function removeLevels(client: NexoClient, guildId: string, userId: 
       throw new NexoBotError(
         `Invalid level amount: ${levels}`,
         ErrorTypes.VALIDATION,
-        'You must remove a positive number of levels.'
+        'Du musst eine positive Anzahl an Leveln entfernen.'
       );
     }
 
@@ -426,7 +426,7 @@ export async function removeLevels(client: NexoClient, guildId: string, userId: 
     throw new NexoBotError(
       `Failed to remove levels: ${error instanceof Error ? error.message : String(error)}`,
       ErrorTypes.DATABASE,
-      'Could not remove levels at this time.'
+      'Level konnten gerade nicht entfernt werden.'
     );
   }
 }
@@ -438,7 +438,7 @@ export async function setUserLevel(client: NexoClient, guildId: string, userId: 
       throw new NexoBotError(
         'Leveling system is disabled on this server',
         ErrorTypes.CONFIGURATION,
-        'The leveling system is currently disabled on this server.'
+        'Das Levelsystem ist auf diesem Server derzeit deaktiviert.'
       );
     }
 
@@ -446,7 +446,7 @@ export async function setUserLevel(client: NexoClient, guildId: string, userId: 
       throw new NexoBotError(
         `Invalid level: ${level}`,
         ErrorTypes.VALIDATION,
-        `Level must be between ${MIN_LEVEL} and ${MAX_LEVEL}.`
+        `Das Level muss zwischen ${MIN_LEVEL} und ${MAX_LEVEL} liegen.`
       );
     }
 
@@ -469,7 +469,7 @@ export async function setUserLevel(client: NexoClient, guildId: string, userId: 
     throw new NexoBotError(
       `Failed to set level: ${error instanceof Error ? error.message : String(error)}`,
       ErrorTypes.DATABASE,
-      'Could not set level at this time.'
+      'Das Level konnte gerade nicht gesetzt werden.'
     );
   }
 }

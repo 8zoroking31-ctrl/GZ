@@ -8,15 +8,15 @@ import { NexoBotError, ErrorTypes } from '../../../utils/errorHandler.js';
 export default {
     data: new SlashCommandBuilder()
         .setName("kick")
-        .setDescription("Kick a user from the server")
+        .setDescription("Einen Nutzer vom Server kicken")
         .addUserOption((option) =>
             option
                 .setName("target")
-                .setDescription("The user to kick")
+                .setDescription("Der Nutzer, der gekickt werden soll")
                 .setRequired(true),
         )
         .addStringOption((option) =>
-            option.setName("reason").setDescription("Reason for the kick"),
+            option.setName("reason").setDescription("Grund für den Kick"),
         )
         .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
     category: "moderation",
@@ -24,13 +24,13 @@ export default {
     async execute(interaction, config, client) {
         const targetUser = interaction.options.getUser("target");
         const member = interaction.options.getMember("target");
-        const reason = interaction.options.getString("reason") || "No reason provided";
+        const reason = interaction.options.getString("reason") || "Kein Grund angegeben";
 
         if (!targetUser) {
             throw new NexoBotError(
                 'Missing target user',
                 ErrorTypes.USER_INPUT,
-                'You must specify a user to kick.',
+                'Du musst einen Nutzer zum Kicken angeben.',
                 { subtype: 'invalid_user' },
             );
         }
@@ -39,7 +39,7 @@ export default {
             throw new NexoBotError(
                 "Cannot kick self",
                 ErrorTypes.VALIDATION,
-                "You cannot kick yourself.",
+                "Du kannst dich nicht selbst kicken.",
             );
         }
 
@@ -47,7 +47,7 @@ export default {
             throw new NexoBotError(
                 "Cannot kick bot",
                 ErrorTypes.VALIDATION,
-                "You cannot kick the bot.",
+                "Du kannst den Bot nicht kicken.",
             );
         }
 
@@ -55,7 +55,7 @@ export default {
             throw new NexoBotError(
                 "Target not found",
                 ErrorTypes.USER_INPUT,
-                "The target user is not currently in this server.",
+                "Der Nutzer ist gerade nicht auf diesem Server.",
                 { subtype: 'user_not_found' },
             );
         }
@@ -70,8 +70,8 @@ export default {
         await InteractionHelper.universalReply(interaction, {
             embeds: [
                 successEmbed(
-                    `👢 **Kicked** ${targetUser.tag}`,
-                    `**Reason:** ${reason}\n**Case ID:** #${result.caseId}`,
+                    `👢 **Gekickt:** ${targetUser.tag}`,
+                    `**Grund:** ${reason}\n**Fall-ID:** #${result.caseId}`,
                 ),
             ],
         });

@@ -158,7 +158,7 @@ export function createRouterCommand(options: RouterOptions): Command {
       throw createError(
         `No route for /${options.name}`,
         ErrorTypes.VALIDATION,
-        'Unknown subcommand.',
+        'Unbekannter Subcommand.',
         { commandName: options.name },
       );
     }
@@ -167,7 +167,7 @@ export function createRouterCommand(options: RouterOptions): Command {
       throw createError(
         `/${options.name} ${route.legacyName} used outside a guild`,
         ErrorTypes.VALIDATION,
-        'This command can only be used in a server.',
+        'Dieser Command kann nur auf einem Server genutzt werden.',
         { commandName: options.name },
       );
     }

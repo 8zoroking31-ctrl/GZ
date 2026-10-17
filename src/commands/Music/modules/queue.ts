@@ -8,9 +8,9 @@ export default {
     category: 'Music',
     data: new SlashCommandBuilder()
         .setName('queue')
-        .setDescription('Show the current music queue')
+        .setDescription('Aktuelle Musik-Warteschlange anzeigen')
         .addIntegerOption((opt) =>
-            opt.setName('page').setDescription('Page number').setMinValue(1),
+            opt.setName('page').setDescription('Seitenzahl').setMinValue(1),
         ),
 
     async execute(interaction, config, client) {

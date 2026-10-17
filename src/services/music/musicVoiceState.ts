@@ -34,7 +34,7 @@ export async function handleMusicVoiceState(client: NexoClient, oldState: VoiceS
         if (guildData.playerChannelId) {
             const channel = client.channels.cache.get(guildData.playerChannelId) as GuildTextBasedChannel | undefined;
             if (channel) {
-                channel.send({ embeds: [successEmbed('Paused', 'Voice channel is empty. Music paused until someone joins.')] }).catch(() => null);
+                channel.send({ embeds: [successEmbed('Pausiert', 'Der Sprachkanal ist leer. Die Musik ist pausiert, bis jemand beitritt.')] }).catch(() => null);
             }
         }
         return;
@@ -46,7 +46,7 @@ export async function handleMusicVoiceState(client: NexoClient, oldState: VoiceS
         if (guildData.playerChannelId) {
             const channel = client.channels.cache.get(guildData.playerChannelId) as GuildTextBasedChannel | undefined;
             if (channel) {
-                channel.send({ embeds: [successEmbed('Resumed', 'Someone joined the voice channel. Playback resumed.')] }).catch(() => null);
+                channel.send({ embeds: [successEmbed('Fortgesetzt', 'Jemand ist dem Sprachkanal beigetreten. Die Wiedergabe läuft weiter.')] }).catch(() => null);
             }
         }
     }

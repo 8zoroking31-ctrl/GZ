@@ -128,6 +128,19 @@ const USER_FACING_ERROR_HINTS = [
     /^missing\b/i,
     /^cannot\b/i,
     /^could not find\b/i,
+    // German user messages
+    /^bitte\b/i,
+    /^du\b/i,
+    /^dein/i,
+    /^gib\b/i,
+    /^wähle\b/i,
+    /^ungültig/i,
+    /^unbekannte[rs]?\b/i,
+    /^fehlende?\b/i,
+    /^kein/i,
+    /^diese[rs]?\b/i,
+    /^das\b/i,
+    /^nicht unterstützt/i,
 ];
 
 function isUserFacingPlainError(error: unknown): error is Error {
@@ -158,7 +171,15 @@ function isUserFacingPlainError(error: unknown): error is Error {
         || lowerMessage.includes('must be ')
         || lowerMessage.includes('at least ')
         || lowerMessage.includes('no longer than ')
-        || lowerMessage.includes('at most ')) {
+        || lowerMessage.includes('at most ')
+        || lowerMessage.includes('nicht gefunden')
+        || lowerMessage.includes('nicht konfiguriert')
+        || lowerMessage.includes('nicht eingerichtet')
+        || lowerMessage.includes('nicht verfügbar')
+        || lowerMessage.includes('berechtigung')
+        || lowerMessage.includes('muss ')
+        || lowerMessage.includes('mindestens ')
+        || lowerMessage.includes('höchstens ')) {
         return true;
     }
 
@@ -168,15 +189,18 @@ function isUserFacingPlainError(error: unknown): error is Error {
 function inferErrorTypeFromUserMessage(message: string = ''): ErrorType {
     const lowerMessage = message.toLowerCase();
 
-    if (lowerMessage.includes('permission') || lowerMessage.includes('not allowed')) {
+    if (lowerMessage.includes('permission') || lowerMessage.includes('not allowed')
+        || lowerMessage.includes('berechtigung') || lowerMessage.includes('nicht erlaubt')) {
         return ErrorTypes.PERMISSION;
     }
 
-    if (lowerMessage.includes('rate limit') || lowerMessage.includes('cooldown') || lowerMessage.includes('too quickly')) {
+    if (lowerMessage.includes('rate limit') || lowerMessage.includes('cooldown') || lowerMessage.includes('too quickly')
+        || lowerMessage.includes('zu schnell')) {
         return ErrorTypes.RATE_LIMIT;
     }
 
-    if (lowerMessage.includes('database') || lowerMessage.includes('postgres') || lowerMessage.includes('sql')) {
+    if (lowerMessage.includes('database') || lowerMessage.includes('postgres') || lowerMessage.includes('sql')
+        || lowerMessage.includes('datenbank')) {
         return ErrorTypes.DATABASE;
     }
 
@@ -185,11 +209,18 @@ function inferErrorTypeFromUserMessage(message: string = ''): ErrorType {
         || lowerMessage.includes('not set up')
         || lowerMessage.includes('disabled')
         || lowerMessage.includes('unknown command')
-        || lowerMessage.includes('unknown category')) {
+        || lowerMessage.includes('unknown category')
+        || lowerMessage.includes('nicht gefunden')
+        || lowerMessage.includes('nicht konfiguriert')
+        || lowerMessage.includes('nicht eingerichtet')
+        || lowerMessage.includes('deaktiviert')
+        || lowerMessage.includes('unbekannter command')
+        || lowerMessage.includes('unbekannte kategorie')) {
         return ErrorTypes.CONFIGURATION;
     }
 
-    if (lowerMessage.includes('channel') || lowerMessage.includes('user') || lowerMessage.includes('role') || lowerMessage.includes('mention')) {
+    if (lowerMessage.includes('channel') || lowerMessage.includes('user') || lowerMessage.includes('role') || lowerMessage.includes('mention')
+        || lowerMessage.includes('kanal') || lowerMessage.includes('nutzer') || lowerMessage.includes('rolle') || lowerMessage.includes('mitglied')) {
         return ErrorTypes.USER_INPUT;
     }
 
@@ -274,57 +305,57 @@ export function categorizeError(error: unknown): ErrorType {
 
 const UserMessages: Record<string, Record<string, string>> = {
     [ErrorTypes.VALIDATION]: {
-        default: 'Please check your input and try again.',
-        missing_required: "You're missing some required information. Check the command options and try again.",
-        invalid_format: 'The format you provided is incorrect. Check the command usage and try again.'
+        default: 'Bitte prüfe deine Eingabe und versuch es erneut.',
+        missing_required: 'Dir fehlen erforderliche Angaben. Prüfe die Command-Optionen und versuch es erneut.',
+        invalid_format: 'Das Format deiner Eingabe ist falsch. Prüfe die Verwendung des Commands und versuch es erneut.'
     },
     [ErrorTypes.PERMISSION]: {
-        default: "You don't have permission to do that.",
-        user_permission: "You don't have permission to use this command.",
-        bot_permission: "I don't have the permissions needed to do that in this channel."
+        default: 'Du hast keine Berechtigung dafür.',
+        user_permission: 'Du hast keine Berechtigung, diesen Command zu nutzen.',
+        bot_permission: 'Mir fehlen die nötigen Berechtigungen in diesem Kanal.'
     },
     [ErrorTypes.CONFIGURATION]: {
-        default: 'This feature is not set up yet. Ask a server administrator to configure it.',
-        missing_config: 'This feature has not been configured yet. Ask a server administrator to set it up.',
-        invalid_config: 'The server configuration for this feature is invalid. Ask a server administrator to review it.'
+        default: 'Diese Funktion ist noch nicht eingerichtet. Bitte einen Server-Admin, sie zu konfigurieren.',
+        missing_config: 'Diese Funktion wurde noch nicht konfiguriert. Bitte einen Server-Admin, sie einzurichten.',
+        invalid_config: 'Die Server-Konfiguration für diese Funktion ist ungültig. Bitte einen Server-Admin, sie zu prüfen.'
     },
     [ErrorTypes.DATABASE]: {
-        default: 'Something went wrong while saving data. Please try again in a moment.',
-        connection_failed: 'I could not reach the database. Please try again later.',
-        timeout: 'That took too long to complete. Please try again.'
+        default: 'Beim Speichern ist etwas schiefgelaufen. Bitte versuch es gleich noch einmal.',
+        connection_failed: 'Ich konnte die Datenbank nicht erreichen. Bitte versuch es später erneut.',
+        timeout: 'Das hat zu lange gedauert. Bitte versuch es erneut.'
     },
     [ErrorTypes.NETWORK]: {
-        default: 'I could not reach an external service. Please try again in a moment.',
-        timeout: 'The request timed out. Please try again.',
-        unreachable: 'The service is unavailable right now. Please try again later.'
+        default: 'Ich konnte einen externen Dienst nicht erreichen. Bitte versuch es gleich noch einmal.',
+        timeout: 'Die Anfrage hat zu lange gedauert. Bitte versuch es erneut.',
+        unreachable: 'Der Dienst ist gerade nicht erreichbar. Bitte versuch es später erneut.'
     },
     [ErrorTypes.DISCORD_API]: {
-        default: 'Discord rejected that request. Please try again in a moment.',
-        rate_limit: "You're doing that too quickly. Wait a moment and try again.",
-        forbidden: "I'm not allowed to do that here. Check my role permissions.",
-        interaction_expired: 'That interaction expired. Please run the command again.',
-        already_acknowledged: 'That action was already handled. Run the command again if you still need help.',
-        invalid_form_body: 'Discord rejected the request payload. Try again with different input.'
+        default: 'Discord hat die Anfrage abgelehnt. Bitte versuch es gleich noch einmal.',
+        rate_limit: 'Du bist zu schnell. Warte kurz und versuch es erneut.',
+        forbidden: 'Das darf ich hier nicht. Prüfe die Berechtigungen meiner Rolle.',
+        interaction_expired: 'Diese Interaktion ist abgelaufen. Bitte führe den Command erneut aus.',
+        already_acknowledged: 'Diese Aktion wurde bereits verarbeitet. Führe den Command erneut aus, falls du noch Hilfe brauchst.',
+        invalid_form_body: 'Discord hat die Anfrage abgelehnt. Versuch es mit einer anderen Eingabe.'
     },
     [ErrorTypes.USER_INPUT]: {
-        default: 'There was a problem with your request. Check your input and try again.',
-        invalid_user: 'I could not find that user. Check the mention or ID and try again.',
-        invalid_channel: 'I could not find that channel. Check the mention or ID and try again.'
+        default: 'Bei deiner Anfrage gab es ein Problem. Prüfe deine Eingabe und versuch es erneut.',
+        invalid_user: 'Ich konnte diesen Nutzer nicht finden. Prüfe die Erwähnung oder ID und versuch es erneut.',
+        invalid_channel: 'Ich konnte diesen Kanal nicht finden. Prüfe die Erwähnung oder ID und versuch es erneut.'
     },
     [ErrorTypes.RATE_LIMIT]: {
-        default: "You're doing that too quickly. Wait a moment and try again.",
-        command_cooldown: 'This command is on cooldown. Wait before using it again.',
-        global_rate_limit: 'Discord is rate limiting requests. Wait a moment and try again.'
+        default: 'Du bist zu schnell. Warte kurz und versuch es erneut.',
+        command_cooldown: 'Dieser Command hat gerade Cooldown. Warte kurz, bevor du ihn erneut nutzt.',
+        global_rate_limit: 'Discord bremst gerade Anfragen aus. Warte kurz und versuch es erneut.'
     },
     [ErrorTypes.UNKNOWN]: {
-        default: 'Something went wrong. Please try again in a moment.',
-        unexpected: 'An unexpected error occurred. Please try again later.',
-        warn_failed: 'I could not warn that member. Check my permissions and role hierarchy, then try again.',
-        kick_failed: 'I could not kick that member. Check my permissions and role hierarchy, then try again.',
-        ban_failed: 'I could not ban that member. Check my permissions and role hierarchy, then try again.',
-        unban_failed: 'I could not unban that user. Check my permissions and try again.',
-        timeout_failed: 'I could not timeout that member. Check my permissions and role hierarchy, then try again.',
-        untimeout_failed: 'I could not remove the timeout. Check my permissions and try again.'
+        default: 'Etwas ist schiefgelaufen. Bitte versuch es gleich noch einmal.',
+        unexpected: 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuch es später erneut.',
+        warn_failed: 'Ich konnte dieses Mitglied nicht verwarnen. Prüfe meine Berechtigungen und die Rollenhierarchie.',
+        kick_failed: 'Ich konnte dieses Mitglied nicht kicken. Prüfe meine Berechtigungen und die Rollenhierarchie.',
+        ban_failed: 'Ich konnte dieses Mitglied nicht bannen. Prüfe meine Berechtigungen und die Rollenhierarchie.',
+        unban_failed: 'Ich konnte diesen Nutzer nicht entbannen. Prüfe meine Berechtigungen und versuch es erneut.',
+        timeout_failed: 'Ich konnte diesem Mitglied keinen Timeout geben. Prüfe meine Berechtigungen und die Rollenhierarchie.',
+        untimeout_failed: 'Ich konnte den Timeout nicht aufheben. Prüfe meine Berechtigungen und versuch es erneut.'
     }
 };
 

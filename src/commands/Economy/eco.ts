@@ -19,7 +19,7 @@ import workCommand from './modules/work.js';
 
 export default createRouterCommand({
   name: 'eco',
-  description: 'Economy: balance, work, shop and more',
+  description: 'Wirtschaft: Kontostand, Arbeiten, Shop und mehr',
   category: 'Economy',
   routes: [
     { legacyName: 'balance', module: balanceCommand },

@@ -23,8 +23,8 @@ export default {
         if (!guildId || !channelId) {
             await InteractionHelper.safeReply(interaction, {
                 embeds: [buildEmbed(
-                    '⚠️ Invalid Feedback Submission',
-                    'This feedback form appears to be malformed.',
+                    '⚠️ Ungültiges Feedback',
+                    'Dieses Feedback-Formular scheint fehlerhaft zu sein.',
                     getColor('error'),
                 )],
                 flags: MessageFlags.Ephemeral,
@@ -36,8 +36,8 @@ export default {
         if (!comment) {
             await InteractionHelper.safeReply(interaction, {
                 embeds: [buildEmbed(
-                    '⚠️ Empty Feedback',
-                    'Please enter a comment before submitting your feedback.',
+                    '⚠️ Leeres Feedback',
+                    'Bitte gib einen Kommentar ein, bevor du dein Feedback absendest.',
                     getColor('warning'),
                 )],
                 flags: MessageFlags.Ephemeral,
@@ -60,8 +60,8 @@ export default {
         if (!ticketData) {
             await InteractionHelper.safeEditReply(interaction, {
                 embeds: [buildEmbed(
-                    '⚠️ Ticket Not Found',
-                    'Could not find the ticket associated with this feedback.',
+                    '⚠️ Ticket nicht gefunden',
+                    'Das Ticket zu diesem Feedback wurde nicht gefunden.',
                     getColor('error'),
                 )],
             });
@@ -71,8 +71,8 @@ export default {
         if (interaction.user.id !== ticketData.userId) {
             await InteractionHelper.safeEditReply(interaction, {
                 embeds: [buildEmbed(
-                    '❌ Not Allowed',
-                    'Only the ticket creator can submit feedback for this ticket.',
+                    '❌ Nicht erlaubt',
+                    'Nur wer das Ticket erstellt hat, kann dafür Feedback abgeben.',
                     getColor('error'),
                 )],
             });
@@ -107,8 +107,8 @@ export default {
 
         await InteractionHelper.safeEditReply(interaction, {
             embeds: [buildEmbed(
-                '✅ Feedback Submitted',
-                'Your written feedback has been recorded. Thank you for helping us improve!',
+                '✅ Feedback abgesendet',
+                'Dein schriftliches Feedback wurde gespeichert. Danke, dass du uns hilfst, besser zu werden!',
                 getColor('success'),
             )],
         });

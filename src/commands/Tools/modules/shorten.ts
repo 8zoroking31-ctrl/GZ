@@ -9,17 +9,17 @@ import type { Command } from '../../../types/index.js';
 export default {
     data: new SlashCommandBuilder()
         .setName("shorten")
-        .setDescription("Shorten a URL using is.gd")
+        .setDescription("Kürze eine URL mit is.gd")
         .addStringOption(option =>
             option
                 .setName("url")
-                .setDescription("The URL to shorten")
+                .setDescription("Die URL, die gekürzt werden soll")
                 .setRequired(true)
         )
         .addStringOption(option =>
             option
                 .setName("custom")
-                .setDescription("Custom URL ending (optional)")
+                .setDescription("Eigenes URL-Ende (optional)")
                 .setRequired(false)
         )
         .setDMPermission(false),
@@ -46,14 +46,14 @@ export default {
         } catch (e) {
             return replyUserError(interaction, {
                 type: ErrorTypes.VALIDATION,
-                message: 'Invalid URL format. Include http:// or https://',
+                message: 'Ungültiges URL-Format. Gib http:// oder https:// mit an.',
             });
         }
 
         if (custom && !/^[a-zA-Z0-9_-]+$/.test(custom)) {
             return replyUserError(interaction, {
                 type: ErrorTypes.VALIDATION,
-                message: 'Custom URL can only contain letters, numbers, underscores, and hyphens.',
+                message: 'Das URL-Ende darf nur Buchstaben, Zahlen, Unterstriche und Bindestriche enthalten.',
             });
         }
 
@@ -75,8 +75,8 @@ export default {
             });
         } catch (networkError) {
             const message = (networkError as { name?: string } | null | undefined)?.name === 'AbortError'
-                ? 'The URL shortener timed out. Please try again in a moment.'
-                : 'Unable to reach the URL shortener service right now. Please try again later.';
+                ? 'Der URL-Kürzer hat nicht rechtzeitig geantwortet. Versuch es gleich noch mal.'
+                : 'Der URL-Kürzer ist gerade nicht erreichbar. Versuch es später noch mal.';
             return replyUserError(interaction, {
                 type: ErrorTypes.NETWORK,
                 message,
@@ -88,7 +88,7 @@ export default {
         if (!response.ok) {
             return replyUserError(interaction, {
                 type: ErrorTypes.UNKNOWN,
-                message: `Shortener service returned HTTP ${response.status}. Please try again later.`,
+                message: `Der URL-Kürzer hat HTTP ${response.status} zurückgegeben. Versuch es später noch mal.`,
             });
         }
 
@@ -100,21 +100,21 @@ export default {
             if (shortUrl.includes("already exists")) {
                 return replyUserError(interaction, {
                     type: ErrorTypes.VALIDATION,
-                    message: 'That custom URL is already taken. Try a different one.',
+                    message: 'Dieses URL-Ende ist schon vergeben. Probier ein anderes.',
                 });
             } else if (shortUrl.includes("invalid")) {
                 return replyUserError(interaction, {
                     type: ErrorTypes.VALIDATION,
-                    message: 'Invalid URL. Include http:// or https://',
+                    message: 'Ungültige URL. Gib http:// oder https:// mit an.',
                 });
             }
             return replyUserError(interaction, {
                 type: ErrorTypes.UNKNOWN,
-                message: `URL shortening failed: ${shortUrl}`,
+                message: `URL konnte nicht gekürzt werden: ${shortUrl}`,
             });
         }
 
-        const embed = successEmbed('URL Shortened', `Here's your shortened URL: ${shortUrl}`);
+        const embed = successEmbed('URL gekürzt', `Hier ist deine gekürzte URL: ${shortUrl}`);
         embed.setColor(getColor('success'));
         await InteractionHelper.safeEditReply(interaction, {
             embeds: [embed],

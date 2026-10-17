@@ -99,7 +99,7 @@ export default {
               throw createError(
                 `No command matching ${interaction.commandName} was found.`,
                 ErrorTypes.CONFIGURATION,
-                'Sorry, that command does not exist.',
+                'Diesen Command gibt es leider nicht.',
                 withTraceContext({ commandName: interaction.commandName }, interactionTraceContext)
               );
             }
@@ -154,7 +154,7 @@ export default {
               throw createError(
                 `Risky command cooldown active for ${interaction.commandName}`,
                 ErrorTypes.RATE_LIMIT,
-                `This command is on cooldown. Please wait ${formattedCooldown} before trying again.`,
+                `Dieser Command hat gerade Cooldown. Bitte warte ${formattedCooldown}, bevor du es erneut versuchst.`,
                 withTraceContext({
                   commandName: interaction.commandName,
                   subtype: 'command_cooldown',
@@ -174,7 +174,7 @@ export default {
                 throw createError(
                   `Command ${accessKey} is disabled in this guild`,
                   ErrorTypes.CONFIGURATION,
-                  'This command has been disabled for this server.',
+                  'Dieser Command wurde für diesen Server deaktiviert.',
                   withTraceContext({ commandName: accessKey, guildId: interaction.guild.id }, interactionTraceContext)
                 );
               }
@@ -227,7 +227,7 @@ export default {
               
               await interaction.respond(
                 filtered.slice(0, 25).map(role => ({
-                  name: `${role.name}${role.enabled === false ? ' (disabled)' : ''}`,
+                  name: `${role.name}${role.enabled === false ? ' (deaktiviert)' : ''}`,
                   value: role.name
                 }))
               );
@@ -251,7 +251,7 @@ export default {
               
               await interaction.respond(
                 filtered.slice(0, 25).map(role => ({
-                  name: `${role.name}${role.enabled === false ? ' (disabled)' : ''}`,
+                  name: `${role.name}${role.enabled === false ? ' (deaktiviert)' : ''}`,
                   value: role.name
                 }))
               );
@@ -310,8 +310,8 @@ export default {
                     const msg = await channel.messages.fetch(panel.messageId).catch(() => null);
                     if (!msg) return null;
                     
-                    const title = msg?.embeds?.[0]?.title ?? 'Untitled Panel';
-                    const channelName = channel?.name ?? 'unknown';
+                    const title = msg?.embeds?.[0]?.title ?? 'Panel ohne Titel';
+                    const channelName = channel?.name ?? 'unbekannt';
                     
                     return {
                       name: `${title} (${channelName})`.substring(0, 100),
@@ -355,7 +355,7 @@ export default {
               throw createError(
                 `No button handler found for ${buttonType}`,
                 ErrorTypes.CONFIGURATION,
-                'This button is not available.',
+                'Dieser Button ist nicht verfügbar.',
                 withTraceContext({ buttonType }, interactionTraceContext)
               );
             }
@@ -373,7 +373,7 @@ export default {
             throw createError(
               `No button handler found for ${customId}`,
               ErrorTypes.CONFIGURATION,
-              'This button is not available.',
+              'Dieser Button ist nicht verfügbar.',
               withTraceContext({ customId }, interactionTraceContext)
             );
           }
@@ -399,7 +399,7 @@ export default {
             throw createError(
               `No select menu handler found for ${customId}`,
               ErrorTypes.CONFIGURATION,
-              'This select menu is not available.',
+              'Dieses Auswahlmenü ist nicht verfügbar.',
               withTraceContext({ customId }, interactionTraceContext)
             );
           }
@@ -452,7 +452,7 @@ export default {
             throw createError(
               `No modal handler found for ${customId}`,
               ErrorTypes.CONFIGURATION,
-              'This form is not available.',
+              'Dieses Formular ist nicht verfügbar.',
               withTraceContext({ customId }, interactionTraceContext)
             );
           }

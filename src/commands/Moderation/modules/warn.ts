@@ -10,18 +10,18 @@ import { InteractionHelper } from '../../../utils/interactionHelper.js';
 export default {
     data: new SlashCommandBuilder()
         .setName("warn")
-        .setDescription("Warn a user")
+        .setDescription("Einen Nutzer verwarnen")
         .addUserOption((o) =>
             o
                 .setName("target")
                 .setRequired(true)
-                .setDescription("User to warn"),
+                .setDescription("Nutzer, der verwarnt werden soll"),
         )
         .addStringOption((o) =>
             o
                 .setName("reason")
                 .setRequired(true)
-                .setDescription("Reason for the warning"),
+                .setDescription("Grund für die Verwarnung"),
         )
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
     category: "moderation",
@@ -47,7 +47,7 @@ export default {
             throw new NexoBotError(
                 'Missing target user',
                 ErrorTypes.USER_INPUT,
-                'You must specify a user to warn.',
+                'Du musst einen Nutzer zum Verwarnen angeben.',
                 { subtype: 'invalid_user' },
             );
         }
@@ -56,7 +56,7 @@ export default {
             throw new NexoBotError(
                 'Missing warning reason',
                 ErrorTypes.VALIDATION,
-                'You must provide a reason for the warning.',
+                'Du musst einen Grund für die Verwarnung angeben.',
                 { subtype: 'missing_required' },
             );
         }
@@ -65,7 +65,7 @@ export default {
             throw new NexoBotError(
                 "Target not found",
                 ErrorTypes.USER_INPUT,
-                "The target user is not currently in this server."
+                "Der Nutzer ist gerade nicht auf diesem Server."
             );
         }
 
@@ -100,8 +100,8 @@ export default {
         await InteractionHelper.safeEditReply(interaction, {
             embeds: [
                 successEmbed(
-                    `⚠️ **Warned** ${target.tag}`,
-                    `**Reason:** ${reason}\n**Total Warns:** ${totalCount}`,
+                    `⚠️ **Verwarnt:** ${target.tag}`,
+                    `**Grund:** ${reason}\n**Verwarnungen gesamt:** ${totalCount}`,
                 ),
             ],
         });

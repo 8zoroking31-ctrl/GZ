@@ -28,7 +28,7 @@ export const botConfig = {
     activities: [
       {
         name: "Custom Status", // required by Discord API, not shown in the client
-        state: "stalking",     // this is what people actually see
+        state: "auf der Lauer",     // this is what people actually see
         type: 4,               // Custom
       },
     ],
@@ -65,9 +65,9 @@ export const botConfig = {
   applications: {
     // Default questions shown when someone fills out an application.
     defaultQuestions: [
-      { question: "What is your name?", required: true },
-      { question: "How old are you?", required: true },
-      { question: "Why do you want to join?", required: true },
+      { question: "Wie heißt du?", required: true },
+      { question: "Wie alt bist du?", required: true },
+      { question: "Warum möchtest du beitreten?", required: true },
     ],
 
     // Embed colors by application status.
@@ -165,9 +165,9 @@ export const botConfig = {
   economy: {
     currency: {
       // Currency display name.
-      name: "coins",
+      name: "Münzen",
       // Plural display name.
-      namePlural: "coins",
+      namePlural: "Münzen",
       // Currency symbol shown in balances.
       symbol: "$",
     },
@@ -228,27 +228,27 @@ export const botConfig = {
       none: {
         emoji: "⚪",
         color: "#95A5A6",
-        label: "None",
+        label: "Keine",
       },
       low: {
         emoji: "🟢",
         color: "#2ECC71",
-        label: "Low",
+        label: "Niedrig",
       },
       medium: {
         emoji: "🟡",
         color: "#F1C40F",
-        label: "Medium",
+        label: "Mittel",
       },
       high: {
         emoji: "🔴",
         color: "#E74C3C",
-        label: "High",
+        label: "Hoch",
       },
       urgent: {
         emoji: "🚨",
         color: "#E91E63",
-        label: "Urgent",
+        label: "Dringend",
       },
     },
 
@@ -306,10 +306,10 @@ export const botConfig = {
   // =========================
   verification: {
     // Message shown when posting the verification panel.
-    defaultMessage: "Click the button below to verify yourself and gain access to the server!",
+    defaultMessage: "Klicke auf den Button unten, um dich zu verifizieren und Zugang zum Server zu erhalten!",
 
     // Text on the verification button.
-    defaultButtonText: "Verify",
+    defaultButtonText: "Verifizieren",
 
     // Automatic verification behavior.
     autoVerify: {
@@ -336,9 +336,9 @@ export const botConfig = {
 
       // Human-readable descriptions for each criteria mode.
       criteria: {
-        account_age: "Account must be older than specified days",
-        server_size: "All users if server has less than 1000 members",
-        none: "All users immediately"
+        account_age: "Account muss älter als die angegebene Anzahl Tage sein",
+        server_size: "Alle Nutzer, wenn der Server weniger als 1000 Mitglieder hat",
+        none: "Alle Nutzer sofort"
       }
     },
 
@@ -376,11 +376,11 @@ export const botConfig = {
     // Welcome template posted when a user joins.
     // Placeholders: {user}, {server}, {memberCount}
     defaultWelcomeMessage:
-      "Welcome {user} to {server}! We now have {memberCount} members!",
+      "Willkommen {user} auf {server}! Wir sind jetzt {memberCount} Mitglieder!",
     // Goodbye template posted when a user leaves.
     // Placeholders: {user}, {memberCount}
     defaultGoodbyeMessage:
-      "{user} has left the server. We now have {memberCount} members.",
+      "{user} hat den Server verlassen. Wir sind jetzt {memberCount} Mitglieder.",
     // Channel ID for welcome messages.
     defaultWelcomeChannel: null as string | null,
     // Channel ID for goodbye messages.
@@ -393,8 +393,8 @@ export const botConfig = {
   counters: {
     defaults: {
       // Default naming/description templates for counter entries.
-      name: "{name} Counter",
-      description: "Server {name} counter",
+      name: "{name}-Zähler",
+      description: "Server-Zähler: {name}",
       // Channel type used for counters (typically "voice").
       type: "voice",
       // Channel name format. `{count}` is replaced automatically.
@@ -408,26 +408,26 @@ export const botConfig = {
     },
     messages: {
       // Default response messages for counter actions.
-      created: "✅ Created counter **{name}**",
-      deleted: "🗑️ Deleted counter **{name}**",
-      updated: "🔄 Updated counter **{name}**",
+      created: "✅ Zähler **{name}** erstellt",
+      deleted: "🗑️ Zähler **{name}** gelöscht",
+      updated: "🔄 Zähler **{name}** aktualisiert",
     },
     types: {
       // Built-in counter types and how each count is calculated.
       members: {
-        name: "👥 Members",
-        description: "Total members in the server",
+        name: "👥 Mitglieder",
+        description: "Mitglieder insgesamt auf dem Server",
         getCount: (guild: Guild) => guild.memberCount.toString(),
       },
       bots: {
         name: "🤖 Bots",
-        description: "Total bot accounts in the server",
+        description: "Bot-Accounts insgesamt auf dem Server",
         getCount: (guild: Guild) =>
           guild.members.cache.filter((m) => m.user.bot).size.toString(),
       },
       members_only: {
-        name: "👤 Humans",
-        description: "Total human members (non-bots)",
+        name: "👤 Menschen",
+        description: "Menschliche Mitglieder insgesamt (ohne Bots)",
         getCount: (guild: Guild) =>
           guild.members.cache.filter((m) => !m.user.bot).size.toString(),
       },
@@ -438,13 +438,13 @@ export const botConfig = {
   // GENERIC BOT MESSAGES
   // =========================
   messages: {
-    noPermission: "You do not have permission to use this command.",
-    cooldownActive: "Please wait {time} before using this command again.",
-    errorOccurred: "An error occurred while executing this command.",
+    noPermission: "Du hast keine Berechtigung, diesen Command zu nutzen.",
+    cooldownActive: "Bitte warte {time}, bevor du diesen Command erneut nutzt.",
+    errorOccurred: "Beim Ausführen dieses Commands ist ein Fehler aufgetreten.",
     missingPermissions:
-      "I am missing required permissions to perform this action.",
-    commandDisabled: "This command has been disabled.",
-    maintenanceMode: "The bot is currently in maintenance mode.",
+      "Mir fehlen die nötigen Berechtigungen für diese Aktion.",
+    commandDisabled: "Dieser Command wurde deaktiviert.",
+    maintenanceMode: "Der Bot befindet sich gerade im Wartungsmodus.",
   },
 
   // =========================

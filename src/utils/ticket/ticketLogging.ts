@@ -156,20 +156,20 @@ function getLogChannelForEventType(config: TicketLogConfig, eventType: string): 
 }
 
 const TICKET_EVENT_STYLES: Record<string, { color: number; title: string }> = {
-  open: { color: 0x5865F2, title: 'Ticket Created' },
-  close: { color: 0xED4245, title: 'Ticket Closed' },
-  delete: { color: 0x8b0000, title: 'Ticket Deleted' },
-  claim: { color: 0x5865F2, title: 'Ticket Claimed' },
-  unclaim: { color: 0xFAA61A, title: 'Ticket Unclaimed' },
-  priority: { color: 0x9b59b6, title: 'Priority Updated' },
-  transcript: { color: 0x57F287, title: 'Transcript Generated' },
-  feedback: { color: 0x57F287, title: 'Feedback Received' },
+  open: { color: 0x5865F2, title: 'Ticket erstellt' },
+  close: { color: 0xED4245, title: 'Ticket geschlossen' },
+  delete: { color: 0x8b0000, title: 'Ticket gelöscht' },
+  claim: { color: 0x5865F2, title: 'Ticket übernommen' },
+  unclaim: { color: 0xFAA61A, title: 'Ticket freigegeben' },
+  priority: { color: 0x9b59b6, title: 'Priorität aktualisiert' },
+  transcript: { color: 0x57F287, title: 'Transkript erstellt' },
+  feedback: { color: 0x57F287, title: 'Feedback erhalten' },
 };
 
 async function createTicketLogEmbed(guild: Guild, event: TicketEvent) {
-  const style = TICKET_EVENT_STYLES[event.type] || { color: 0x95a5a6, title: 'Ticket Event' };
+  const style = TICKET_EVENT_STYLES[event.type] || { color: 0x95a5a6, title: 'Ticket-Ereignis' };
   const ticketNumber = event.ticketNumber || event.ticketId;
-  const ticketRef = ticketNumber ? `#${ticketNumber}` : 'Unknown';
+  const ticketRef = ticketNumber ? `#${ticketNumber}` : 'Unbekannt';
   const channelMention = event.ticketId ? `<#${event.ticketId}>` : null;
   const executorMention = event.executorId ? `<@${event.executorId}>` : null;
   const userMention = event.userId ? `<@${event.userId}>` : null;
@@ -184,13 +184,13 @@ async function createTicketLogEmbed(guild: Guild, event: TicketEvent) {
       author = await resolveUserAuthor(guild.client, event.userId);
       inlineFields = [
         { name: 'Ticket', value: ticketRef, inline: true },
-        { name: 'Creator', value: userMention || 'Unknown', inline: true },
+        { name: 'Ersteller', value: userMention || 'Unbekannt', inline: true },
       ];
       if (channelMention) {
-        inlineFields.push({ name: 'Channel', value: channelMention, inline: true });
+        inlineFields.push({ name: 'Kanal', value: channelMention, inline: true });
       }
       if (event.reason) {
-        fields.push({ name: 'Reason', value: String(event.reason).slice(0, 1024), inline: false });
+        fields.push({ name: 'Grund', value: String(event.reason).slice(0, 1024), inline: false });
       }
       break;
 
@@ -198,13 +198,13 @@ async function createTicketLogEmbed(guild: Guild, event: TicketEvent) {
       author = await resolveUserAuthor(guild.client, event.executorId);
       inlineFields = [
         { name: 'Ticket', value: ticketRef, inline: true },
-        { name: 'Closed by', value: executorMention || 'Unknown', inline: true },
+        { name: 'Geschlossen von', value: executorMention || 'Unbekannt', inline: true },
       ];
       if (channelMention) {
-        inlineFields.push({ name: 'Channel', value: channelMention, inline: true });
+        inlineFields.push({ name: 'Kanal', value: channelMention, inline: true });
       }
       if (event.reason) {
-        fields.push({ name: 'Reason', value: String(event.reason).slice(0, 1024), inline: false });
+        fields.push({ name: 'Grund', value: String(event.reason).slice(0, 1024), inline: false });
       }
       break;
 
@@ -212,7 +212,7 @@ async function createTicketLogEmbed(guild: Guild, event: TicketEvent) {
       author = await resolveUserAuthor(guild.client, event.executorId);
       inlineFields = [
         { name: 'Ticket', value: ticketRef, inline: true },
-        { name: 'Deleted by', value: executorMention || 'Unknown', inline: true },
+        { name: 'Gelöscht von', value: executorMention || 'Unbekannt', inline: true },
       ];
       break;
 
@@ -222,8 +222,8 @@ async function createTicketLogEmbed(guild: Guild, event: TicketEvent) {
       inlineFields = [
         { name: 'Ticket', value: ticketRef, inline: true },
         {
-          name: event.type === 'claim' ? 'Claimed by' : 'Unclaimed by',
-          value: executorMention || 'Unknown',
+          name: event.type === 'claim' ? 'Übernommen von' : 'Freigegeben von',
+          value: executorMention || 'Unbekannt',
           inline: true,
         },
       ];
@@ -231,14 +231,15 @@ async function createTicketLogEmbed(guild: Guild, event: TicketEvent) {
 
     case 'priority': {
       const priorityEmojis: Record<string, string> = { none: '⚪', low: '🔵', medium: '🟢', high: '🟡', urgent: '🔴' };
+      const priorityNames: Record<string, string> = { none: 'Keine', low: 'Niedrig', medium: 'Mittel', high: 'Hoch', urgent: 'Dringend' };
       const priorityLabel = event.priority
-        ? `${priorityEmojis[event.priority] || '⚪'} ${event.priority.charAt(0).toUpperCase()}${event.priority.slice(1)}`
-        : 'Unknown';
+        ? `${priorityEmojis[event.priority] || '⚪'} ${priorityNames[event.priority] || event.priority}`
+        : 'Unbekannt';
       author = await resolveUserAuthor(guild.client, event.executorId);
       inlineFields = [
         { name: 'Ticket', value: ticketRef, inline: true },
-        { name: 'Priority', value: priorityLabel, inline: true },
-        { name: 'Updated by', value: executorMention || 'Unknown', inline: true },
+        { name: 'Priorität', value: priorityLabel, inline: true },
+        { name: 'Aktualisiert von', value: executorMention || 'Unbekannt', inline: true },
       ];
       break;
     }
@@ -246,17 +247,17 @@ async function createTicketLogEmbed(guild: Guild, event: TicketEvent) {
     case 'transcript':
       inlineFields = [
         { name: 'Ticket', value: ticketRef, inline: true },
-        { name: 'Creator', value: userMention || 'Unknown', inline: true },
+        { name: 'Ersteller', value: userMention || 'Unbekannt', inline: true },
       ];
       if (event.metadata?.messageCount) {
-        inlineFields.push({ name: 'Messages', value: String(event.metadata.messageCount), inline: true });
+        inlineFields.push({ name: 'Nachrichten', value: String(event.metadata.messageCount), inline: true });
       }
       if (event.metadata?.duration) {
-        fields.push({ name: 'Duration', value: String(event.metadata.duration), inline: false });
+        fields.push({ name: 'Dauer', value: String(event.metadata.duration), inline: false });
       }
       if (event.metadata?.subject || event.reason) {
         fields.push({
-          name: 'Subject',
+          name: 'Betreff',
           value: String(event.metadata?.subject || event.reason).slice(0, 1024),
           inline: false,
         });
@@ -266,17 +267,17 @@ async function createTicketLogEmbed(guild: Guild, event: TicketEvent) {
     case 'feedback': {
       const rating = event.metadata?.rating ?? event.rating;
       const comment = event.metadata?.comment;
-      const ratingDisplay = formatRatingStars(rating) || 'No rating';
+      const ratingDisplay = formatRatingStars(rating) || 'Keine Bewertung';
 
       author = await resolveUserAuthor(guild.client, event.userId);
       inlineFields = [
         { name: 'Ticket', value: ticketRef, inline: true },
-        { name: 'Rating', value: ratingDisplay, inline: true },
+        { name: 'Bewertung', value: ratingDisplay, inline: true },
       ];
 
       if (comment) {
         fields.push({
-          name: 'Comment',
+          name: 'Kommentar',
           value: String(comment).slice(0, 1024),
           inline: false,
         });
@@ -320,7 +321,7 @@ export function validateLogChannel(
   if (!channel || channel.type !== ChannelType.GuildText) {
     return {
       valid: false,
-      error: 'Channel must be a text channel.',
+      error: 'Der Kanal muss ein Textkanal sein.',
     };
   }
 
@@ -332,7 +333,7 @@ export function validateLogChannel(
   if (missing.length > 0) {
     return {
       valid: false,
-      error: `Missing permissions: ${missing.join(', ')}`,
+      error: `Fehlende Berechtigungen: ${missing.join(', ')}`,
     };
   }
 

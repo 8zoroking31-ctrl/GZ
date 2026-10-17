@@ -9,6 +9,7 @@ import type { ApplicationCommand, ButtonBuilder, EmbedBuilder } from 'discord.js
 import type { NexoClient, SelectMenuHandler } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 import { resolveLegacyName } from '../../config/commands/legacyCommandMap.js';
+import { formatCategoryName, getCategoryIcon } from '../../config/commands/commandCategories.js';
 import { handleInteractionError } from '../../utils/errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -18,7 +19,7 @@ const BACK_BUTTON_ID = "help-back-to-main";
 const ALL_COMMANDS_ID = "help-all-commands";
 const PAGINATION_PREFIX = "help-page";
 const CATEGORY_SELECT_ID = "help-category-select";
-const FOOTER_TEXT = "Made with ❤️";
+const FOOTER_TEXT = "Mit ❤️ gemacht";
 const SUBCOMMAND_TYPE = 1;
 const SUBCOMMAND_GROUP_TYPE = 2;
 
@@ -51,42 +52,14 @@ function hasToJSON(value: unknown): value is { toJSON(): unknown } {
     return typeof value === 'object' && value !== null && 'toJSON' in value && typeof value.toJSON === 'function';
 }
 
-const CATEGORY_ICONS: Record<string, string> = {
-    Core: "ℹ️",
-    Moderation: "🛡️",
-    Economy: "💰",
-    Music: "🎵",
-    Fun: "🎮",
-    Leveling: "📊",
-    Utility: "🔧",
-    Ticket: "🎫",
-    Welcome: "👋",
-    Giveaway: "🎉",
-    Counter: "🔢",
-    Tools: "🛠️",
-    Search: "🔍",
-    "Reaction Roles": "🎭",
-    Community: "👥",
-    Birthday: "🎂",
-    "Join To Create": "🔌",
-    Verification: "✅",
-    Config: "⚙️",
-};
 
-function formatCategoryName(rawCategory: string): string {
-    return rawCategory
-        .replace(/_/g, ' ')
-        .replace(/([a-z])([A-Z])/g, '$1 $2')
-        .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-/** Appends the pre-consolidation name, e.g. "Check your balance (formerly /balance)". */
+/** Appends the pre-consolidation name, e.g. "Zeigt deinen Kontostand (früher /balance)". */
 function withLegacyHint(description: string, command: string, group: string | null, subcommand: string): string {
     const legacyName = resolveLegacyName(command, group, subcommand);
     if (!legacyName || legacyName === command) {
         return description;
     }
-    return `${description} (formerly /${group ? `${legacyName} ${subcommand}` : legacyName})`;
+    return `${description} (früher /${group ? `${legacyName} ${subcommand}` : legacyName})`;
 }
 
 function buildHelpEntries(command: unknown, category: string): HelpEntry[] {
@@ -96,7 +69,7 @@ function buildHelpEntries(command: unknown, category: string): HelpEntry[] {
     }
 
     const baseName = commandData.name;
-    const baseDescription = commandData.description || "No description";
+    const baseDescription = commandData.description || "Keine Beschreibung";
     const options = commandData.options || [];
 
     const entries: HelpEntry[] = [];
@@ -165,7 +138,7 @@ function normalizeCommandData(command: unknown): HelpCommandData | null {
 
 async function createCategoryCommandsMenu(category: string, client: NexoClient): Promise<HelpMenuPayload> {
     const categoryName = formatCategoryName(category);
-    const icon = CATEGORY_ICONS[categoryName] || "🔍";
+    const icon = getCategoryIcon(category);
 
     const categoryCommands: HelpEntry[] = [];
 
@@ -213,10 +186,10 @@ async function createCategoryCommandsMenu(category: string, client: NexoClient):
     }
 
     const embed = createEmbed({
-        title: `${icon} ${categoryName} Commands`,
+        title: `${icon} ${categoryName}: Commands`,
         description: categoryCommands.length > 0
-            ? `Click any command mention below to use it.`
-            : `No commands found in the **${categoryName}** category.`
+            ? `Klick auf einen Command, um ihn zu nutzen.`
+            : `In der Kategorie **${categoryName}** wurden keine Commands gefunden.`
     });
 
     if (categoryCommands.length > 0) {
@@ -254,7 +227,7 @@ async function createCategoryCommandsMenu(category: string, client: NexoClient):
 
             chunks.forEach((chunk, index) => {
                 embed.addFields({
-                    name: `Commands (Part ${index + 1})`,
+                    name: `Commands (Teil ${index + 1})`,
                     value: chunk,
                     inline: false,
                 });
@@ -267,7 +240,7 @@ async function createCategoryCommandsMenu(category: string, client: NexoClient):
 
     const backButton = createButton(
         BACK_BUTTON_ID,
-        "Back",
+        "Zurück",
         "primary",
         "⬅️",
         false,
@@ -353,8 +326,8 @@ export async function createAllCommandsMenu(
     const pageCommands = allCommands.slice(startIndex, endIndex);
 
     const embed = createEmbed({
-        title: "📋 All Commands",
-        description: `Browse every available command in one list. Use the page buttons below to move through the full set.`
+        title: "📋 Alle Commands",
+        description: `Alle verfügbaren Commands in einer Liste. Mit den Buttons unten blätterst du durch die Seiten.`
     });
 
     embed.setFooter({ text: FOOTER_TEXT });
@@ -380,7 +353,7 @@ export async function createAllCommandsMenu(
             if (!chunk) continue;
 
             embed.addFields({
-                name: i === 0 ? `Commands (Page ${page})` : "Commands (cont.)",
+                name: i === 0 ? `Commands (Seite ${page})` : "Commands (Forts.)",
                 value: chunk,
                 inline: columnCount > 1,
             });
@@ -400,7 +373,7 @@ export async function createAllCommandsMenu(
 
     const backButton = createButton(
         BACK_BUTTON_ID,
-        "Back",
+        "Zurück",
         "primary",
         "⬅️",
         false,

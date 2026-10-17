@@ -133,7 +133,7 @@ function recordBlockedAttempt(
 
 export function formatCooldownDuration(ms: number): string {
   if (!Number.isFinite(ms) || ms <= 0) {
-    return 'a moment';
+    return 'einen Moment';
   }
 
   const totalSeconds = Math.ceil(ms / 1000);

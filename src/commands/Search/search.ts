@@ -9,32 +9,32 @@ import searchUrban from './modules/search_urban.js';
 export default {
     data: new SlashCommandBuilder()
         .setName('search')
-        .setDescription('Search the web and dictionaries')
+        .setDescription('Im Web und in Wörterbüchern suchen')
         .addSubcommand(subcommand =>
             subcommand
                 .setName('define')
-                .setDescription('Look up a word definition')
+                .setDescription('Die englische Definition eines Worts nachschlagen')
                 .addStringOption(option =>
                     option.setName('word')
-                        .setDescription('The word to look up')
+                        .setDescription('Das (englische) Wort, das du nachschlagen willst')
                         .setRequired(true))
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('google')
-                .setDescription('Search Google')
+                .setDescription('Bei Google suchen')
                 .addStringOption(option =>
                     option.setName('query')
-                        .setDescription('What would you like to search for?')
+                        .setDescription('Wonach möchtest du suchen?')
                         .setRequired(true))
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('urban')
-                .setDescription('Search Urban Dictionary for definitions')
+                .setDescription('Definitionen im Urban Dictionary suchen')
                 .addStringOption(option =>
                     option.setName('term')
-                        .setDescription('The term to look up on Urban Dictionary')
+                        .setDescription('Der Begriff, den du im Urban Dictionary suchen willst')
                         .setRequired(true))
         ),
 
@@ -49,7 +49,7 @@ export default {
             case 'urban':
                 return await searchUrban.execute(interaction);
             default:
-                return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Unknown subcommand' });
+                return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Unbekannter Subcommand' });
         }
     }
 } satisfies Command;

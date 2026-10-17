@@ -8,6 +8,7 @@ import type { Command, NexoClient } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { createEmbed } from "../../utils/embeds.js";
+import { formatCategoryName, getCategoryIcon } from "../../config/commands/commandCategories.js";
 import {
     createSelectMenu,
 } from "../../utils/components.js";
@@ -23,34 +24,6 @@ const ALL_COMMANDS_ID = "help-all-commands";
 const BUG_REPORT_BUTTON_ID = "help-bug-report";
 const HELP_MENU_TIMEOUT_MS = 5 * 60 * 1000;
 
-const CATEGORY_ICONS: Record<string, string> = {
-    Core: "ℹ️",
-    Moderation: "🛡️",
-    Economy: "💰",
-    Music: "🎵",
-    Fun: "🎮",
-    Leveling: "📊",
-    Utility: "🔧",
-    Ticket: "🎫",
-    Welcome: "👋",
-    Giveaway: "🎉",
-    Counter: "🔢",
-    Tools: "🛠️",
-    Search: "🔍",
-    "Reaction Roles": "🎭",
-    Community: "👥",
-    Birthday: "🎂",
-    "Join To Create": "🔌",
-    Verification: "✅",
-};
-
-function formatCategoryName(rawCategory: string) {
-    return rawCategory
-        .replace(/_/g, '')
-        .replace(/([a-z])([A-Z])/g, '$1 $2')
-        .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
 export async function createInitialHelpMenu(client: NexoClient) {
     const commandsPath = path.join(__dirname, "../../commands");
     const categoryDirs = (
@@ -62,67 +35,68 @@ export async function createInitialHelpMenu(client: NexoClient) {
 
     const options = [
         {
-            label: "📋 All Commands",
-            description: "Browse every available command in a single list",
+            label: "📋 Alle Commands",
+            description: "Alle verfügbaren Commands in einer Liste durchsuchen",
             value: ALL_COMMANDS_ID,
         },
         ...categoryDirs.map((category) => {
             const categoryName = formatCategoryName(category);
-            const icon = CATEGORY_ICONS[categoryName] || "🔍";
+            const icon = getCategoryIcon(category);
             return {
                 label: `${icon} ${categoryName}`,
-                description: `View commands in the ${categoryName} category`,
+                description: `Commands der Kategorie ${categoryName} anzeigen`,
                 value: category,
             };
         }),
     ];
 
-    const botName = client?.user?.username || "Bot";
+    const botName = client?.user?.username || "Nexo";
     const embed = createEmbed({
-        title: `📖 ${botName} Help`,
-        description: 'Set up your server, pick what to enable, then browse commands below.',
+        title: `📖 ${botName} – Hilfe`,
+        description: 'Richte deinen Server ein, wähle aus, was aktiv sein soll, und stöbere dann unten durch die Commands.',
         color: 'primary',
         thumbnail: client.user?.displayAvatarURL?.({ size: 1024 }),
         fields: [
             {
-                name: '🚀 Getting Started',
+                name: '🚀 Erste Schritte',
                 value: [
-                    '**1. Launch setup** — Run `/configwizard` to configure prefix, mod role, and logs.',
-                    '**2. Enable systems** — Use `/commands dashboard` to turn categories on or off.',                    '**3. Browse commands** — Use the menu below to view categories and commands.',
+                    '**1. Einrichtung starten** — Mit `/configwizard` legst du Prefix, Moderator-Rolle und Logs fest.',
+                    '**2. Systeme aktivieren** — Mit `/commands dashboard` schaltest du Kategorien an oder aus.',
+                    '**3. Commands entdecken** — Im Menü unten findest du alle Kategorien und Commands.',
                 ].join('\n'),
                 inline: false,
             },
             {
-                name: 'ℹ️ How It Works',
+                name: 'ℹ️ So funktioniert’s',
                 value: [
-                    '• Dashboard commands manage each feature visually',
-                    '• Settings are saved per server',
-                    '• Slash commands and prefixes both work once enabled',
+                    '• Dashboard-Commands verwalten jede Funktion übersichtlich',
+                    '• Einstellungen werden pro Server gespeichert',
+                    '• Slash-Commands und Prefix-Commands funktionieren, sobald sie aktiviert sind',
                 ].join('\n'),
                 inline: false,
             },
             {
                 name: '\u200B',
-                value: `-# ${botName} is [open source](https://github.com/Robertwlt03/NexoBot)`,
+                value: `-# ${botName} ist [Open Source](https://github.com/Robertwlt03/NexoBot)`,
                 inline: false,
             },
         ],
     });
 
     embed.setFooter({ 
-        text: "Made with ❤️" 
+        text: "Ein Bot. Alle Funktionen. · Mit ❤️ gemacht" 
     });
     embed.setTimestamp();
 
     const bugReportButton = new ButtonBuilder()
         .setCustomId(BUG_REPORT_BUTTON_ID)
-        .setLabel("Report Bug")
+        .setLabel("Bug melden")
         .setStyle(ButtonStyle.Danger);
 
 
     const selectRow = createSelectMenu(
         CATEGORY_SELECT_ID,
-        "Select to view the commands",
+        "Wähle eine Kategorie, um die Commands zu sehen",
         options,
     );
 
@@ -140,7 +114,7 @@ export default {
     slashOnly: true,
     data: new SlashCommandBuilder()
         .setName("help")
-        .setDescription("Displays the help menu with all available commands"),
+        .setDescription("Zeigt das Hilfemenü mit allen verfügbaren Commands"),
 
     async execute(interaction, guildConfig, client) {
         
@@ -161,8 +135,8 @@ export default {
                 }
 
                 const closedEmbed = createEmbed({
-                    title: "Help menu closed",
-                    description: "Help menu has been closed, use /help again.",
+                    title: "Hilfemenü geschlossen",
+                    description: "Das Hilfemenü wurde geschlossen. Nutze /help erneut.",
                     color: "secondary",
                 });
 

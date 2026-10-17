@@ -85,7 +85,7 @@ async function handlePrefixCommand(message: Message<true>, client: NexoClient) {
     if (isMaintenanceMode() && !isBotOwner(message.author.id)) {
       await message.channel.send({
         embeds: [createEmbed({
-          title: 'Maintenance Mode',
+          title: 'Wartungsmodus',
           description: getBotMessage('maintenanceMode'),
           color: 'warning',
         })],
@@ -101,7 +101,7 @@ async function handlePrefixCommand(message: Message<true>, client: NexoClient) {
     if (!isCommandCategoryEnabled(command.category) || (route && !isCommandCategoryEnabled(route.category))) {
       await message.channel.send({
         embeds: [createEmbed({
-          title: 'Feature Disabled',
+          title: 'Funktion deaktiviert',
           description: getBotMessage('commandDisabled'),
           color: 'error',
         })],
@@ -113,8 +113,8 @@ async function handlePrefixCommand(message: Message<true>, client: NexoClient) {
     if (!supportsPrefixExecution(command) || restriction.blocked) {
       if (restriction.blocked && restriction.reason) {
         const embed = createEmbed({
-          title: 'Slash Command Only',
-          description: `${restriction.reason}\nUse \`/${route ? accessKey : resolvedCommandName}\` instead.`,
+          title: 'Nur als Slash-Command',
+          description: `${restriction.reason}\nNutze stattdessen \`/${route ? accessKey : resolvedCommandName}\`.`,
           color: 'info',
         });
         await message.channel.send({ embeds: [embed] }).catch(() => {});
@@ -124,8 +124,8 @@ async function handlePrefixCommand(message: Message<true>, client: NexoClient) {
 
     if (!(await isCommandEnabled(client, message.guild.id, accessKey, command.category))) {
       const embed = createEmbed({
-        title: 'Command Disabled',
-        description: 'This command has been disabled for this server.',
+        title: 'Command deaktiviert',
+        description: 'Dieser Command wurde für diesen Server deaktiviert.',
         color: 'error',
       });
       await message.channel.send({ embeds: [embed] }).catch(() => {});
@@ -144,8 +144,8 @@ async function handlePrefixCommand(message: Message<true>, client: NexoClient) {
     if (!abuseProtection.allowed) {
       const formattedCooldown = formatCooldownDuration(abuseProtection.remainingMs);
       const embed = createEmbed({
-        title: 'Command Cooldown',
-        description: `This command is on cooldown. Please wait ${formattedCooldown} before trying again.`,
+        title: 'Command-Cooldown',
+        description: `Dieser Command hat gerade Cooldown. Bitte warte ${formattedCooldown}, bevor du es erneut versuchst.`,
         color: 'error',
       });
       await message.channel.send({ embeds: [embed] }).catch(() => {});
@@ -180,7 +180,7 @@ async function handleCountingGame(message: Message<true>, client: NexoClient) {
         currentStreak: 0,
       });
 
-      const failureMessage = await message.channel.send(`❌ Count broken by <@${message.author.id}>. The sequence has been reset to **1**.`);
+      const failureMessage = await message.channel.send(`❌ <@${message.author.id}> hat die Zählung unterbrochen. Es geht wieder bei **1** los.`);
       setTimeout(() => {
         failureMessage.delete().catch(() => {});
       }, 10000);

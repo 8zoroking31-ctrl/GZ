@@ -7,7 +7,7 @@ import grerollCommand from './modules/greroll.js';
 
 export default createRouterCommand({
   name: 'giveaway',
-  description: 'Create and manage giveaways',
+  description: 'Giveaways erstellen und verwalten',
   category: 'Giveaway',
   defaultMemberPermissions: PermissionFlagsBits.ManageGuild,
   routes: [

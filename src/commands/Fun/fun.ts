@@ -5,7 +5,7 @@ import rollCommand from './modules/roll.js';
 
 export default createRouterCommand({
   name: 'fun',
-  description: 'Fun commands and mini games',
+  description: 'Spaß-Commands und Minispiele',
   category: 'Fun',
   routes: [
     { legacyName: 'fight', module: fightCommand },

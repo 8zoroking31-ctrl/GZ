@@ -16,7 +16,7 @@ export const getGuildConfig = wrapServiceBoundary(async function getGuildConfig(
     service: 'guildConfigService',
     operation: 'getGuildConfig',
     message: 'Failed to fetch guild configuration',
-    userMessage: 'Failed to load server configuration. Please try again.',
+    userMessage: 'Die Server-Konfiguration konnte nicht geladen werden. Bitte versuch es erneut.',
 });
 
 export const setGuildConfig = wrapServiceBoundary(async function setGuildConfig(client: NexoClient, guildId: string, config: unknown, context: GuildConfigContext = {}): Promise<GuildConfig> {
@@ -26,7 +26,7 @@ export const setGuildConfig = wrapServiceBoundary(async function setGuildConfig(
     service: 'guildConfigService',
     operation: 'setGuildConfig',
     message: 'Failed to save guild configuration',
-    userMessage: 'Failed to save server configuration. Please try again.',
+    userMessage: 'Die Server-Konfiguration konnte nicht gespeichert werden. Bitte versuch es erneut.',
 });
 
 export const updateGuildConfig = wrapServiceBoundary(async function updateGuildConfig(client: NexoClient, guildId: string, updates: Record<string, unknown>, context: GuildConfigContext = {}): Promise<GuildConfig> {
@@ -38,7 +38,7 @@ export const updateGuildConfig = wrapServiceBoundary(async function updateGuildC
     service: 'guildConfigService',
     operation: 'updateGuildConfig',
     message: 'Failed to update guild configuration',
-    userMessage: 'Failed to update server configuration. Please try again.',
+    userMessage: 'Die Server-Konfiguration konnte nicht aktualisiert werden. Bitte versuch es erneut.',
 });
 
 export const getConfigValue = wrapServiceBoundary(async function getConfigValue(client: NexoClient, guildId: string, key: string, defaultValue: unknown = null, context: GuildConfigContext = {}): Promise<unknown> {
@@ -48,7 +48,7 @@ export const getConfigValue = wrapServiceBoundary(async function getConfigValue(
     service: 'guildConfigService',
     operation: 'getConfigValue',
     message: 'Failed to read guild configuration value',
-    userMessage: 'Failed to read a server setting. Please try again.',
+    userMessage: 'Eine Server-Einstellung konnte nicht gelesen werden. Bitte versuch es erneut.',
 });
 
 export const setConfigValue = wrapServiceBoundary(async function setConfigValue(client: NexoClient, guildId: string, key: string, value: unknown, context: GuildConfigContext = {}): Promise<GuildConfig> {
@@ -57,7 +57,7 @@ export const setConfigValue = wrapServiceBoundary(async function setConfigValue(
     service: 'guildConfigService',
     operation: 'setConfigValue',
     message: 'Failed to update guild configuration value',
-    userMessage: 'Failed to update a server setting. Please try again.',
+    userMessage: 'Eine Server-Einstellung konnte nicht aktualisiert werden. Bitte versuch es erneut.',
 });
 
 /**
@@ -68,7 +68,7 @@ export const patchGuildConfig = wrapServiceBoundary(async function patchGuildCon
         throw createError(
             'Invalid guild config patch',
             ErrorTypes.VALIDATION,
-            'Invalid configuration update.',
+            'Ungültige Konfigurationsänderung.',
             { guildId, ...context },
         );
     }
@@ -82,7 +82,7 @@ export const patchGuildConfig = wrapServiceBoundary(async function patchGuildCon
     service: 'guildConfigService',
     operation: 'patchGuildConfig',
     message: 'Failed to patch guild configuration',
-    userMessage: 'Failed to update server configuration. Please try again.',
+    userMessage: 'Die Server-Konfiguration konnte nicht aktualisiert werden. Bitte versuch es erneut.',
 });
 
 function deepMergeGuildConfig(base: Record<string, unknown>, patch: Record<string, unknown>): Record<string, unknown> {

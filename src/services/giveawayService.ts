@@ -23,7 +23,7 @@ export function parseDuration(durationString: unknown): number {
         throw new NexoBotError(
             'Invalid duration format provided',
             ErrorTypes.VALIDATION,
-            'Please provide a valid duration (e.g., 1h, 30m, 5d, 10s).',
+            'Bitte gib eine gültige Dauer an (z. B. 1h, 30m, 5d, 10s).',
             { durationString }
         );
     }
@@ -35,7 +35,7 @@ export function parseDuration(durationString: unknown): number {
         throw new NexoBotError(
             `Invalid duration format: ${durationString}`,
             ErrorTypes.VALIDATION,
-            'Invalid duration format. Use: 1h, 30m, 5d, 10s (min: 10s, max: 30d)',
+            'Ungültiges Format für die Dauer. Nutze: 1h, 30m, 5d, 10s (min.: 10s, max.: 30d)',
             { input: durationString }
         );
     }
@@ -47,7 +47,7 @@ export function parseDuration(durationString: unknown): number {
         throw new NexoBotError(
             `Duration amount out of range: ${amount}`,
             ErrorTypes.VALIDATION,
-            'Duration amount must be between 1 and 999.',
+            'Der Wert für die Dauer muss zwischen 1 und 999 liegen.',
             { amount, unit }
         );
     }
@@ -70,7 +70,7 @@ export function parseDuration(durationString: unknown): number {
             throw new NexoBotError(
                 `Unknown duration unit: ${unit}`,
                 ErrorTypes.VALIDATION,
-                'Please use s (seconds), m (minutes), h (hours), or d (days).',
+                'Bitte nutze s (Sekunden), m (Minuten), h (Stunden) oder d (Tage).',
                 { unit }
             );
     }
@@ -80,7 +80,7 @@ export function parseDuration(durationString: unknown): number {
         throw new NexoBotError(
             `Duration exceeds maximum: ${ms}ms > ${maxDuration}ms`,
             ErrorTypes.VALIDATION,
-            `Maximum duration is ${Math.floor(maxDuration / (24 * 60 * 60 * 1000))} days.`,
+            `Die maximale Dauer beträgt ${Math.floor(maxDuration / (24 * 60 * 60 * 1000))} Tage.`,
             { requestedMs: ms, maxMs: maxDuration }
         );
     }
@@ -90,7 +90,7 @@ export function parseDuration(durationString: unknown): number {
         throw new NexoBotError(
             `Duration below minimum: ${ms}ms < ${minDuration}ms`,
             ErrorTypes.VALIDATION,
-            `Minimum duration is ${Math.ceil(minDuration / 1000)} seconds.`,
+            `Die minimale Dauer beträgt ${Math.ceil(minDuration / 1000)} Sekunden.`,
             { requestedMs: ms, minMs: minDuration }
         );
     }
@@ -103,7 +103,7 @@ export function validatePrize(prize: unknown): string {
         throw new NexoBotError(
             'Prize must be a non-empty string',
             ErrorTypes.VALIDATION,
-            'Please provide a valid prize description.',
+            'Bitte gib eine gültige Preisbeschreibung an.',
             { prize }
         );
     }
@@ -113,7 +113,7 @@ export function validatePrize(prize: unknown): string {
         throw new NexoBotError(
             `Prize length out of range: ${trimmed.length}`,
             ErrorTypes.VALIDATION,
-            'Prize must be between 1 and 256 characters.',
+            'Der Preis muss zwischen 1 und 256 Zeichen lang sein.',
             { length: trimmed.length }
         );
     }
@@ -129,7 +129,7 @@ export function validateWinnerCount(winnerCount: number): void {
         throw new NexoBotError(
             `Invalid winner count: ${winnerCount}`,
             ErrorTypes.VALIDATION,
-            `Winner count must be between ${minimumWinners} and ${maximumWinners}.`,
+            `Die Anzahl der Gewinner muss zwischen ${minimumWinners} und ${maximumWinners} liegen.`,
             { winnerCount, minimumWinners, maximumWinners }
         );
     }
@@ -143,22 +143,22 @@ export function createGiveawayEmbed(giveaway: Giveaway, status: string, winners:
         
         const embed = new EmbedBuilder()
             .setTitle(`${statusEmoji} ${giveaway.prize}`)
-            .setDescription('React with the button below to enter!')
+            .setDescription('Klick auf den Button unten, um teilzunehmen!')
             .setColor(color)
             .addFields(
-                { name: '👤 Hosted by', value: `<@${giveaway.hostId}>`, inline: true },
-                { name: '🏆 Winners', value: giveaway.winnerCount!.toString(), inline: true },
-                { name: '👥 Entries', value: giveaway.participants?.length?.toString() || '0', inline: true }
+                { name: '👤 Veranstaltet von', value: `<@${giveaway.hostId}>`, inline: true },
+                { name: '🏆 Gewinner', value: giveaway.winnerCount!.toString(), inline: true },
+                { name: '👥 Teilnahmen', value: giveaway.participants?.length?.toString() || '0', inline: true }
             );
 
         if (isEnded) {
             const winnerDisplay = winners.length > 0 
                 ? winners.map(id => `<@${id}>`).join(', ')
-                : 'No valid entries';
-            embed.addFields({ name: '🎯 Winners', value: winnerDisplay, inline: false });
+                : 'Keine gültigen Teilnahmen';
+            embed.addFields({ name: '🎯 Gewinner', value: winnerDisplay, inline: false });
         } else {
             const endTime = giveaway.endsAt || giveaway.endTime;
-            embed.addFields({ name: '⏰ Ends', value: `<t:${Math.floor(endTime! / 1000)}:R>`, inline: false });
+            embed.addFields({ name: '⏰ Endet', value: `<t:${Math.floor(endTime! / 1000)}:R>`, inline: false });
         }
 
         embed.setTimestamp();
@@ -169,7 +169,7 @@ export function createGiveawayEmbed(giveaway: Giveaway, status: string, winners:
         throw new NexoBotError(
             'Failed to create giveaway embed',
             ErrorTypes.UNKNOWN,
-            'An internal error occurred while formatting the giveaway.',
+            'Beim Erstellen des Giveaways ist ein interner Fehler aufgetreten.',
             { error: (error as Error).message }
         );
     }
@@ -183,12 +183,12 @@ export function createGiveawayButtons(ended: boolean = false): ActionRowBuilder<
             row.addComponents(
                 new ButtonBuilder()
                     .setCustomId('giveaway_reroll')
-                    .setLabel('🎲 Reroll')
+                    .setLabel('🎲 Neu auslosen')
                     .setStyle(ButtonStyle.Secondary)
                     .setDisabled(false),
                 new ButtonBuilder()
                     .setCustomId('giveaway_view')
-                    .setLabel('👁️ View Winners')
+                    .setLabel('👁️ Gewinner anzeigen')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(false)
             );
@@ -196,12 +196,12 @@ export function createGiveawayButtons(ended: boolean = false): ActionRowBuilder<
             row.addComponents(
                 new ButtonBuilder()
                     .setCustomId('giveaway_join')
-                    .setLabel('🎉 Join')
+                    .setLabel('🎉 Teilnehmen')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(false),
                 new ButtonBuilder()
                     .setCustomId('giveaway_end')
-                    .setLabel('🛑 End')
+                    .setLabel('🛑 Beenden')
                     .setStyle(ButtonStyle.Danger)
                     .setDisabled(false)
             );
@@ -213,7 +213,7 @@ export function createGiveawayButtons(ended: boolean = false): ActionRowBuilder<
         throw new NexoBotError(
             'Failed to create giveaway buttons',
             ErrorTypes.UNKNOWN,
-            'An internal error occurred while creating interactive buttons.',
+            'Beim Erstellen der Buttons ist ein interner Fehler aufgetreten.',
             { error: (error as Error).message }
         );
     }
@@ -230,7 +230,7 @@ export function selectWinners(participants: string[], winnerCount: number): stri
         throw new NexoBotError(
             'Invalid winner count for selection',
             ErrorTypes.VALIDATION,
-            'Winner count must be at least 1.',
+            'Es muss mindestens 1 Gewinner geben.',
             { winnerCount }
         );
     }
@@ -250,7 +250,7 @@ export function selectWinners(participants: string[], winnerCount: number): stri
         throw new NexoBotError(
             'Failed to select winners',
             ErrorTypes.UNKNOWN,
-            'An error occurred while selecting winners.',
+            'Beim Auslosen der Gewinner ist ein Fehler aufgetreten.',
             { error: (error as Error).message, participantCount: participants.length }
         );
     }
@@ -283,7 +283,7 @@ export async function endGiveaway(
             throw new NexoBotError(
                 'Giveaway object is null or undefined',
                 ErrorTypes.VALIDATION,
-                'Cannot end a non-existent giveaway.',
+                'Ein nicht existierendes Giveaway kann nicht beendet werden.',
                 { giveaway }
             );
         }
@@ -292,7 +292,7 @@ export async function endGiveaway(
             throw new NexoBotError(
                 `Giveaway ${giveaway.messageId} is already ended`,
                 ErrorTypes.VALIDATION,
-                'This giveaway has already ended.',
+                'Dieses Giveaway ist bereits beendet.',
                 { giveawayId: giveaway.messageId, status: 'already_ended' }
             );
         }
@@ -326,7 +326,7 @@ export async function endGiveaway(
         throw new NexoBotError(
             'Failed to end giveaway',
             ErrorTypes.UNKNOWN,
-            'An error occurred while ending the giveaway.',
+            'Beim Beenden des Giveaways ist ein Fehler aufgetreten.',
             { error: (error as Error).message, giveawayId: giveaway?.messageId }
         );
     }
@@ -376,7 +376,7 @@ export async function checkGiveaways(client: NexoClient): Promise<void> {
 
         const winnerMentions = winners.length > 0
           ? winners.map(id => `<@${id}>`).join(', ')
-          : 'No valid entries!';
+          : 'Keine gültigen Teilnahmen!';
 
         const endedEmbed = createGiveawayEmbed(giveaway, 'ended', winners);
 
@@ -396,7 +396,7 @@ export async function checkGiveaways(client: NexoClient): Promise<void> {
         }
 
         if (winners.length > 0) {
-          const winnerAnnouncement = `🎉 Congratulations ${winnerMentions}! You won the **${giveaway.prize || 'giveaway'}**! Please contact <@${giveaway.hostId}> to claim your prize.`;
+          const winnerAnnouncement = `🎉 Glückwunsch ${winnerMentions}! Gewonnen: **${giveaway.prize || 'das Giveaway'}**! Meldet euch bei <@${giveaway.hostId}>, um den Preis abzuholen.`;
           const winnerPingMsg = await channel.send({ content: winnerAnnouncement });
           giveaway.winnerPingMessageId = winnerPingMsg.id;
           await markGiveawayEnded(client, giveawayId, giveaway);
@@ -407,21 +407,21 @@ export async function checkGiveaways(client: NexoClient): Promise<void> {
               guildId,
               eventType: EVENT_TYPES.GIVEAWAY_WINNER,
               data: {
-                description: `Giveaway ended with ${winners.length} winner(s)`,
+                description: `Giveaway mit ${winners.length} Gewinner(n) beendet`,
                 channelId: channel.id,
                 fields: [
                   {
-                    name: '🎁 Prize',
-                    value: giveaway.prize || 'Mystery Prize!',
+                    name: '🎁 Preis',
+                    value: giveaway.prize || 'Überraschungspreis!',
                     inline: true
                   },
                   {
-                    name: '🏆 Winners',
+                    name: '🏆 Gewinner',
                     value: winners.map(id => `<@${id}>`).join(', '),
                     inline: false
                   },
                   {
-                    name: '👥 Entries',
+                    name: '👥 Teilnahmen',
                     value: participants.length.toString(),
                     inline: true
                   }
@@ -432,7 +432,7 @@ export async function checkGiveaways(client: NexoClient): Promise<void> {
             logger.debug('Error logging giveaway winner:', error);
           }
         } else {
-          await channel.send({ content: `The giveaway for **${giveaway.prize}** has ended with no valid entries.` });
+          await channel.send({ content: `Das Giveaway für **${giveaway.prize}** ist ohne gültige Teilnahmen zu Ende gegangen.` });
         }
 
         logger.info(`Ended giveaway ${messageId} in guild ${guildId}`);

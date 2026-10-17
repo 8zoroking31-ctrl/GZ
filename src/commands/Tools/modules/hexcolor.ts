@@ -9,10 +9,10 @@ import type { Command } from '../../../types/index.js';
 export default {
     data: new SlashCommandBuilder()
         .setName('hexcolor')
-        .setDescription('Generate a random hex color with preview')
+        .setDescription('Erzeugt eine zufällige Hex-Farbe mit Vorschau')
         .addStringOption(option =>
             option.setName('color')
-                .setDescription('Specific hex color (e.g., #FF5733 or FF5733)')
+                .setDescription('Bestimmte Hex-Farbe (z. B. #FF5733 oder FF5733)')
                 .setRequired(false)),
 
     async execute(interaction) {
@@ -28,7 +28,7 @@ export default {
                 } else {
                     hexColor = hexColor.replace('#', '');
                     if (!/^[0-9A-Fa-f]{3,6}$/.test(hexColor)) {
-                        return await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'Please provide a valid hex code.\n\n**Valid formats:**\n• `#FF5733` (with hash)\n• `FF5733` (without hash)\n• `F57` (3-digit shorthand)\n\n**Invalid:** `#GG5733` (G is not a hex digit)' });
+                        return await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'Bitte gib einen gültigen Hex-Code an.\n\n**Gültige Formate:**\n• `#FF5733` (mit Raute)\n• `FF5733` (ohne Raute)\n• `F57` (3-stellige Kurzform)\n\n**Ungültig:** `#GG5733` (G ist keine Hex-Ziffer)' });
                     }
 
                     if (hexColor.length === 3) {
@@ -50,22 +50,22 @@ export default {
                 const colorName = getColorName(hexColor);
 
                 const embed = successEmbed(
-                    '🎨 Color Information',
+                    '🎨 Farbinfo',
                     `**Hex:** \`${hexColor}\`\n` +
                     `**RGB:** \`rgb(${r}, ${g}, ${b})\`\n` +
                     `**HSL:** \`${rgbToHsl(r, g, b)}\`\n` +
-                    `**Name:** ${colorName || 'Custom Color'}`
+                    `**Name:** ${colorName || 'Eigene Farbe'}`
                 )
                     .setColor(hexColor as HexColorString)
                     .setImage(colorPreviewUrl);
 
                 if (isRandom) {
-                    embed.setFooter({ text: 'Randomly generated color' });
+                    embed.setFooter({ text: 'Zufällig erzeugte Farbe' });
                 }
 
                 await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
             },
-            'Failed to generate color information. Please try again.',
+            'Die Farbinfo konnte nicht erzeugt werden. Versuch es noch mal.',
             {
                 autoDefer: true,
                 deferOptions: { flags: MessageFlags.Ephemeral }
@@ -97,26 +97,26 @@ h = s = 0;
 
 function getColorName(hex: string): string | null {
     const colors: Record<string, string> = {
-        '#FF0000': 'Red',
-        '#00FF00': 'Green',
-        '#0000FF': 'Blue',
-        '#FFFF00': 'Yellow',
+        '#FF0000': 'Rot',
+        '#00FF00': 'Grün',
+        '#0000FF': 'Blau',
+        '#FFFF00': 'Gelb',
         '#FF00FF': 'Magenta',
         '#00FFFF': 'Cyan',
-        '#000000': 'Black',
-        '#FFFFFF': 'White',
-        '#808080': 'Gray',
+        '#000000': 'Schwarz',
+        '#FFFFFF': 'Weiß',
+        '#808080': 'Grau',
         '#FFA500': 'Orange',
-        '#800080': 'Purple',
-        '#A52A2A': 'Brown',
-        '#FFC0CB': 'Pink',
-        '#008000': 'Dark Green',
-        '#000080': 'Navy',
+        '#800080': 'Lila',
+        '#A52A2A': 'Braun',
+        '#FFC0CB': 'Rosa',
+        '#008000': 'Dunkelgrün',
+        '#000080': 'Marineblau',
         '#FFD700': 'Gold',
-        '#C0C0C0': 'Silver',
-        '#FF6347': 'Tomato',
-        '#40E0D0': 'Turquoise',
-        '#E6E6FA': 'Lavender'
+        '#C0C0C0': 'Silber',
+        '#FF6347': 'Tomatenrot',
+        '#40E0D0': 'Türkis',
+        '#E6E6FA': 'Lavendel'
     };
     
     if (colors[hex.toUpperCase()]) {
@@ -137,5 +137,5 @@ function getColorName(hex: string): string | null {
         }
     }
     
-    return minDistance < 1000000 ? `Close to ${closestColor}` : null;
+    return minDistance < 1000000 ? `Ähnlich wie ${closestColor}` : null;
 }

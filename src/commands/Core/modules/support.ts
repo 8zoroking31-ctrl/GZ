@@ -8,12 +8,12 @@ const SUPPORT_URL = "https://github.com/Robertwlt03/NexoBot/issues";
 export default {
     data: new SlashCommandBuilder()
     .setName("support")
-    .setDescription("Get help and report issues on GitHub"),
+    .setDescription("Hilfe bekommen und Probleme auf GitHub melden"),
 
   async execute(interaction) {
     try {
       const supportButton = new ButtonBuilder()
-        .setLabel("Open GitHub Issues")
+        .setLabel("GitHub-Issues öffnen")
         .setStyle(ButtonStyle.Link)
         .setURL(SUPPORT_URL);
 
@@ -21,7 +21,7 @@ export default {
 
       await InteractionHelper.safeReply(interaction, {
         embeds: [
-          createEmbed({ title: "Need Help?", description: "Need help, found a bug or have a feature idea? Open an issue on GitHub." }),
+          createEmbed({ title: "Brauchst du Hilfe?", description: "Du brauchst Hilfe, hast einen Bug gefunden oder eine Idee für ein Feature? Eröffne ein Issue auf GitHub." }),
         ],
         components: [actionRow],
         flags: MessageFlags.Ephemeral,
@@ -31,7 +31,7 @@ export default {
       
       try {
         return await InteractionHelper.safeReply(interaction, {
-          embeds: [createEmbed({ title: 'System Error', description: 'Could not display support information.', color: 'error' })],
+          embeds: [createEmbed({ title: 'Systemfehler', description: 'Support-Infos konnten nicht angezeigt werden.', color: 'error' })],
           flags: MessageFlags.Ephemeral,
         });
       } catch (replyError) {

@@ -98,7 +98,8 @@ function isImportantFooter(footerText: string): boolean {
   }
 
   const normalized = footerText.toLowerCase();
-  return /\b(close|closes|closed|expire|expires|available in|page\s+\d+|dashboard closes|ticket id)\b/.test(normalized);
+  return /\b(close|closes|closed|expire|expires|available in|page\s+\d+|dashboard closes|ticket id)\b/.test(normalized)
+    || /schließ|geschlossen|läuft\b.*\bab\b|abgelaufen|ablauf|verfügbar in|seite\s+\d+|ticket-id/.test(normalized);
 }
 
 const originalSetDescription = EmbedBuilder.prototype.setDescription;
@@ -254,23 +255,23 @@ export function createEmbed({
 }
 
 const NOTIFICATION_DEFAULT_TITLES: Record<string, string> = {
-  success: 'Success',
-  error: 'Error',
+  success: 'Erfolg',
+  error: 'Fehler',
   info: 'Information',
-  warning: 'Warning',
-  primary: 'Notice',
+  warning: 'Warnung',
+  primary: 'Hinweis',
 };
 
 export const USER_ERROR_TITLES: Record<string, string> = {
-  validation: 'Invalid Input',
-  permission: 'Permission Denied',
-  configuration: 'Configuration Error',
-  database: 'Database Error',
-  network: 'Network Error',
-  discord_api: 'Discord API Error',
-  user_input: 'Input Error',
-  rate_limit: 'Too Fast',
-  unknown: 'Something Went Wrong',
+  validation: 'Ungültige Eingabe',
+  permission: 'Keine Berechtigung',
+  configuration: 'Konfigurationsfehler',
+  database: 'Datenbankfehler',
+  network: 'Netzwerkfehler',
+  discord_api: 'Discord-API-Fehler',
+  user_input: 'Eingabefehler',
+  rate_limit: 'Zu schnell',
+  unknown: 'Etwas ist schiefgelaufen',
 };
 
 const USER_ERROR_COLORS: Record<string, string> = {
@@ -330,7 +331,7 @@ export function errorEmbed(title?: string | null, detail: unknown = null, option
   }
 
   const description = body ? String(body).trim() : '';
-  const titleOverride = title && title !== 'Error' ? title : undefined;
+  const titleOverride = title && title !== 'Error' && title !== 'Fehler' ? title : undefined;
 
   return buildUserErrorEmbed('unknown', description, { titleOverride });
 }
@@ -338,10 +339,10 @@ export function errorEmbed(title?: string | null, detail: unknown = null, option
 /** @param {string} titleOrBody - With one arg: body text. With two args: title and body. */
 export function successEmbed(title?: string | null, body: string | null = ''): EmbedBuilder {
   if (arguments.length === 1) {
-    return buildNotificationEmbed('Success', title, 'success');
+    return buildNotificationEmbed('Erfolg', title, 'success');
   }
 
-  return buildNotificationEmbed(title || 'Success', body, 'success');
+  return buildNotificationEmbed(title || 'Erfolg', body, 'success');
 }
 
 /** @param {string} titleOrBody - With one arg: body text. With two args: title and body. */
@@ -356,10 +357,10 @@ export function infoEmbed(title?: string | null, body: string | null = ''): Embe
 /** @param {string} titleOrBody - With one arg: body text. With two args: title and body. */
 export function warningEmbed(title?: string | null, body: string | null = ''): EmbedBuilder {
   if (arguments.length === 1) {
-    return buildNotificationEmbed('Warning', title, 'warning');
+    return buildNotificationEmbed('Warnung', title, 'warning');
   }
 
-  return buildNotificationEmbed(title || 'Warning', body, 'warning');
+  return buildNotificationEmbed(title || 'Warnung', body, 'warning');
 }
 
 export function formatUser(user: User): string {

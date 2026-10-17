@@ -22,13 +22,13 @@ export async function handleCreate(interaction: ChatInputCommandInteraction, cli
     }
 
     if (!(interaction.member as GuildMember).permissions.has(PermissionFlagsBits.ManageChannels)) {
-        await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'You need **Manage Channels** permission to create counters.' }).catch(logger.error);
+        await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: 'Du brauchst die Berechtigung **Kanäle verwalten**, um Zähler zu erstellen.' }).catch(logger.error);
         return;
     }
 
     try {
         if (!category || category.type !== ChannelType.GuildCategory) {
-            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Please select a valid category for the counter channel.' }).catch(logger.error);
+            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Bitte wähle eine gültige Kategorie für den Zählerkanal.' }).catch(logger.error);
             return;
         }
 
@@ -41,7 +41,7 @@ export async function handleCreate(interaction: ChatInputCommandInteraction, cli
 
         if (duplicateType) {
             const duplicateChannel = guild.channels.cache.get(duplicateType.channelId);
-            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: `A **${getCounterTypeLabel(type)}** counter already exists for this server${duplicateChannel ? ` in ${duplicateChannel}` : ''}. Delete it first before creating another.` }).catch(logger.error);
+            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: `Auf diesem Server gibt es bereits einen **${getCounterTypeLabel(type)}**-Zähler${duplicateChannel ? ` in ${duplicateChannel}` : ''}. Lösche ihn zuerst, bevor du einen neuen erstellst.` }).catch(logger.error);
             return;
         }
 
@@ -49,12 +49,12 @@ export async function handleCreate(interaction: ChatInputCommandInteraction, cli
             name: baseChannelName,
             type: targetChannelType,
             parent: category.id,
-            reason: `Counter channel created by ${interaction.user.tag}`
+            reason: `Zählerkanal erstellt von ${interaction.user.tag}`
         });
 
         const existingCounter = counters.find(c => c.channelId === targetChannel.id);
         if (existingCounter) {
-            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: `A counter already exists for channel **${targetChannel.name}**. Please delete it first or choose a different type.` }).catch(logger.error);
+            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: `Für den Kanal **${targetChannel.name}** gibt es bereits einen Zähler. Lösche ihn zuerst oder wähle einen anderen Typ.` }).catch(logger.error);
             return;
         }
 
@@ -71,23 +71,23 @@ export async function handleCreate(interaction: ChatInputCommandInteraction, cli
 
         const saved = await saveServerCounters(client, guild.id, counters);
         if (!saved) {
-            await targetChannel.delete('Counter creation failed during save').catch(() => null);
-            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Failed to save counter data. Please try again.' }).catch(logger.error);
+            await targetChannel.delete('Zählererstellung beim Speichern fehlgeschlagen').catch(() => null);
+            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Zählerdaten konnten nicht gespeichert werden. Bitte versuche es erneut.' }).catch(logger.error);
             return;
         }
 
         const updated = await updateCounter(client, guild, newCounter);
         if (!updated) {
-            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Counter created but failed to update channel name. The counter will update on the next scheduled run.' }).catch(logger.error);
+            await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Zähler erstellt, aber der Kanalname konnte nicht aktualisiert werden. Er wird beim nächsten geplanten Durchlauf aktualisiert.' }).catch(logger.error);
             return;
         }
 
         await InteractionHelper.safeEditReply(interaction, {
-            embeds: [successEmbed(`**Counter Created Successfully!**\n\n**Type:** ${getCounterTypeLabel(type)}\n**Channel Type:** ${targetChannel.type === ChannelType.GuildVoice ? 'voice' : 'text'}\n**Category:** ${category}\n**Channel:** ${targetChannel}\n**Channel Name:** ${targetChannel.name}\n**Counter ID:** \`${newCounter.id}\`\n\nThe counter will automatically update every 15 minutes.\n\nUse \`/serverstats list\` to view all counters.`)]
+            embeds: [successEmbed(`**Zähler erfolgreich erstellt!**\n\n**Typ:** ${getCounterTypeLabel(type)}\n**Kanaltyp:** ${targetChannel.type === ChannelType.GuildVoice ? 'Sprachkanal' : 'Textkanal'}\n**Kategorie:** ${category}\n**Kanal:** ${targetChannel}\n**Kanalname:** ${targetChannel.name}\n**Zähler-ID:** \`${newCounter.id}\`\n\nDer Zähler wird automatisch alle 15 Minuten aktualisiert.\n\nNutze \`/serverstats list\`, um alle Zähler anzusehen.`)]
         }).catch(logger.error);
 
     } catch (error) {
         logger.error("Error creating counter:", error);
-        await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'An error occurred while creating the counter. Please try again.' }).catch(logger.error);
+        await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Beim Erstellen des Zählers ist ein Fehler aufgetreten. Bitte versuche es erneut.' }).catch(logger.error);
     }
 }

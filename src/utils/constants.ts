@@ -71,11 +71,11 @@ export const DEFAULTS = {
 };
 
 export const ERROR_DEFAULTS = {
-    INVALID_INPUT: 'Invalid input provided',
-    DATABASE_ERROR: 'Database operation failed',
-    NOT_FOUND: 'Not found',
-    INSUFFICIENT_PERMISSIONS: 'Insufficient permissions',
-    INVALID_FORMAT: 'Invalid format'
+    INVALID_INPUT: 'Ungültige Eingabe',
+    DATABASE_ERROR: 'Datenbankvorgang fehlgeschlagen',
+    NOT_FOUND: 'Nicht gefunden',
+    INSUFFICIENT_PERMISSIONS: 'Unzureichende Berechtigungen',
+    INVALID_FORMAT: 'Ungültiges Format'
 };
 
 export const TIME = {

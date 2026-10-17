@@ -18,14 +18,14 @@ export default {
       if (oldMessage.content === newMessage.content) return;
 
       const metaLines = [
-        formatLogLine('Channel', newMessage.channel ? `${(newMessage.channel as GuildTextBasedChannel).name} ${newMessage.channel.toString()}` : 'Unknown'),
-        formatLogLine('Message ID', `\`${newMessage.id}\``),
-        formatLogLine('Message author', newMessage.author ? newMessage.author.toString() : 'Unknown'),
-        formatLogLine('Message created', `<t:${Math.floor(newMessage.createdTimestamp / 1000)}:R>`),
+        formatLogLine('Kanal', newMessage.channel ? `${(newMessage.channel as GuildTextBasedChannel).name} ${newMessage.channel.toString()}` : 'Unbekannt'),
+        formatLogLine('Nachrichten-ID', `\`${newMessage.id}\``),
+        formatLogLine('Autor', newMessage.author ? newMessage.author.toString() : 'Unbekannt'),
+        formatLogLine('Erstellt', `<t:${Math.floor(newMessage.createdTimestamp / 1000)}:R>`),
       ];
 
-      const oldContent = oldMessage.content || '*(empty message)*';
-      const newContent = newMessage.content || '*(empty message)*';
+      const oldContent = oldMessage.content || '*(leere Nachricht)*';
+      const newContent = newMessage.content || '*(leere Nachricht)*';
       const oldContentTruncated = oldContent.length > MAX_LOGGED_EDIT_CONTENT_LENGTH
         ? `${oldContent.substring(0, MAX_LOGGED_EDIT_CONTENT_LENGTH - 3)}...`
         : oldContent;
@@ -38,12 +38,12 @@ export default {
         guildId: newMessage.guild.id,
         eventType: EVENT_TYPES.MESSAGE_EDIT,
         data: {
-          title: 'Message edited',
+          title: 'Nachricht bearbeitet',
           lines: metaLines,
           quoted: true,
           fields: [
-            { name: 'Before', value: oldContentTruncated, inline: true },
-            { name: 'After', value: newContentTruncated, inline: true },
+            { name: 'Vorher', value: oldContentTruncated, inline: true },
+            { name: 'Nachher', value: newContentTruncated, inline: true },
           ],
           userId: newMessage.author?.id,
           channelId: newMessage.channel.id,

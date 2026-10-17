@@ -4,7 +4,7 @@ import leaderboardCommand from './modules/leaderboard.js';
 
 export default createRouterCommand({
   name: 'rank',
-  description: 'Show ranks and the level leaderboard',
+  description: 'Ränge und die Level-Bestenliste anzeigen',
   category: 'Leveling',
   routes: [
     { legacyName: 'rank', module: rankCommand },
