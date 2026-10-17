@@ -47,10 +47,6 @@ export const CATEGORY_LABELS: Record<string, string> = {
   Welcome: 'Willkommen',
 };
 
-const CATEGORY_LABELS_BY_KEY = new Map(
-  Object.entries(CATEGORY_LABELS).map(([folder, label]) => [normalizeCategoryKey(folder), label]),
-);
-
 /** Commands that always stay available so admins can recover access. */
 export const PROTECTED_COMMANDS = new Set(['commands', 'configwizard']);
 
@@ -71,7 +67,7 @@ function formatFolderName(rawCategory: string | null | undefined): string {
 
 /** German display label for a category folder; falls back to the title-cased folder name. */
 export function formatCategoryName(rawCategory: string | null | undefined): string {
-  return CATEGORY_LABELS_BY_KEY.get(normalizeCategoryKey(rawCategory)) ?? formatFolderName(rawCategory);
+  return CATEGORY_LABELS[String(rawCategory || '')] ?? formatFolderName(rawCategory);
 }
 
 export function getCategoryIcon(category: string): string {

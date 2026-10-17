@@ -135,20 +135,12 @@ for (const target of Object.values(LEGACY_COMMAND_MAP)) {
   NEW_FIRST_LEVEL_NAMES.set(target.command, names);
 }
 
-export function getLegacyTarget(name: string): LegacyCommandTarget | null {
-  return LEGACY_COMMAND_MAP[name.toLowerCase()] ?? null;
-}
-
 /** New path tokens for a legacy target, e.g. ['eco', 'balance'] or ['msg', 'notes']. */
 export function getLegacyPath(target: LegacyCommandTarget): string[] {
   return [target.command, firstLevelName(target)];
 }
 
 /** `/eco balance` style display string for a legacy command name. */
-export function formatLegacyTarget(name: string): string | null {
-  const target = getLegacyTarget(name);
-  return target ? `/${getLegacyPath(target).join(' ')}` : null;
-}
 
 /**
  * Whether `firstArg` is already a valid first-level name of the new command.
@@ -194,7 +186,7 @@ export function routeLegacyPrefixCommand(
   commandName: string,
   args: string[],
 ): { commandName: string; args: string[] } | null {
-  const target = getLegacyTarget(commandName);
+  const target = LEGACY_COMMAND_MAP[commandName.toLowerCase()];
   if (!target) {
     return null;
   }
@@ -225,9 +217,3 @@ export function resolveLegacyName(command: string, group: string | null, subcomm
   return null;
 }
 
-/** All legacy names that now live under `command` (for help hints and docs). */
-export function getLegacyNamesFor(command: string): string[] {
-  return Object.entries(LEGACY_COMMAND_MAP)
-    .filter(([, target]) => target.command === command)
-    .map(([legacyName]) => legacyName);
-}

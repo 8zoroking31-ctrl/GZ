@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import { isLoadableModuleFile } from '../../utils/helpers.js';
 import path from 'path';
-import { fileURLToPath, pathToFileURL } from 'url';
+import { fileURLToPath } from 'url';
 import { ApplicationCommandOptionType, Collection } from 'discord.js';
 import type { RESTPostAPIChatInputApplicationCommandsJSONBody } from 'discord.js';
 import { logger } from '../../utils/logger.js';
@@ -306,30 +306,5 @@ export async function registerCommands(client: NexoClient, options: { clientId?:
     } catch (error) {
         logger.error('Error registering commands:', error);
         throw error;
-    }
-}
-
-export async function reloadCommand(client: NexoClient, commandName: string): Promise<{ success: boolean; message: string }> {
-    const command = client.commands.get(commandName);
-    
-    if (!command) {
-        return { success: false, message: `Command "${commandName}" not found` };
-    }
-    
-    try {
-        const commandPath = path.resolve(command.filePath!);
-        const moduleUrl = pathToFileURL(commandPath);
-        moduleUrl.searchParams.set('t', Date.now().toString());
-
-        // The reloaded file is the same command module that was validated on initial load.
-        const { default: newCommand }: { default: Command } = await import(moduleUrl.href);
-        
-        client.commands.set(commandName, newCommand);
-        
-        logger.info(`Reloaded command: ${commandName}`);
-        return { success: true, message: `Successfully reloaded command "${commandName}"` };
-    } catch (error) {
-        logger.error(`Error reloading command "${commandName}":`, error);
-        return { success: false, message: `Error reloading command: ${error instanceof Error ? error.message : String(error)}` };
     }
 }
