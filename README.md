@@ -13,7 +13,7 @@
 
 > **Herkunft:** NexoBot basiert auf [TitanBot](https://github.com/codebymitch/TitanBot) von codebymitch (MIT-Lizenz) und wurde für diesen Bot überarbeitet: Rebranding, Umstellung auf TypeScript, zusammengefasste Commands und deutsche Texte.
 
-## Inhalt
+## <img src="assets/icons/contents.svg" height="33" align="absmiddle" alt="">Inhalt
 
 - [Funktionen](#funktionen)
 - [Commands](#commands)
@@ -24,7 +24,7 @@
 - [Umgebungsvariablen](#umgebungsvariablen)
 - [Intents und Berechtigungen](#intents-und-berechtigungen)
 
-## Funktionen
+## <img src="assets/icons/features.svg" height="33" align="absmiddle" alt="">Funktionen
 
 - **Moderation** – Ban, Kick, Timeout, Verwarnungen, Fälle, Massenaktionen, Kanal-Sperren, Nutzernotizen
 - **Economy** – Kontostand, Arbeit, Shop, Inventar, Glücksspiel, Überweisungen, Bestenliste
@@ -38,15 +38,15 @@
 
 Alle Funktionen lassen sich pro Server über `/configwizard` und `/commands` konfigurieren und einzeln sperren.
 
-## Commands
+## <img src="assets/icons/commands.svg" height="33" align="absmiddle" alt="">Commands
 
 NexoBot bündelt die Funktionen in thematische Commands mit Subcommands, zum Beispiel `/eco balance`, `/mod warn` oder `/music play`. Die vollständige Zuordnung der früheren Einzel-Commands steht in [docs/COMMAND_MIGRATION.md](docs/COMMAND_MIGRATION.md). `/help` zeigt alle Commands im Bot an.
 
-## Einrichtung
+## <img src="assets/icons/setup.svg" height="33" align="absmiddle" alt="">Einrichtung
 
 Voraussetzungen: ein Bot im [Discord Developer Portal](https://discord.com/developers/applications) mit Token und Client-ID sowie den unten genannten Intents.
 
-### Lokal
+### <img src="assets/icons/local.svg" height="26" align="absmiddle" alt="">Lokal
 
 Benötigt Node.js 20.10 oder neuer und PostgreSQL.
 
@@ -69,7 +69,7 @@ docker compose up -d db
 
 Die Compose-Datenbank läuft dann auf `127.0.0.1:5432` (User/Passwort/DB aus `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`). Sie hat kein SSL: Setze `POSTGRES_SSL=false`, sonst schlägt die Verbindung mit `NODE_ENV=production` fehl und der Bot läuft im In-Memory-Modus.
 
-### Docker
+### <img src="assets/icons/docker.svg" height="26" align="absmiddle" alt="">Docker
 
 ```bash
 cp .env.example .env   # mindestens DISCORD_TOKEN, CLIENT_ID, GUILD_ID setzen
@@ -84,7 +84,7 @@ docker compose --profile local-lavalink up -d
 
 Fertige Images: `ghcr.io/robertwlt03/nexobot`.
 
-### Railway
+### <img src="assets/icons/railway.svg" height="26" align="absmiddle" alt="">Railway
 
 1. Repository in Railway verbinden und einen PostgreSQL-Dienst hinzufügen.
 2. Im Bot-Dienst `DISCORD_TOKEN`, `CLIENT_ID` und `GUILD_ID` setzen und `POSTGRES_URL` bzw. `DATABASE_URL` auf die private Railway-Datenbank-URL verweisen lassen.
@@ -92,7 +92,7 @@ Fertige Images: `ghcr.io/robertwlt03/nexobot`.
 
 Healthchecks: `GET /health` (Prozess lebt) und `GET /ready` (Bot verbunden und Datenbank bereit).
 
-## Umgebungsvariablen
+## <img src="assets/icons/env.svg" height="33" align="absmiddle" alt="">Umgebungsvariablen
 
 Alle Variablen mit Beispielwerten stehen in [.env.example](.env.example). Die wichtigsten:
 
@@ -113,7 +113,7 @@ Alle Variablen mit Beispielwerten stehen in [.env.example](.env.example). Die wi
 
 Ohne erreichbare Datenbank läuft der Bot in einem eingeschränkten In-Memory-Modus. Für den Produktivbetrieb ist PostgreSQL Pflicht.
 
-### Datenbank-Werkzeuge
+### <img src="assets/icons/database.svg" height="26" align="absmiddle" alt="">Datenbank-Werkzeuge
 
 ```bash
 npm run migrate          # Schema-Migrationen anwenden
@@ -124,7 +124,7 @@ npm run restore:db       # Backup einspielen
 
 Die Skripte laufen aus `dist/scripts/`, also vorher `npm run build` ausführen.
 
-## Intents und Berechtigungen
+## <img src="assets/icons/permissions.svg" height="33" align="absmiddle" alt="">Intents und Berechtigungen
 
 Im Developer Portal aktivieren (Privileged Gateway Intents):
 
