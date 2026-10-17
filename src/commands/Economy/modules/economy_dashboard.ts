@@ -17,7 +17,7 @@ import {
     type StringSelectMenuInteraction,
     type SelectMenuModalData,
 } from 'discord.js';
-import { getColor, BotConfig } from '../../../config/bot.js';
+import { getColor, BotConfig, isBotOwner } from '../../../config/bot.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import { successEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
@@ -116,7 +116,21 @@ async function refreshDashboard(rootInteraction: ChatInputCommandInteraction, gu
     }).catch(() => {});
 }
 
+/**
+ * Quoted literal for a value written into the bot config source, or null when the value could break
+ * the file or the regexes below (quotes, backslashes, line breaks).
+ */
+export function toConfigLiteral(value: string): string | null {
+    return /["\\\r\n]/.test(value) ? null : JSON.stringify(value);
+}
+
 async function updateConfigFile(currencySymbol: string, currencyName: string) {
+    const symbolLiteral = toConfigLiteral(currencySymbol);
+    const nameLiteral = toConfigLiteral(currencyName);
+    if (!symbolLiteral || !nameLiteral) {
+        return false;
+    }
+
     try {
         // tsx dev runs from src/ (config/bot.ts); the compiled build runs from dist/ (config/bot.js).
         const tsConfigPath = path.join(__dirname, '../../../config/bot.ts');
@@ -125,17 +139,17 @@ async function updateConfigFile(currencySymbol: string, currencyName: string) {
 
         configContent = configContent.replace(
             /symbol:\s*"[^"]*"/,
-            `symbol: "${currencySymbol}"`
+            `symbol: ${symbolLiteral}`
         );
 
         configContent = configContent.replace(
             /(\/\/\s*Currency display name\.?\s*\n\s*)name:\s*"[^"]*"/,
-            (_match: string, prefix: string) => `${prefix}name: "${currencyName}"`
+            (_match: string, prefix: string) => `${prefix}name: ${nameLiteral}`
         );
 
         configContent = configContent.replace(
             /(\/\/\s*Plural display name\.?\s*\n\s*)namePlural:\s*"[^"]*"/,
-            (_match: string, prefix: string) => `${prefix}namePlural: "${currencyName}s"`
+            (_match: string, prefix: string) => `${prefix}namePlural: ${nameLiteral}`
         );
         
         await fs.writeFile(configPath, configContent, 'utf-8');
@@ -427,6 +441,12 @@ async function handleRemoveCurrency(selectInteraction: StringSelectMenuInteracti
 }
 
 async function handleChangeCurrency(selectInteraction: StringSelectMenuInteraction, rootInteraction: ChatInputCommandInteraction, guild: Guild) {
+    // The currency lives in the global bot config file, so only bot owners may change it (not every guild's admins).
+    if (!isBotOwner(selectInteraction.user.id)) {
+        await replyUserError(selectInteraction, { type: ErrorTypes.PERMISSION, message: 'Die Währung gilt für alle Server. Nur Bot-Besitzer können sie ändern.' });
+        return;
+    }
+
     const modal = new ModalBuilder()
         .setCustomId(`economy_change_currency_${guild.id}`)
         .setTitle('Währungssymbol ändern');
@@ -456,8 +476,8 @@ async function handleChangeCurrency(selectInteraction: StringSelectMenuInteracti
 
     const newSymbol = submitted.fields.getTextInputValue('currency_symbol').trim();
 
-    if (newSymbol.length === 0 || newSymbol.length > 3) {
-        await replyUserError(submitted, { type: ErrorTypes.VALIDATION, message: 'Das Währungssymbol muss 1–3 Zeichen lang sein.' });
+    if (newSymbol.length === 0 || newSymbol.length > 3 || !toConfigLiteral(newSymbol)) {
+        await replyUserError(submitted, { type: ErrorTypes.VALIDATION, message: 'Das Währungssymbol muss 1–3 Zeichen lang sein und darf keine Anführungszeichen oder Backslashes enthalten.' });
         return;
     }
 
@@ -481,6 +501,12 @@ async function handleChangeCurrency(selectInteraction: StringSelectMenuInteracti
 }
 
 async function handleChangeName(selectInteraction: StringSelectMenuInteraction, rootInteraction: ChatInputCommandInteraction, guild: Guild) {
+    // The currency lives in the global bot config file, so only bot owners may change it (not every guild's admins).
+    if (!isBotOwner(selectInteraction.user.id)) {
+        await replyUserError(selectInteraction, { type: ErrorTypes.PERMISSION, message: 'Die Währung gilt für alle Server. Nur Bot-Besitzer können sie ändern.' });
+        return;
+    }
+
     const modal = new ModalBuilder()
         .setCustomId(`economy_change_name_${guild.id}`)
         .setTitle('Währungsname ändern');
@@ -510,8 +536,8 @@ async function handleChangeName(selectInteraction: StringSelectMenuInteraction, 
 
     const newName = submitted.fields.getTextInputValue('currency_name').trim();
 
-    if (newName.length === 0 || newName.length > 20) {
-        await replyUserError(submitted, { type: ErrorTypes.VALIDATION, message: 'Der Währungsname muss 1–20 Zeichen lang sein.' });
+    if (newName.length === 0 || newName.length > 20 || !toConfigLiteral(newName)) {
+        await replyUserError(submitted, { type: ErrorTypes.VALIDATION, message: 'Der Währungsname muss 1–20 Zeichen lang sein und darf keine Anführungszeichen oder Backslashes enthalten.' });
         return;
     }
 
