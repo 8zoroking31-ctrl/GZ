@@ -2,7 +2,7 @@
  * Single source of truth for the PostgreSQL schema.
  *
  * Both the runtime auto-create path (src/utils/postgresDatabase.js) and the
- * standalone migration script (scripts/migrate.js) build the database from these
+ * standalone migration script (src/scripts/migrate.ts) build the database from these
  * definitions, so the schema can never diverge between them.
  */
 

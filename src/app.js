@@ -15,8 +15,11 @@ import { loadCommands, registerCommands as registerSlashCommands } from './handl
 import { runSafeTask, handleTaskError, ErrorCodes } from './utils/errorHandler.js';
 import { initializeMusic } from './services/music/riffySetup.js';
 import { shutdownMusic } from './services/music/playerHandler.js';
-import pkg from '../package.json' with { type: 'json' };
+import { readFileSync } from 'node:fs';
 import { EXPECTED_SCHEMA_VERSION, EXPECTED_SCHEMA_LABEL } from './config/database/schemaVersion.js';
+
+// package.json sits outside rootDir; read it at runtime (works from src/ and dist/).
+const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 class NexoBot extends Client {
   constructor() {

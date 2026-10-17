@@ -9,7 +9,7 @@ Root
 - package.json                -> scripts, dependencies, project metadata
 - README.md                   -> setup and usage docs
 - SECURITY.md                 -> security policy
-- scripts/                    -> utility/maintenance scripts (backup, restore, migrate)
+- src/scripts/                -> maintenance scripts (backup, restore, migrate), run from dist/scripts
 - logs/                       -> runtime log output
 - src/                        -> main bot application code
 - tests/                      -> unit tests (run via npm test)

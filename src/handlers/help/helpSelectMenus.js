@@ -1,4 +1,5 @@
 import { createEmbed } from '../../utils/embeds.js';
+import { isLoadableModuleFile } from '../../utils/helpers.js';
 import { createButton, getPaginationRow } from '../../utils/components.js';
 import fs from 'fs/promises';
 import path from 'path';
@@ -129,7 +130,7 @@ async function createCategoryCommandsMenu(category, client) {
     try {
         const categoryPath = path.join(__dirname, "../../commands", category);
         const commandFiles = (await fs.readdir(categoryPath))
-            .filter((file) => file.endsWith(".js"))
+            .filter(isLoadableModuleFile)
             .sort();
 
         for (const file of commandFiles) {
@@ -258,7 +259,7 @@ export async function createAllCommandsMenu(page = 1, client) {
                 category,
             );
             const commandFiles = (await fs.readdir(categoryPath))
-                .filter((file) => file.endsWith(".js"))
+                .filter(isLoadableModuleFile)
                 .sort();
 
             for (const file of commandFiles) {

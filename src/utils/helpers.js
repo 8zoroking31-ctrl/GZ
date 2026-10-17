@@ -19,3 +19,8 @@ export function getPriorityMap() {
 }
 
 export const PRIORITY_MAP = getPriorityMap();
+
+// Loaders accept compiled .js and source .ts (tsx dev mode), never declaration files.
+export function isLoadableModuleFile(fileName) {
+    return /\.(js|ts)$/.test(fileName) && !fileName.endsWith('.d.ts');
+}

@@ -4,10 +4,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import pg from 'pg';
-import { logger } from '../src/utils/logger.js';
+import { logger } from '../utils/logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, '..', '.env') });
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
 
 const { Pool } = pg;
 

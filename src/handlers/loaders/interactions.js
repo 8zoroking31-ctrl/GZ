@@ -1,4 +1,5 @@
 import { readdir } from 'fs/promises';
+import { isLoadableModuleFile } from '../../utils/helpers.js';
 import { join } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname } from 'path';
@@ -17,7 +18,7 @@ async function getAllInteractionFiles(directory, fileList = []) {
 
     if (entry.isDirectory()) {
       await getAllInteractionFiles(entryPath, fileList);
-    } else if (entry.name.endsWith('.js')) {
+    } else if (isLoadableModuleFile(entry.name)) {
       fileList.push(entryPath);
     }
   }

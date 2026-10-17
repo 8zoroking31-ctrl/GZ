@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import { isLoadableModuleFile } from '../../utils/helpers.js';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { Collection } from 'discord.js';
@@ -43,7 +44,7 @@ async function getAllFiles(directory, fileList = []) {
                 continue;
             }
             await getAllFiles(filePath, fileList);
-        } else if (file.name.endsWith('.js')) {
+        } else if (isLoadableModuleFile(file.name)) {
             fileList.push(filePath);
         }
     }
@@ -64,7 +65,7 @@ export async function loadCommands(client) {
         try {
             const normalizedPath = filePath.replace(/\\/g, '/');
             
-            const commandName = path.basename(filePath, '.js');
+            const commandName = path.parse(filePath).name;
             const commandDir = path.dirname(filePath);
             const category = path.basename(commandDir);
             

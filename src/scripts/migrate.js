@@ -2,14 +2,14 @@ import pg from 'pg';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { logger } from '../src/utils/logger.js';
-import { EXPECTED_SCHEMA_LABEL, EXPECTED_SCHEMA_VERSION } from '../src/config/database/schemaVersion.js';
+import { logger } from '../utils/logger.js';
+import { EXPECTED_SCHEMA_LABEL, EXPECTED_SCHEMA_VERSION } from '../config/database/schemaVersion.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, '..', '.env') });
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
 
 // Imported after dotenv.config so resolveSslConfig sees the loaded env vars.
-const { resolveSslConfig } = await import('../src/config/database/postgres.js');
+const { resolveSslConfig } = await import('../config/database/postgres.js');
 // The schema is the single source of truth shared with the runtime auto-create
 // path (src/utils/postgresDatabase.js), so this script can never diverge from it.
 const {
@@ -17,8 +17,8 @@ const {
   indexStatements,
   UPDATE_TIMESTAMP_FUNCTION,
   triggerDefinitions,
-} = await import('../src/utils/database/schema.js');
-const { assertAllowlistedIdentifier, quoteIdentifier } = await import('../src/utils/sqlIdentifiers.js');
+} = await import('../utils/database/schema.js');
+const { assertAllowlistedIdentifier, quoteIdentifier } = await import('../utils/sqlIdentifiers.js');
 
 const { Pool } = pg;
 

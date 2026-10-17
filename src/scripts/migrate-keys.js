@@ -8,19 +8,19 @@
  * a dry-run preview or to force a re-run.
  *
  * Usage:
- *   node scripts/migrate-keys.js [--dry-run] [--force]
+ *   node dist/scripts/migrate-keys.js [--dry-run] [--force]
  */
 
 import pg from 'pg';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { resolveSslConfig } from '../src/config/database/postgres.js';
-import { runKeyMigration } from '../src/utils/database/keyMigration.js';
-import { logger } from '../src/utils/logger.js';
+import { resolveSslConfig } from '../config/database/postgres.js';
+import { runKeyMigration } from '../utils/database/keyMigration.js';
+import { logger } from '../utils/logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, '..', '.env') });
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
 
 const { Pool } = pg;
 const dryRun = process.argv.includes('--dry-run');

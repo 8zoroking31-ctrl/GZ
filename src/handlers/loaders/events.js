@@ -1,4 +1,5 @@
 import { readdir } from 'fs/promises';
+import { isLoadableModuleFile } from '../../utils/helpers.js';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -9,7 +10,7 @@ const __dirname = dirname(__filename);
 
 export default async function loadEvents(client) {
     const eventsPath = join(__dirname, '../../events');
-    const eventFiles = await readdir(eventsPath).then(files => files.filter(file => file.endsWith('.js')));
+    const eventFiles = await readdir(eventsPath).then(files => files.filter(isLoadableModuleFile));
 
     logger.info(`Found ${eventFiles.length} event files to load`);
 
