@@ -1,100 +1,13 @@
-import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from 'discord.js';
-import { logger } from '../../utils/logger.js';
-import { NexoBotError, ErrorTypes } from '../../utils/errorHandler.js';
-import { getUserLevelData, getLevelingConfig, getXpForLevel } from '../../services/leveling/leveling.js';
+import { createRouterCommand } from '../../utils/commandRouter.js';
+import rankCommand from './modules/rank.js';
+import leaderboardCommand from './modules/leaderboard.js';
 
-import { InteractionHelper } from '../../utils/interactionHelper.js';
-import type { Command } from '../../types/index.js';
-export default {
-  data: new SlashCommandBuilder()
-    .setName('rank')
-    .setDescription("Check your or another user's rank and level")
-    .addUserOption((option) =>
-      option
-        .setName('user')
-        .setDescription('The user to check the rank of')
-        .setRequired(false)
-    )
-    .setDMPermission(false),
+export default createRouterCommand({
+  name: 'rank',
+  description: 'Show ranks and the level leaderboard',
   category: 'Leveling',
-
-  async execute(interaction, config, client) {
-    await InteractionHelper.safeDefer(interaction);
-
-    const levelingConfig = await getLevelingConfig(client, interaction.guildId!);
-    if (!levelingConfig?.enabled) {
-      await InteractionHelper.safeEditReply(interaction, {
-        embeds: [
-          new EmbedBuilder()
-            .setColor('#f1c40f')
-            .setDescription('The leveling system is currently disabled on this server.')
-        ],
-        flags: MessageFlags.Ephemeral
-      });
-      return;
-    }
-
-    const targetUser = interaction.options.getUser('user') || interaction.user;
-    const member = await interaction.guild!.members
-      .fetch(targetUser.id)
-      .catch(() => null);
-
-    if (!member) {
-      throw new NexoBotError(
-        `User ${targetUser.id} not found in guild`,
-        ErrorTypes.USER_INPUT,
-        'Could not find the specified user in this server.'
-      );
-    }
-
-    const userData = await getUserLevelData(client, interaction.guildId!, targetUser.id);
-
-    const safeUserData = {
-      level: userData?.level ?? 0,
-      xp: userData?.xp ?? 0,
-      totalXp: userData?.totalXp ?? 0
-    };
-
-    const xpNeeded = getXpForLevel(safeUserData.level + 1);
-    const progress = xpNeeded > 0 ? Math.floor((safeUserData.xp / xpNeeded) * 100) : 0;
-    const progressBar = createProgressBar(progress, 20);
-
-    const embed = new EmbedBuilder()
-      .setTitle(`${member.displayName}'s Rank`)
-      .setThumbnail(member.displayAvatarURL())
-      .addFields(
-        {
-          name: 'Level',
-          value: safeUserData.level.toString(),
-          inline: true
-        },
-        {
-          name: 'XP',
-          value: `${safeUserData.xp}/${xpNeeded}`,
-          inline: true
-        },
-        {
-          name: 'Total XP',
-          value: safeUserData.totalXp.toString(),
-          inline: true
-        },
-        {
-          name: `Progress to Level ${safeUserData.level + 1}`,
-          value: `${progressBar} ${progress}%`
-        }
-      )
-      .setColor('#2ecc71')
-      .setTimestamp();
-
-    await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
-    logger.debug(`Rank checked for user ${targetUser.id} in guild ${interaction.guildId}`);
-  }
-} satisfies Command;
-
-function createProgressBar(percentage: number, length = 10): string {
-  if (percentage < 0 || percentage > 100) {
-    percentage = Math.max(0, Math.min(100, percentage));
-  }
-  const filled = Math.round((percentage / 100) * length);
-  return '█'.repeat(filled) + '░'.repeat(length - filled);
-}
+  routes: [
+    { legacyName: 'rank', module: rankCommand },
+    { legacyName: 'leaderboard', module: leaderboardCommand },
+  ],
+});

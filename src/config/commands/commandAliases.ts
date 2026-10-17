@@ -23,7 +23,6 @@ export const commandAliases: Record<string, string> = {
     'ping': 'ping',
     'help': 'help',
     'h': 'help',
-    'info': 'help',
 
     'ban': 'ban',
     'kick': 'kick',

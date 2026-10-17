@@ -8,6 +8,7 @@ import { parsePrefixCommand } from '../utils/prefixParser.js';
 import { supportsPrefixExecution, executePrefixCommand, resolvePrefixAccessKey } from '../utils/messageAdapter.js';
 import { resolveCommandAlias, resolveSubcommandAlias } from '../config/commands/commandAliases.js';
 import { getPrefixRestriction } from '../config/commands/prefixRestrictions.js';
+import { routeLegacyPrefixCommand } from '../config/commands/legacyCommandMap.js';
 import { getGuildConfig } from '../services/config/guildConfig.js';
 import { getCommandPrefix, getBotMessage, isBotOwner, isCommandCategoryEnabled, isMaintenanceMode } from '../config/bot.js';
 import { enforceAbuseProtection, formatCooldownDuration } from '../utils/abuseProtection.js';
@@ -66,7 +67,13 @@ async function handlePrefixCommand(message: Message<true>, client: NexoClient) {
 
     logger.info(`Prefix command detected: ${commandName}, args: ${args.join(', ')}`);
 
-    const resolvedCommandName = resolveCommandAlias(commandName);
+    let resolvedCommandName = resolveCommandAlias(commandName);
+    // Old command names keep working: `!bal` -> `/eco balance`.
+    const legacyRoute = routeLegacyPrefixCommand(resolvedCommandName, args);
+    if (legacyRoute) {
+      resolvedCommandName = legacyRoute.commandName;
+      args = legacyRoute.args;
+    }
     logger.info(`Resolved command name: ${resolvedCommandName}`);
     const command = client.commands.get(resolvedCommandName);
 
@@ -86,7 +93,12 @@ async function handlePrefixCommand(message: Message<true>, client: NexoClient) {
       return;
     }
 
-    if (!isCommandCategoryEnabled(command.category)) {
+    // Loaded commands always have a name, so the access key is never null here.
+    const accessKey = resolvePrefixAccessKey(command.data, args)!;
+    const [, firstLevel = null, secondLevel = null] = accessKey.split(' ');
+    const route = command.resolveRoute?.(secondLevel ? firstLevel : null, secondLevel ?? firstLevel) ?? null;
+
+    if (!isCommandCategoryEnabled(command.category) || (route && !isCommandCategoryEnabled(route.category))) {
       await message.channel.send({
         embeds: [createEmbed({
           title: 'Feature Disabled',
@@ -102,7 +114,7 @@ async function handlePrefixCommand(message: Message<true>, client: NexoClient) {
       if (restriction.blocked && restriction.reason) {
         const embed = createEmbed({
           title: 'Slash Command Only',
-          description: `${restriction.reason}\nUse \`/${resolvedCommandName}\` instead.`,
+          description: `${restriction.reason}\nUse \`/${route ? accessKey : resolvedCommandName}\` instead.`,
           color: 'info',
         });
         await message.channel.send({ embeds: [embed] }).catch(() => {});
@@ -110,8 +122,7 @@ async function handlePrefixCommand(message: Message<true>, client: NexoClient) {
       return;
     }
 
-    // Loaded commands always have a name, so the access key is never null here.
-    if (!(await isCommandEnabled(client, message.guild.id, resolvePrefixAccessKey(command.data, args)!, command.category))) {
+    if (!(await isCommandEnabled(client, message.guild.id, accessKey, command.category))) {
       const embed = createEmbed({
         title: 'Command Disabled',
         description: 'This command has been disabled for this server.',
@@ -127,8 +138,8 @@ async function handlePrefixCommand(message: Message<true>, client: NexoClient) {
     };
     const abuseProtection = await enforceAbuseProtection(
       mockInteractionForProtection,
-      command,
-      resolvedCommandName,
+      route ? { category: route.category, abuseProtection: route.module.abuseProtection } : command,
+      route?.legacyName ?? resolvedCommandName,
     );
     if (!abuseProtection.allowed) {
       const formattedCooldown = formatCooldownDuration(abuseProtection.remainingMs);

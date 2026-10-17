@@ -252,15 +252,15 @@ export default {
 
     const commandName = target!.toLowerCase();
     if (isDisable) {
-      await disableCommand(client, interaction.guildId!, commandName);
+      const result = await disableCommand(client, interaction.guildId!, commandName);
       return InteractionHelper.safeEditReply(interaction, {
-        embeds: [successEmbed('Command Disabled', `\`/${commandName}\` is now disabled in this server.`)],
+        embeds: [successEmbed('Command Disabled', `\`/${result.commandName}\` is now disabled in this server.`)],
       });
     }
 
-    await enableCommand(client, interaction.guildId!, commandName);
+    const result = await enableCommand(client, interaction.guildId!, commandName);
     return InteractionHelper.safeEditReply(interaction, {
-      embeds: [successEmbed('Command Enabled', `\`/${commandName}\` is now enabled in this server.`)],
+      embeds: [successEmbed('Command Enabled', `\`/${result.commandName}\` is now enabled in this server.`)],
     });
   },
 } satisfies Command;

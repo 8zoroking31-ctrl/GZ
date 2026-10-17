@@ -8,6 +8,7 @@ import { Collection, ActionRowBuilder, MessageFlags } from 'discord.js';
 import type { ApplicationCommand, ButtonBuilder, EmbedBuilder } from 'discord.js';
 import type { NexoClient, SelectMenuHandler } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
+import { resolveLegacyName } from '../../config/commands/legacyCommandMap.js';
 import { handleInteractionError } from '../../utils/errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -79,6 +80,15 @@ function formatCategoryName(rawCategory: string): string {
         .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+/** Appends the pre-consolidation name, e.g. "Check your balance (formerly /balance)". */
+function withLegacyHint(description: string, command: string, group: string | null, subcommand: string): string {
+    const legacyName = resolveLegacyName(command, group, subcommand);
+    if (!legacyName || legacyName === command) {
+        return description;
+    }
+    return `${description} (formerly /${group ? `${legacyName} ${subcommand}` : legacyName})`;
+}
+
 function buildHelpEntries(command: unknown, category: string): HelpEntry[] {
     const commandData = normalizeCommandData(command);
     if (!commandData?.name) {
@@ -98,7 +108,7 @@ function buildHelpEntries(command: unknown, category: string): HelpEntry[] {
             entries.push({
                 baseName,
                 displayName: `${baseName} ${option.name}`,
-                description: option.description || baseDescription,
+                description: withLegacyHint(option.description || baseDescription, baseName, null, option.name ?? ""),
                 category,
             });
             continue;
@@ -112,7 +122,7 @@ function buildHelpEntries(command: unknown, category: string): HelpEntry[] {
                 entries.push({
                     baseName,
                     displayName: `${baseName} ${option.name} ${nested.name}`,
-                    description: nested.description || option.description || baseDescription,
+                    description: withLegacyHint(nested.description || option.description || baseDescription, baseName, option.name ?? null, nested.name ?? ""),
                     category,
                 });
             }

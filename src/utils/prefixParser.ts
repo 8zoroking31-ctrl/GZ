@@ -155,51 +155,57 @@ export function mapArgumentsToOptions(args: string[], commandData: PrefixCommand
     };
   }
 
-  const subcommandGroup = cmdData.options.find((opt) => opt.type === 2);
+  // Commands may mix direct subcommands and subcommand groups (e.g. /msg purge and /msg notes add).
+  const groups = cmdData.options.filter((opt) => opt.type === 2);
   const subcommands = cmdData.options.filter((opt) => opt.type === 1);
-  const hasSubcommands = subcommands.length > 0 && !subcommandGroup;
+  const hasSubcommands = subcommands.length > 0;
+  const hasGroups = groups.length > 0;
+  let matchedGroup: PrefixOptionDef | null = null;
+
+  // An exact name wins over a subcommand alias (e.g. /fun roll vs. the "roll" -> "reroll" alias).
+  const findSubcommand = (list: readonly PrefixOptionDef[], raw: string): PrefixOptionDef | undefined =>
+    list.find((s) => s.name === raw.toLowerCase()) ?? list.find((s) => s.name === resolveSubcommandAlias(raw));
+  const basicOptions = (sub: PrefixOptionDef): PrefixOptionDef[] =>
+    sub.options?.filter((opt) => opt.type !== 1 && opt.type !== 2) || [];
 
   let currentArgs = args;
   let optionDefs: PrefixOptionDef[] = [];
 
   logger.debug(
-    `Parsing prefix command: commandName=${cmdData.name}, args=${JSON.stringify(args)}, hasSubcommands=${hasSubcommands}, hasSubcommandGroup=${!!subcommandGroup}, optionsCount=${cmdData.options.length}`,
+    `Parsing prefix command: commandName=${cmdData.name}, args=${JSON.stringify(args)}, hasSubcommands=${hasSubcommands}, hasSubcommandGroup=${hasGroups}, optionsCount=${cmdData.options.length}`,
   );
 
-  if (subcommandGroup) {
-    if (args.length > 0) {
-      subcommandGroupName = args[0].toLowerCase();
-      const group = subcommandGroup.options?.find((g) => g.name === subcommandGroupName);
-      if (group && args.length > 1) {
-        subcommandName = resolveSubcommandAlias(args[1]);
-        const sub = group.options?.find((s) => s.name === subcommandName);
+  if ((hasSubcommands || hasGroups) && args.length > 0) {
+    const firstArg = args[0].toLowerCase();
+    matchedGroup = groups.find((g) => g.name === firstArg) ?? null;
+
+    if (matchedGroup) {
+      subcommandGroupName = firstArg;
+      if (args.length > 1) {
+        const sub = findSubcommand(matchedGroup.options || [], args[1]);
         if (sub) {
-          optionDefs = sub.options?.filter((opt) => opt.type !== 1 && opt.type !== 2) || [];
+          subcommandName = sub.name;
+          optionDefs = basicOptions(sub);
           currentArgs = args.slice(2);
         } else {
-          logger.debug(`Subcommand ${subcommandName} not found in group ${subcommandGroupName}`);
+          logger.debug(`Subcommand ${args[1]} not found in group ${subcommandGroupName}`);
         }
-      } else if (!group) {
-        logger.debug(`Subcommand group ${subcommandGroupName} not found`);
       }
-    }
-  } else if (hasSubcommands) {
-    if (args.length > 0) {
-      const resolvedSubcommand = resolveSubcommandAlias(args[0]);
-      logger.debug(
-        `Looking for subcommand: ${resolvedSubcommand}, available: ${subcommands.map((s) => s.name).join(', ')}`,
-      );
-      const sub = subcommands.find((s) => s.name === resolvedSubcommand);
+    } else if (hasSubcommands) {
+      logger.debug(`Looking for subcommand: ${args[0]}, available: ${subcommands.map((s) => s.name).join(', ')}`);
+      const sub = findSubcommand(subcommands, args[0]);
       if (sub) {
-        subcommandName = resolvedSubcommand;
-        optionDefs = sub.options?.filter((opt) => opt.type !== 1 && opt.type !== 2) || [];
+        subcommandName = sub.name;
+        optionDefs = basicOptions(sub);
         currentArgs = args.slice(1);
         logger.debug(`Found subcommand ${subcommandName}, optionDefs: ${optionDefs.length}`);
       } else {
-        logger.debug(`Subcommand ${resolvedSubcommand} not found`);
+        logger.debug(`Subcommand ${args[0]} not found`);
       }
+    } else {
+      logger.debug(`Subcommand group ${firstArg} not found`);
     }
-  } else {
+  } else if (!hasSubcommands && !hasGroups) {
     optionDefs = cmdData.options.filter((opt) => opt.type !== 1 && opt.type !== 2);
   }
 
@@ -211,7 +217,7 @@ export function mapArgumentsToOptions(args: string[], commandData: PrefixCommand
   }
 
   const missing: MissingPrefixOption[] = [];
-  if (subcommandName || (!hasSubcommands && !subcommandGroup)) {
+  if (subcommandName || (!hasSubcommands && !hasGroups)) {
     for (const opt of optionDefs) {
       if (opt.required && !options[opt.name]) {
         missing.push({
@@ -223,29 +229,21 @@ export function mapArgumentsToOptions(args: string[], commandData: PrefixCommand
     }
   }
 
-  if ((hasSubcommands || subcommandGroup) && !subcommandName && !subcommandGroupName) {
-    const availableSubcommands = hasSubcommands
-      ? subcommands.map((s) => s.name).join(',') || 'none'
-      : subcommandGroup?.options?.map((g) => g.name).join(',') || 'none';
-    missing.push({
-      name: subcommandGroup ? 'subcommand group' : 'subcommand',
-      description: `Available: ${availableSubcommands}`,
-      type: 1,
-    });
-  } else if (hasSubcommands && args.length > 0 && !subcommandName) {
-    missing.push({
-      name: 'subcommand',
-      description: `Available: ${subcommands.map((s) => s.name).join(', ')}`,
-      type: 1,
-    });
-  } else if (subcommandGroup && subcommandGroupName && !subcommandName) {
-    const group = subcommandGroup.options?.find((g) => g.name === subcommandGroupName);
-    const availableSubcommands = group?.options?.map((s) => s.name).join(',') || 'none';
-    missing.push({
-      name: 'subcommand',
-      description: `Available: ${availableSubcommands}`,
-      type: 1,
-    });
+  if ((hasSubcommands || hasGroups) && !subcommandName) {
+    if (matchedGroup) {
+      missing.push({
+        name: 'subcommand',
+        description: `Available: ${matchedGroup.options?.map((s) => s.name).join(', ') || 'none'}`,
+        type: 1,
+      });
+    } else {
+      const available = [...subcommands, ...groups].map((s) => s.name).join(', ') || 'none';
+      missing.push({
+        name: hasSubcommands ? 'subcommand' : 'subcommand group',
+        description: `Available: ${available}`,
+        type: 1,
+      });
+    }
   }
 
   return {

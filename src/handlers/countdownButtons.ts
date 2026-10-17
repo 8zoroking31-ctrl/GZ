@@ -1,6 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } from 'discord.js';
 import type { ButtonInteraction, GuildMember } from 'discord.js';
-import type { CountdownData } from '../commands/Tools/countdown.js';
+import type { CountdownData } from '../commands/Tools/modules/countdown.js';
 import type { NexoClient } from '../types/index.js';
 import { successEmbed } from '../utils/embeds.js';
 import { logger } from '../utils/logger.js';
@@ -104,7 +104,7 @@ function cleanupCountdown(countdownId: string, activeCountdowns: Map<string, Cou
 
 async function countdownButtonHandler(interaction: ButtonInteraction, client: NexoClient, args: string[]): Promise<unknown> {
     try {
-        const { activeCountdowns } = await import('../commands/Tools/countdown.js');
+        const { activeCountdowns } = await import('../commands/Tools/modules/countdown.js');
         const action = args[0];
         const countdownId = args[1];
 

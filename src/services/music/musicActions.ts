@@ -205,7 +205,7 @@ export async function joinVoiceChannel(client: NexoClient, interaction: NexoInte
 
     return successEmbed(
         'Joined Voice Channel',
-        `Connected to **${channel.name}**. Use /play to start music, or /music for playback controls.`,
+        `Connected to **${channel.name}**. Use /music play to start music, or /music for playback controls.`,
     );
 }
 

@@ -84,7 +84,7 @@ async function handleMusicButton(interaction: ButtonInteraction, client: NexoCli
     }
 
     if (!player) {
-        return replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: 'No music is playing. Use `/play` first.' });
+        return replyUserError(interaction, { type: ErrorTypes.USER_INPUT, message: 'No music is playing. Use `/music play` first.' });
     }
 
     if (!canControlMusic(interaction.member as GuildMember, player)) {

@@ -26,7 +26,8 @@
     "migrate:keys:dry": "node dist/scripts/migrate-keys.js --dry-run",
     "backup:db": "node dist/scripts/backup.js",
     "restore:db": "node dist/scripts/restore.js",
-    "backup:drill": "node dist/scripts/restore-drill.js"
+    "backup:drill": "node dist/scripts/restore-drill.js",
+    "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "@discordjs/rest": "^2.6.1",

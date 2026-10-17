@@ -20,7 +20,7 @@ async function calculateModalHandler(interaction: ModalSubmitInteraction, client
             return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Failed to retrieve calculation context.' });
         }
 
-        const { calculationContexts } = await import('../commands/Tools/calculate.js');
+        const { calculationContexts } = await import('../commands/Tools/modules/calculate.js');
         const context = calculationContexts.get(contextKey);
         
         if (!context) {

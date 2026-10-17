@@ -1,5 +1,5 @@
 import { Events, MessageFlags } from 'discord.js';
-import type { GuildTextBasedChannel, Interaction } from 'discord.js';
+import type { ChatInputCommandInteraction, GuildTextBasedChannel, Interaction } from 'discord.js';
 import { logger } from '../utils/logger.js';
 import { getGuildConfig } from '../services/config/guildConfig.js';
 import {
@@ -24,7 +24,7 @@ import type { ErrorContext, ErrorLike } from '../utils/errorHandler.js';
 import type { InteractionExtras, NexoInteraction } from '../utils/interactionHelper.js';
 import type { TraceContext } from '../utils/logger.js';
 import type { ReactionRoleMessage } from '../services/reactionRoleService.js';
-import type { BotEvent, GuildConfig } from '../types/index.js';
+import type { BotEvent, Command, GuildConfig, ResolvedRoute } from '../types/index.js';
 
 /** Error context plus the identifiers withTraceContext folds into the trace fields. */
 type TraceableContext = ErrorContext & { commandName?: string; guildId?: string | null; userId?: string | null };
@@ -47,6 +47,14 @@ const COMMAND_ERROR_SUBTYPES: Record<string, string> = {
   gdelete: 'giveaway_failed',
   greroll: 'giveaway_failed',
 };
+
+/** For consolidated router commands: the old command behind the invoked subcommand. */
+function resolveCommandRoute(command: Command | undefined, interaction: ChatInputCommandInteraction): ResolvedRoute | null {
+  return command?.resolveRoute?.(
+    interaction.options.getSubcommandGroup(false),
+    interaction.options.getSubcommand(false),
+  ) ?? null;
+}
 
 function withTraceContext(context: TraceableContext = {}, traceContext: Partial<TraceContext> = {}): ErrorContext {
   return {
@@ -105,7 +113,11 @@ export default {
               );
             }
 
-            if (!isCommandCategoryEnabled(command.category)) {
+            const route = resolveCommandRoute(command, interaction);
+            // Bucket name for cooldowns and abuse protection: the old command name, so limits stay per old command.
+            const protectionName = route?.legacyName ?? interaction.commandName;
+
+            if (!isCommandCategoryEnabled(command.category) || (route && !isCommandCategoryEnabled(route.category))) {
               throw createError(
                 `Feature disabled for category ${command.category}`,
                 ErrorTypes.CONFIGURATION,
@@ -116,7 +128,7 @@ export default {
 
             const defaultCooldownSec = Number(botConfig.commands?.defaultCooldown) || 0;
             if (defaultCooldownSec > 0 && !isBotOwner(interaction.user.id)) {
-              const cooldownKey = `${interaction.user.id}:${interaction.commandName}`;
+              const cooldownKey = `${interaction.user.id}:${protectionName}`;
               const expiresAt = client.cooldowns.get(cooldownKey);
 
               if (expiresAt && Date.now() < expiresAt) {
@@ -132,7 +144,11 @@ export default {
               client.cooldowns.set(cooldownKey, Date.now() + defaultCooldownSec * 1000);
             }
 
-            const abuseProtection = await enforceAbuseProtection(interaction, command, interaction.commandName);
+            const abuseProtection = await enforceAbuseProtection(
+              interaction,
+              route ? { category: route.category, abuseProtection: route.module.abuseProtection } : command,
+              protectionName,
+            );
             if (!abuseProtection.allowed) {
               const formattedCooldown = formatCooldownDuration(abuseProtection.remainingMs);
               throw createError(
@@ -177,7 +193,7 @@ export default {
             await handleInteractionError(interaction, error, withTraceContext({
               type: 'command',
               commandName: interaction.commandName,
-              subtype: COMMAND_ERROR_SUBTYPES[interaction.commandName] || (error as ErrorLike | null | undefined)?.context?.subtype,
+              subtype: COMMAND_ERROR_SUBTYPES[resolveCommandRoute(client.commands.get(interaction.commandName), interaction)?.legacyName ?? interaction.commandName] || (error as ErrorLike | null | undefined)?.context?.subtype,
             }, interactionTraceContext));
           }
         } else if (interaction.isAutocomplete()) {

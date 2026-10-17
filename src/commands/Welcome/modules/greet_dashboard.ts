@@ -190,7 +190,7 @@ export default {
                 throw new NexoBotError(
                     'Greet system not configured',
                     ErrorTypes.CONFIGURATION,
-                    'Neither Welcome nor Goodbye has been set up yet. Run `/welcome setup` or `/goodbye setup` first.',
+                    'Neither Welcome nor Goodbye has been set up yet. Run `/welcome message setup` or `/welcome goodbye setup` first.',
                 );
             }
 

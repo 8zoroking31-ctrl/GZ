@@ -73,10 +73,21 @@ export interface Command {
   slashOnly?: boolean;
   prefixOnly?: boolean;
   abuseProtection?: AbuseProtectionPolicy;
+  /** Router commands (consolidated commands): the old command a subcommand path maps to. */
+  resolveRoute?(group: string | null, subcommand: string | null): ResolvedRoute | null;
   /** Set by the command loader. */
   category?: string;
   /** Set by the command loader. */
   filePath?: string;
+}
+
+/** Result of `Command.resolveRoute`: the pre-consolidation command behind a router subcommand. */
+export interface ResolvedRoute {
+  /** Old top-level command name (cooldown buckets, error subtypes, access checks). */
+  legacyName: string;
+  /** Category folder of the old command. */
+  category: string;
+  module: Command;
 }
 
 /** A subcommand implementation called by a router command. */

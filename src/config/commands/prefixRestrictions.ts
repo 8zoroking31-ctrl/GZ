@@ -29,7 +29,6 @@ function isSubcommandOption(opt: APIApplicationCommandOption): opt is APIApplica
 export const SLASH_ONLY_COMMANDS = new Set([
   'configwizard',
   'help',
-  'embedbuilder',
   'wipedata',
   'apply',
 ]);
@@ -55,23 +54,21 @@ export const COMMAND_BLOCKED_SUBCOMMANDS: Record<string, Set<string> | undefined
     'move',
     'clear',
     '247',
+    'play',
+    'queue',
   ]),
+  eco: new Set(['shop']),
+  msg: new Set(['embed']),
   birthday: new Set(['setchannel']),
   report: new Set(['setchannel']),
 };
 
 function collectSubcommandNames(commandJson: RESTPostAPIChatInputApplicationCommandsJSONBody): string[] {
-  const subcommandGroup = commandJson.options?.find(isSubcommandGroupOption);
-
-  if (subcommandGroup) {
-    const names: string[] = [];
-    for (const group of subcommandGroup.options || []) {
-      names.push(...(group.options?.map((opt) => opt.name) || []));
-    }
-    return names;
+  const names = (commandJson.options?.filter(isSubcommandOption) || []).map((sub) => sub.name);
+  for (const group of commandJson.options?.filter(isSubcommandGroupOption) || []) {
+    names.push(...(group.options?.map((sub) => sub.name) || []));
   }
-
-  return (commandJson.options?.filter(isSubcommandOption) || []).map((sub) => sub.name);
+  return names;
 }
 
 function isSubcommandBlocked(commandName: string, subcommandName: string | null | undefined): boolean {
@@ -118,7 +115,9 @@ export function getPrefixRestriction(
   const resolvedFirstArg = firstArg ? resolveSubcommandAlias(firstArg) : null;
   const resolvedSecondArg = secondArg ? resolveSubcommandAlias(secondArg) : null;
 
-  const subcommandGroup = commandJson.options?.find(isSubcommandGroupOption);
+  const matchedGroup = commandJson.options?.find(
+    (opt): opt is APIApplicationCommandSubcommandGroupOption => isSubcommandGroupOption(opt) && opt.name === firstArg,
+  );
 
   const allSubcommandNames = collectSubcommandNames(commandJson);
   const allSubcommandsBlocked =
@@ -136,14 +135,14 @@ export function getPrefixRestriction(
     };
   }
 
-  if (resolvedFirstArg && isSubcommandBlocked(commandName, resolvedFirstArg)) {
+  if (firstArg && (isSubcommandBlocked(commandName, firstArg) || isSubcommandBlocked(commandName, resolvedFirstArg))) {
     return {
       blocked: true,
       reason: 'This subcommand is only available as a slash command.',
     };
   }
 
-  if (subcommandGroup && resolvedSecondArg && isSubcommandBlocked(commandName, resolvedSecondArg)) {
+  if (matchedGroup && secondArg && (isSubcommandBlocked(commandName, secondArg) || isSubcommandBlocked(commandName, resolvedSecondArg))) {
     return {
       blocked: true,
       reason: 'This subcommand is only available as a slash command.',
