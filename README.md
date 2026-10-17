@@ -1,12 +1,17 @@
-# Nexo – Ein Bot. Alle Funktionen.
+<p align="center">
+  <img src="assets/banner.svg" alt="Nexo – Ein Bot. Alle Funktionen." width="100%">
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/discord.js"><img src="https://img.shields.io/npm/v/discord.js?style=flat-square&labelColor=%23202225&color=%23202225&logo=npm&logoColor=white&logoWidth=20" alt="discord.js"></a>
+  <img src="https://img.shields.io/badge/-TypeScript-%233178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript">
+  <img src="https://img.shields.io/badge/-PostgreSQL-%23336791?logo=postgresql&logoColor=white&style=flat-square&logoWidth=20" alt="PostgreSQL">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/Lizenz-MIT-7C5CFF?style=flat-square" alt="Lizenz: MIT"></a>
+</p>
 
 **NexoBot** (Anzeigename „Nexo“) ist ein modularer Discord-Community-Bot mit Moderation, Economy, Leveling, Tickets, Musik, Giveaways, Verifizierung und vielen Werkzeugen. Geschrieben in TypeScript mit discord.js v14, PostgreSQL als Datenspeicher.
 
 > **Herkunft:** NexoBot basiert auf [TitanBot](https://github.com/codebymitch/TitanBot) von codebymitch (MIT-Lizenz) und wurde für diesen Bot überarbeitet: Rebranding, Umstellung auf TypeScript, zusammengefasste Commands und deutsche Texte.
-
-[![Discord.js](https://img.shields.io/npm/v/discord.js?style=flat-square&labelColor=%23202225&color=%23202225&logo=npm&logoColor=white&logoWidth=20)](https://www.npmjs.com/package/discord.js)
-![TypeScript](https://img.shields.io/badge/-TypeScript-%233178C6?logo=typescript&logoColor=white&style=flat-square)
-![PostgreSQL](https://img.shields.io/badge/-PostgreSQL-%23336791?logo=postgresql&logoColor=white&style=flat-square&logoWidth=20)
 
 ## Inhalt
 
@@ -18,7 +23,6 @@
   - [Railway](#railway)
 - [Umgebungsvariablen](#umgebungsvariablen)
 - [Intents und Berechtigungen](#intents-und-berechtigungen)
-- [Lizenz und Credits](#lizenz-und-credits)
 
 ## Funktionen
 
@@ -136,8 +140,8 @@ Einladung mit den Scopes `bot` und `applications.commands` und diesen Berechtigu
 - Mitglieder kicken, Mitglieder bannen, Mitglieder moderieren (Timeout)
 - Verbinden und Sprechen (Musik)
 
-## Lizenz und Credits
-
-NexoBot steht unter der MIT-Lizenz, siehe [LICENSE](LICENSE).
-
-Based on TitanBot by codebymitch, licensed under MIT. Basiert auf [TitanBot](https://github.com/codebymitch/TitanBot) von codebymitch.
+<p align="center">
+  <img src="assets/banner-footer.svg" alt="NexoBot – © 2026 Robertwlt03, MIT-Lizenz. Basiert auf TitanBot von codebymitch (MIT)." width="100%">
+  <br>
+  <sub><a href="LICENSE">Lizenz</a> · <a href="https://github.com/codebymitch/TitanBot">TitanBot</a> · <a href="docs/COMMAND_MIGRATION.md">Command-Migration</a></sub>
+</p>

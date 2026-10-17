@@ -1,4 +1,6 @@
-# Command-Migration: 99 → 36 Commands
+<p align="center">
+  <img src="../assets/banner-commands.svg" alt="Command-Migration: 99 → 36 Commands" width="100%">
+</p>
 
 NexoBot fasst die früheren Einzel-Commands thematisch zusammen. Aus 99 Top-Level-Commands werden 36. Command-Namen innerhalb der Gruppen, Optionen und Buttons bleiben gleich.
 
@@ -100,3 +102,7 @@ Bestehende Subcommands bleiben außerdem direkt erhalten bei `/economy` (dashboa
 | `/goodbye …` | `/welcome goodbye …` | Welcome |
 | `/greet …` | `/welcome greet …` | Welcome |
 | `/welcome …` | `/welcome message …` | Welcome |
+
+<p align="center">
+  <img src="../assets/banner-footer.svg" alt="NexoBot – © 2026 Robertwlt03, MIT-Lizenz. Basiert auf TitanBot von codebymitch (MIT)." width="100%">
+</p>
