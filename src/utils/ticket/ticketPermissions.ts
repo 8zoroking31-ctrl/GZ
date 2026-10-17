@@ -1,17 +1,17 @@
 // ticketPermissions.js
 
 import { PermissionFlagsBits } from 'discord.js';
-import type { ChatInputCommandInteraction, GuildMember } from 'discord.js';
+import type { ButtonInteraction, ChatInputCommandInteraction, GuildMember, ModalSubmitInteraction } from 'discord.js';
 import type { NexoClient } from '../../types/index.js';
 import { getGuildConfig } from '../../services/config/guildConfig.js';
 import { getTicketData } from '../database.js';
 
 export async function getTicketPermissionContext({ client, interaction }: {
   client: NexoClient;
-  interaction: ChatInputCommandInteraction;
+  interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction;
 }) {
   const guildId = interaction.guildId!;
-  const channelId = interaction.channelId;
+  const channelId = interaction.channelId!;
 
   const [config, ticketData] = await Promise.all([
     getGuildConfig(client, guildId),

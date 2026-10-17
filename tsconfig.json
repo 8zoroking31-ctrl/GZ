@@ -11,8 +11,6 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "allowJs": true,
-    "checkJs": false,
     "strict": true
   },
   "include": ["src"]

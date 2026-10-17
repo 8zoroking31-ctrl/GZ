@@ -7,9 +7,9 @@ import { getGuildConfigKey } from './keys.js';
 
 /** Optional tracing context passed through to logs and errors. */
 export interface GuildConfigContext {
-    traceId?: string;
-    userId?: string;
-    command?: string;
+    traceId?: string | null;
+    userId?: string | null;
+    command?: string | null;
     [key: string]: unknown;
 }
 

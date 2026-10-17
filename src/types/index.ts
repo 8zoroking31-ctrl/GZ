@@ -81,6 +81,7 @@ export interface Command {
 
 /** A subcommand implementation called by a router command. */
 export interface SubcommandModule {
+  prefixOnly?: boolean;
   execute(
     interaction: ChatInputCommandInteraction,
     guildConfig: GuildConfig | null,

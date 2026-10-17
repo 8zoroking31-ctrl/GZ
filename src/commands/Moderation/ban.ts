@@ -1,0 +1,68 @@
+import type { Command } from '../../types/index.js';
+import { SlashCommandBuilder, PermissionFlagsBits, type GuildMember } from 'discord.js';
+import { successEmbed } from '../../utils/embeds.js';
+import { InteractionHelper } from '../../utils/interactionHelper.js';
+import { ModerationService } from '../../services/moderation/moderationService.js';
+import { NexoBotError, ErrorTypes } from '../../utils/errorHandler.js';
+
+export default {
+    data: new SlashCommandBuilder()
+        .setName("ban")
+        .setDescription("Ban a user from the server")
+        .addUserOption((option) =>
+            option
+                .setName("target")
+                .setDescription("The user to ban")
+                .setRequired(true),
+        )
+        .addStringOption((option) =>
+            option.setName("reason").setDescription("Reason for the ban"),
+        )
+        .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
+    category: "moderation",
+
+    async execute(interaction, config, client) {
+        const user = interaction.options.getUser("target");
+        const reason = interaction.options.getString("reason") || "No reason provided";
+
+        if (!user) {
+            throw new NexoBotError(
+                'Missing target user',
+                ErrorTypes.USER_INPUT,
+                'You must specify a user to ban.',
+                { subtype: 'invalid_user' },
+            );
+        }
+
+        if (user.id === interaction.user.id) {
+            throw new NexoBotError(
+                'Cannot ban self',
+                ErrorTypes.VALIDATION,
+                'You cannot ban yourself.',
+            );
+        }
+        if (user.id === client.user.id) {
+            throw new NexoBotError(
+                'Cannot ban bot',
+                ErrorTypes.VALIDATION,
+                'You cannot ban the bot.',
+            );
+        }
+
+        const result = await ModerationService.banUser({
+            guild: interaction.guild!,
+            user,
+            moderator: interaction.member as GuildMember,
+            reason,
+        });
+
+        await InteractionHelper.universalReply(interaction, {
+            embeds: [
+                successEmbed(
+                    `🚫 **Banned** ${user.tag}`,
+                    `**Reason:** ${reason}\n**Case ID:** #${result.caseId}`,
+                ),
+            ],
+        });
+    },
+} satisfies Command;
