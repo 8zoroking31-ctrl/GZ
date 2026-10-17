@@ -20,7 +20,7 @@ import {
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { successEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
-import { TitanBotError, replyUserError, ErrorTypes } from '../../utils/errorHandler.js';
+import { NexoBotError, replyUserError, ErrorTypes } from '../../utils/errorHandler.js';
 import { getColor } from '../../config/bot.js';
 
 const MAX_FIELDS = 25;
@@ -1129,7 +1129,7 @@ export default {
                 } catch (error) {
                     logger.error('Error in embedbuilder collector:', error);
                     const msg =
-                        error instanceof TitanBotError
+                        error instanceof NexoBotError
                             ? error.userMessage || 'An error occurred.'
                             : 'An unexpected error occurred.';
                     if (!ci.replied && !ci.deferred) await ci.deferUpdate().catch(() => {});
@@ -1146,9 +1146,9 @@ export default {
                 }
             });
         } catch (error) {
-            if (error instanceof TitanBotError) throw error;
+            if (error instanceof NexoBotError) throw error;
             logger.error('Unexpected error in embedbuilder:', error);
-            throw new TitanBotError(
+            throw new NexoBotError(
                 `embedbuilder failed: ${error.message}`,
                 ErrorTypes.UNKNOWN,
                 'Failed to open the embed builder.',
