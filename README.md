@@ -62,6 +62,8 @@ Eine lokale Datenbank lässt sich am einfachsten per Docker starten:
 docker compose up -d db
 ```
 
+Die Compose-Datenbank läuft dann auf `127.0.0.1:5432` (User/Passwort/DB aus `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`). Sie hat kein SSL: Setze `POSTGRES_SSL=false`, sonst schlägt die Verbindung mit `NODE_ENV=production` fehl und der Bot läuft im In-Memory-Modus.
+
 ### Docker
 
 ```bash
