@@ -22,14 +22,8 @@
       <stop offset="0" stop-color="#C4B5FD" stop-opacity="0.15"/><stop offset="0.5" stop-color="#D8B4FE" stop-opacity="0.9"/><stop offset="1" stop-color="#7DD3FC" stop-opacity="0.9"/>
     </linearGradient>
     <clipPath id="orbitFront"><rect x="-600" y="0" width="1200" height="600"/></clipPath>
-    <filter id="shadow" x="-15%" y="-25%" width="130%" height="160%">
-      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000000" flood-opacity="0.35"/>
-    </filter>
-    <filter id="glow" x="-200%" y="-200%" width="500%" height="500%">
-      <feGaussianBlur stdDeviation="4"/>
-    </filter>
   </defs>
-  <g filter="url(#shadow)">
+  <g>
     <polygon points="344,87 616,87 544,145 272,145" fill="#8B5CF6"/>
     <polygon points="916,245 1224,245 1152,303 844,303" fill="#22D3EE"/>
     <polygon points="366,105 1206,105 1134,285 294,285" fill="url(#plate)"/>
@@ -45,9 +39,9 @@
   <polygon points="366,105 1206,105 1134,285 294,285" fill="none" stroke="url(#brand)" stroke-width="3" stroke-opacity="0.7"/>
   <g font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="900">
     <text x="430" y="214" font-size="120" fill="#FFFFFF" letter-spacing="4">NEXO</text>
-    <text x="434" y="256" font-size="24" font-weight="700" fill="url(#brand)" letter-spacing="3">EIN BOT. ALLE FUNKTIONEN.</text>
+    <text x="434" y="262" font-size="30" font-weight="700" fill="url(#brand)" letter-spacing="3">EIN BOT. ALLE FUNKTIONEN.</text>
   </g>
-  <g transform="translate(220 182) scale(0.5) translate(-512 -500)" filter="url(#shadow)">
+  <g transform="translate(220 182) scale(0.5) translate(-512 -500)">
     <g transform="translate(512 560) rotate(-10)" opacity="0.55"><ellipse cx="0" cy="0" rx="400" ry="88" fill="none" stroke="url(#orbit)" stroke-width="14"/></g>
       <rect x="497" y="236" width="30" height="80" rx="15" fill="#FFFFFF" stroke="#CFC8F5" stroke-width="8"/>
       <circle cx="512" cy="226" r="27" fill="#FFFFFF" stroke="#CFC8F5" stroke-width="8"/>
@@ -65,7 +59,7 @@
       <circle cx="512" cy="672" r="11" fill="#67E8F9"/>
       <circle cx="572" cy="672" r="11" fill="#D8B4FE"/>
     <g transform="translate(512 560) rotate(-10)" clip-path="url(#orbitFront)"><ellipse cx="0" cy="0" rx="400" ry="88" fill="none" stroke="url(#orbit)" stroke-width="14"/></g>
-    <circle cx="880" cy="470" r="16" fill="#FFFFFF" opacity="0.9" filter="url(#glow)"/>
+    <circle cx="880" cy="470" r="13" fill="#FFFFFF" opacity="0.9"/>
   </g>
   <path d="M 70 58 Q 70 70 82 70 Q 70 70 70 82 Q 70 70 58 70 Q 70 70 70 58 Z" fill="#FFFFFF"/>
   <path d="M 340 52 Q 340 60 348 60 Q 340 60 340 68 Q 340 60 332 60 Q 340 60 340 52 Z" fill="#FFFFFF"/>

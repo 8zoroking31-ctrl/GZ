@@ -104,5 +104,11 @@ Bestehende Subcommands bleiben außerdem direkt erhalten bei `/economy` (dashboa
 | `/welcome …` | `/welcome message …` | Welcome |
 
 <p align="center">
-  <img src="../assets/banner-footer.svg" alt="NexoBot – © 2026 Robertwlt03, MIT-Lizenz. Basiert auf TitanBot von codebymitch (MIT)." width="100%">
+  <img src="../assets/banner-footer.svg" alt="" width="480">
+</p>
+
+<p align="center">
+  <b>Nexo · Ein Bot. Alle Funktionen.</b><br>
+  <sub>© 2026 Robertwlt03 · Veröffentlicht unter der <a href="../LICENSE">MIT-Lizenz</a></sub><br>
+  <sub>Basiert auf <a href="https://github.com/codebymitch/TitanBot">TitanBot</a> von codebymitch (MIT) und für NexoBot überarbeitet</sub>
 </p>
