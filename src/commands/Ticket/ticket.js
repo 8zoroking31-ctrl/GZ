@@ -130,7 +130,7 @@ export default {
 
         // ====== CYANSTAR PANEL (edit these 3 values) ======
         const PANEL_COLOR = "#00E5FF";
-        const PANEL_THUMBNAIL = "https://YOUR_LOGO_URL.png"; // or: client.user.displayAvatarURL({ extension: "png", size: 256 })
+        const PANEL_THUMBNAIL = client.user.displayAvatarURL({ extension: "png", size: 256 });
         const PANEL_BANNER = "https://YOUR_BANNER_URL.png";  // optional, set to null to remove
         // ===================================================
 
