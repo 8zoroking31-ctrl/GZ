@@ -128,19 +128,33 @@ export default {
         const maxTicketsPerUser = interaction.options.getInteger("max_tickets_per_user") || 3;
         const dmOnClose = interaction.options.getBoolean("dm_on_close") !== false;
 
+        // ====== CYANSTAR PANEL (edit these 3 values) ======
+        const PANEL_COLOR = "#00E5FF";
+        const PANEL_THUMBNAIL = "https://YOUR_LOGO_URL.png"; // or: client.user.displayAvatarURL({ extension: "png", size: 256 })
+        const PANEL_BANNER = "https://YOUR_BANNER_URL.png";  // optional, set to null to remove
+        // ===================================================
+
         const setupEmbed = createEmbed({
-            title: "Support Tickets",
-            description: "Purchase",
-            color: "#5865F2",
-            thumbnail: client.user.displayAvatarURL({
-                extension: "png",
-                size: 256
-            }),
-            
+            title: "CyanStar Support",
+            description: [
+                "Press the button below to open a ticket and choose what you need:",
+                "",
+                "<:481292fortnite:1562373392869498880>  **Fortnite**",
+                "",
+                "<:2320spotify:1562422108179398726>  **Spotify**",
+                "",
+                "<:discord:1562367615467528252>  **Discord**"
+            ].join("\n"),
+            color: PANEL_COLOR,
+            thumbnail: PANEL_THUMBNAIL,
             footer: {
-                text: " "
+                text: "CyanStar • Support"
             }
         });
+
+        if (PANEL_BANNER) {
+            setupEmbed.setImage(PANEL_BANNER);
+        }
 
         const ticketButton = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
@@ -289,4 +303,3 @@ export default {
         }
     }
 };
-```
