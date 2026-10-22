@@ -82,8 +82,8 @@ async function persistPanelMessageId(client, guildId, guildConfig, messageId) {
 function buildPanelEmbed(config, client = null) {
     const embed = new EmbedBuilder()
         .setTitle('Support Tickets')
-        .setDescription('Purchase')
-        .setColor('#5865F2')
+        .setDescription('💲 Purchase')
+        .setColor('#00D9E8')
         .setFooter({ text: ' ' });
 
     if (client?.user) {
