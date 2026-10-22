@@ -957,7 +957,9 @@ async function handleDeleteSystem(btnInteraction, rootInteraction, guildConfig, 
         return;
     }
 
-    await submitted.deferUpdate();
+    // Acknowledge the modal submission with an ephemeral reply. This is more
+    // reliable here than deferUpdate and leaves followUp available for the result.
+    await submitted.deferReply({ flags: MessageFlags.Ephemeral });
 
     const keysToDelete = [
         'ticketPanelChannelId',
