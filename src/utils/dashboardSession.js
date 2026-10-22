@@ -15,7 +15,8 @@ function wrapHandler(handler, interactionLabel = 'dashboard') {
         try {
             await handler(componentInteraction);
         } catch (error) {
-            if (error?.code === 40060) return;
+            // Expired or already-acknowledged component interactions are no longer actionable.
+            if (error?.code === 10062 || error?.code === 40060) return;
 
             if (error instanceof TitanBotError) {
                 logger.debug(`${interactionLabel} error: ${error.message}`);
