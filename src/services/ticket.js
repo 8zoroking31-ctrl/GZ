@@ -203,10 +203,15 @@ export async function createTicket(guild, member, categoryId, reason = 'No reaso
     const staffMention = config.ticketStaffRoleId ? ` <@&${config.ticketStaffRoleId}>` : '';
     const messageContent = `${member.toString()}${staffMention}`;
     
-    const ticketMessage = await channel.send({ 
+    const ticketMessage = await channel.send({
       content: messageContent,
+      // Explicitly allow only the ticket opener and configured staff role to be mentioned.
+      allowedMentions: {
+        users: [member.id],
+        roles: config.ticketStaffRoleId ? [config.ticketStaffRoleId] : [],
+      },
       embeds: [embed],
-      components: [row] 
+      components: [row],
     });
 
     await ticketMessage.pin().catch(() => {});
