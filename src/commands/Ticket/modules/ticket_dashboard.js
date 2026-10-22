@@ -386,13 +386,17 @@ async function handlePanelMessage(selectInteraction, rootInteraction, guildConfi
 
     if (!submitted) return;
 
+    // Acknowledge the modal submission immediately so longer database/panel updates
+    // cannot exceed Discord's interaction response deadline.
+    await submitted.deferReply({ flags: MessageFlags.Ephemeral });
+
     const newMessage = submitted.fields.getTextInputValue('panel_msg_input').trim();
     guildConfig.ticketPanelMessage = newMessage;
     await setGuildConfig(client, guildId, guildConfig);
 
     const panelUpdated = await updateLivePanel(client, rootInteraction.guild, guildConfig, guildId);
 
-    await submitted.reply({
+    await submitted.editReply({
         embeds: [
             successEmbed(
                 '✅ Panel Message Updated',
