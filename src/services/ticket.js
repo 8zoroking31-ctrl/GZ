@@ -21,6 +21,35 @@ const TICKET_DELETE_DELAY_MS = 3000;
 const TICKET_DELETE_DELAY_SECONDS = Math.floor(TICKET_DELETE_DELAY_MS / 1000);
 const TICKET_SERVICE = 'ticketService';
 
+// Ticket categories and channels deny @everyone ViewChannel, so the bot needs its own
+// overwrite. Without one, Discord rejects the member overwrites on the ticket channel
+// (a bot can only grant permissions it has in the parent) and the bot cannot post in it.
+const BOT_TICKET_PERMISSIONS = [
+  PermissionFlagsBits.ViewChannel,
+  PermissionFlagsBits.SendMessages,
+  PermissionFlagsBits.EmbedLinks,
+  PermissionFlagsBits.AttachFiles,
+  PermissionFlagsBits.ReadMessageHistory,
+];
+
+// Repairs "Tickets" categories created before the bot overwrite existed.
+async function ensureBotCanAccessCategory(category, botMember) {
+  if (!category || !botMember) return;
+  if (category.permissionsFor(botMember)?.has(BOT_TICKET_PERMISSIONS)) return;
+
+  try {
+    await category.permissionOverwrites.edit(botMember.id, {
+      ViewChannel: true,
+      SendMessages: true,
+      EmbedLinks: true,
+      AttachFiles: true,
+      ReadMessageHistory: true,
+    });
+  } catch (error) {
+    logger.warn(`Could not grant bot access to ticket category ${category.id}: ${error.message}`);
+  }
+}
+
 function ticketUserError(message, userMessage, type = ErrorTypes.VALIDATION, context = {}) {
   throw createError(message, type, userMessage, { service: TICKET_SERVICE, ...context });
 }
@@ -112,8 +141,14 @@ export async function createTicket(guild, member, categoryId, reason = 'No reaso
             id: guild.id,
             deny: [PermissionFlagsBits.ViewChannel],
           },
+          {
+            id: guild.members.me.id,
+            allow: BOT_TICKET_PERMISSIONS,
+          },
         ],
       });
+    } else {
+      await ensureBotCanAccessCategory(category, guild.members.me);
     }
     
     const ticketNumber = await getNextTicketNumber(guild.id);
@@ -135,6 +170,10 @@ export async function createTicket(guild, member, categoryId, reason = 'No reaso
         {
           id: guild.id,
           deny: [PermissionFlagsBits.ViewChannel],
+        },
+        {
+          id: guild.members.me.id,
+          allow: BOT_TICKET_PERMISSIONS,
         },
         {
           id: member.id,
