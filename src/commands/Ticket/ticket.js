@@ -135,26 +135,11 @@ export default {
         // ===================================================
 
         const setupEmbed = createEmbed({
-            title: "CyanStar Support",
-            description: [
-                "Press the button below to open a ticket and choose what you need:",
-                "",
-                "<:481292fortnite:1562373392869498880>  **Fortnite**",
-                "",
-                "<:2320spotify:1562422108179398726>  **Spotify**",
-                "",
-                "<:discord:1562367615467528252>  **Discord**"
-            ].join("\n"),
-            color: PANEL_COLOR,
-            thumbnail: PANEL_THUMBNAIL,
-            footer: {
-                text: "CyanStar • Support"
-            }
+            title: "Support Tickets",
+            description: "💲 Purchase",
+            color: "#00D9E8",
+            thumbnail: PANEL_THUMBNAIL
         });
-
-        if (PANEL_BANNER) {
-            setupEmbed.setImage(PANEL_BANNER);
-        }
 
         const ticketButton = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
