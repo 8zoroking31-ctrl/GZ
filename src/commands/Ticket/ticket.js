@@ -1,4 +1,3 @@
-```js
 import { getColor } from '../../config/bot.js';
 import { SlashCommandBuilder, PermissionFlagsBits, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
 import { createEmbed, successEmbed } from '../../utils/embeds.js';
@@ -122,26 +121,24 @@ export default {
         const closedCategoryChannel = interaction.options.getChannel("closed_category");
         const staffRole = interaction.options.getRole("staff_role");
 
-        const panelMessage = interaction.options.getString("panel_message")
-            || "Click the button below to create a support ticket.";
+        const panelMessage = "Purchase";
 
-        const buttonLabel = interaction.options.getString("button_label")
-            || "Create Ticket";
+        const buttonLabel = "Purchase";
 
         const maxTicketsPerUser = interaction.options.getInteger("max_tickets_per_user") || 3;
         const dmOnClose = interaction.options.getBoolean("dm_on_close") !== false;
 
         const setupEmbed = createEmbed({
-            title: "🎫 Support Center",
-            description: `${panelMessage}\n\n**Need help?** Click the button below and our team will get back to you as soon as possible.`,
+            title: "Support Tickets",
+            description: "Purchase",
             color: "#5865F2",
             thumbnail: client.user.displayAvatarURL({
                 extension: "png",
                 size: 256
             }),
-            image: "https://placehold.co/1200x300/5865F2/FFFFFF.png?text=SUPPORT+TICKETS",
+            
             footer: {
-                text: "SUPPORT CENTER • We're here to help"
+                text: " "
             }
         });
 
@@ -150,7 +147,7 @@ export default {
                 .setCustomId("create_ticket")
                 .setLabel(buttonLabel)
                 .setStyle(ButtonStyle.Primary)
-                .setEmoji("📩")
+                .setEmoji("🛒")
         );
 
         try {
