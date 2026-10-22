@@ -81,16 +81,15 @@ async function persistPanelMessageId(client, guildId, guildConfig, messageId) {
 
 function buildPanelEmbed(config, client = null) {
     const embed = new EmbedBuilder()
-        .setTitle('🎫 Support Center')
-        .setDescription(`${config.ticketPanelMessage || 'Click the button below to create a support ticket.'}\n\n**Need help?** Press the button below and our team will get back to you as soon as possible.`)
+        .setTitle('Support Tickets')
+        .setDescription('Purchase')
         .setColor('#5865F2')
-        .setFooter({ text: "SUPPORT CENTER • We're here to help" });
+        .setFooter({ text: ' ' });
 
     if (client?.user) {
         embed.setThumbnail(client.user.displayAvatarURL({ extension: 'png', size: 256 }));
     }
 
-    embed.setImage('https://placehold.co/1200x300/5865F2/FFFFFF.png?text=SUPPORT+TICKETS');
     return embed;
 }
 
@@ -98,9 +97,9 @@ function buildPanelButtonRow(config) {
     return new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('create_ticket')
-            .setLabel(config.ticketButtonLabel || 'Create Ticket')
+            .setLabel('Purchase')
             .setStyle(ButtonStyle.Primary)
-            .setEmoji('📩'),
+            .setEmoji('🛒'),
     );
 }
 
