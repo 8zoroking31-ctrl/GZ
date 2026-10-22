@@ -174,7 +174,7 @@ export async function createTicket(guild, member, categoryId, reason = 'No reaso
     const priorityInfo = PRIORITY_MAP[priority] || PRIORITY_MAP.none;
     
     const embed = createEmbed({
-      title: productCategory ? `${productCategory} Purchase #${ticketNumber}` : `Ticket #${ticketNumber}`,
+      title: productCategory ? `Ticket #${ticketNumber} • ${productCategory} Purchase` : `Ticket #${ticketNumber}`,
       description: `${member.toString()}, welcome to your CyanStar purchase ticket!\n\n**Category:** ${productCategory || 'General'}\n**Purchase details:** ${reason}\n**Priority:** ${priorityInfo.emoji} ${priorityInfo.label}\n\nThe CyanStar Support Team will assist you here.`,
       color: productCategory ? '#00D9E8' : priorityInfo.color,
       thumbnail: guild.client.user?.displayAvatarURL({ extension: 'png', size: 256 }),
