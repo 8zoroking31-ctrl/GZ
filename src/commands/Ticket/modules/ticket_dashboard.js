@@ -79,20 +79,27 @@ async function persistPanelMessageId(client, guildId, guildConfig, messageId) {
     }
 }
 
-function buildPanelEmbed(config) {
-    return new EmbedBuilder()
+function buildPanelEmbed(config, client = null) {
+    const embed = new EmbedBuilder()
         .setTitle('Support Tickets')
-        .setDescription(config.ticketPanelMessage || 'Click the button below to create a support ticket.')
-        .setColor(getColor('info'));
+        .setDescription('💲 Purchase')
+        .setColor('#00D9E8')
+        .setFooter({ text: ' ' });
+
+    if (client?.user) {
+        embed.setThumbnail(client.user.displayAvatarURL({ extension: 'png', size: 256 }));
+    }
+
+    return embed;
 }
 
 function buildPanelButtonRow(config) {
     return new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('create_ticket')
-            .setLabel(config.ticketButtonLabel || 'Create Ticket')
+            .setLabel('Purchase')
             .setStyle(ButtonStyle.Primary)
-            .setEmoji('📩'),
+            .setEmoji('🛒'),
     );
 }
 
@@ -107,7 +114,7 @@ async function repostTicketPanel(client, guild, guildConfig, guildId) {
     }
 
     const sentPanel = await channel.send({
-        embeds: [buildPanelEmbed(guildConfig)],
+        embeds: [buildPanelEmbed(guildConfig, client)],
         components: [buildPanelButtonRow(guildConfig)],
     });
 
@@ -148,9 +155,10 @@ function buildDashboardEmbed(config, guild, panelStatus = null, ticketStats = nu
         : '`No ratings yet`';
 
     return new EmbedBuilder()
-        .setTitle('🎫 Ticket System Dashboard')
-        .setDescription(`Manage ticket system settings for **${guild.name}**.\nSelect an option below to modify a setting.`)
-        .setColor(getColor('info'))
+        .setTitle('🎫 Support Center Dashboard')
+        .setDescription(`Manage the ticket system for **${guild.name}**.\nChoose a setting below to customize your support experience.`)
+        .setColor('#5865F2')
+        .setThumbnail(guild.client.user.displayAvatarURL({ extension: 'png', size: 256 }))
         .addFields(
             { name: 'Panel Status', value: panelStatusValue, inline: false },
             { name: 'Panel Channel', value: panelChannel, inline: true },
@@ -170,7 +178,7 @@ function buildDashboardEmbed(config, guild, panelStatus = null, ticketStats = nu
             { name: 'Avg Close Time', value: avgCloseTime, inline: true },
             { name: 'Feedback Rating', value: feedbackSummary, inline: true },
         )
-        .setFooter({ text: 'Select an option below • Dashboard closes after 10 minutes of inactivity' })
+        .setFooter({ text: 'SUPPORT CENTER • Select an option below • Closes after 10 minutes of inactivity' })
         .setTimestamp();
 }
 
@@ -245,7 +253,7 @@ async function updateLivePanel(client, guild, config, guildId) {
         if (!panelStatus.exists || !panelStatus.message) return false;
 
         await panelStatus.message.edit({
-            embeds: [buildPanelEmbed(config)],
+            embeds: [buildPanelEmbed(config, client)],
             components: [buildPanelButtonRow(config)],
         });
         return true;
@@ -271,6 +279,8 @@ export default {
             }
 
             const panelStatus = await getTicketPanelStatus(client, interaction.guild, guildConfig);
+            // Keep the existing panel in sync with the current embed design.
+            await updateLivePanel(client, interaction.guild, guildConfig, guildId);
             if (panelStatus.recoveredId) {
                 await persistPanelMessageId(client, guildId, guildConfig, panelStatus.recoveredId);
             }
@@ -376,13 +386,17 @@ async function handlePanelMessage(selectInteraction, rootInteraction, guildConfi
 
     if (!submitted) return;
 
+    // Acknowledge the modal submission immediately so longer database/panel updates
+    // cannot exceed Discord's interaction response deadline.
+    await submitted.deferReply({ flags: MessageFlags.Ephemeral });
+
     const newMessage = submitted.fields.getTextInputValue('panel_msg_input').trim();
     guildConfig.ticketPanelMessage = newMessage;
     await setGuildConfig(client, guildId, guildConfig);
 
     const panelUpdated = await updateLivePanel(client, rootInteraction.guild, guildConfig, guildId);
 
-    await submitted.reply({
+    await submitted.editReply({
         embeds: [
             successEmbed(
                 '✅ Panel Message Updated',
@@ -943,7 +957,9 @@ async function handleDeleteSystem(btnInteraction, rootInteraction, guildConfig, 
         return;
     }
 
-    await submitted.deferUpdate();
+    // Acknowledge the modal submission with an ephemeral reply. This is more
+    // reliable here than deferUpdate and leaves followUp available for the result.
+    await submitted.deferReply({ flags: MessageFlags.Ephemeral });
 
     const keysToDelete = [
         'ticketPanelChannelId',

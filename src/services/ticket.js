@@ -79,7 +79,7 @@ export const getUserTicketCount = wrapServiceBoundary(async function getUserTick
   context: {},
 });
 
-export async function createTicket(guild, member, categoryId, reason = 'No reason provided', priority = 'none') {
+export async function createTicket(guild, member, categoryId, reason = 'No reason provided', priority = 'none', productCategory = null) {
   try {
     const config = await getGuildConfig(guild.client, guild.id);
     const ticketConfig = config.tickets || {};
@@ -118,7 +118,8 @@ export async function createTicket(guild, member, categoryId, reason = 'No reaso
     
     const ticketNumber = await getNextTicketNumber(guild.id);
     
-    let channelName = `ticket-${ticketNumber}`;
+    const categorySlug = ['Fortnite', 'Spotify', 'Discord'].includes(productCategory) ? `${productCategory.toLowerCase()}-` : '';
+    let channelName = `${categorySlug}ticket-${ticketNumber}`;
     
     if (priority !== 'none') {
       const priorityInfo = PRIORITY_MAP[priority];
@@ -173,9 +174,10 @@ export async function createTicket(guild, member, categoryId, reason = 'No reaso
     const priorityInfo = PRIORITY_MAP[priority] || PRIORITY_MAP.none;
     
     const embed = createEmbed({
-      title: `Ticket #${ticketNumber}`,
-      description: `${member.toString()}, thanks for creating a ticket!\n\n**Reason:** ${reason}\n**Priority:** ${priorityInfo.emoji} ${priorityInfo.label}`,
-      color: priorityInfo.color,
+      title: productCategory ? `Ticket #${ticketNumber} • ${productCategory} Purchase` : `Ticket #${ticketNumber}`,
+      description: `${member.toString()}, welcome to your CyanStar purchase ticket!\n\n**Category:** ${productCategory || 'General'}\n**Purchase details:** ${reason}\n**Priority:** ${priorityInfo.emoji} ${priorityInfo.label}\n\nThe CyanStar Support Team will assist you here.`,
+      color: productCategory ? '#00D9E8' : priorityInfo.color,
+      thumbnail: guild.client.user?.displayAvatarURL({ extension: 'png', size: 256 }),
       fields: [
         { name: 'Status', value: '🟢 Open', inline: true },
         { name: 'Claimed By', value: 'Not claimed', inline: true },
@@ -203,10 +205,15 @@ export async function createTicket(guild, member, categoryId, reason = 'No reaso
     const staffMention = config.ticketStaffRoleId ? ` <@&${config.ticketStaffRoleId}>` : '';
     const messageContent = `${member.toString()}${staffMention}`;
     
-    const ticketMessage = await channel.send({ 
+    const ticketMessage = await channel.send({
       content: messageContent,
+      // Explicitly allow only the ticket opener and configured staff role to be mentioned.
+      allowedMentions: {
+        users: [member.id],
+        roles: config.ticketStaffRoleId ? [config.ticketStaffRoleId] : [],
+      },
       embeds: [embed],
-      components: [row] 
+      components: [row],
     });
 
     await ticketMessage.pin().catch(() => {});

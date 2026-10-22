@@ -117,39 +117,39 @@ const createTicketHandler = {
 
       const config = await getGuildConfig(client, interaction.guildId);
       const maxTicketsPerUser = config.maxTicketsPerUser || 3;
-      
       const { getUserTicketCount } = await import('../services/ticket.js');
       const currentTicketCount = await getUserTicketCount(interaction.guildId, interaction.user.id);
-      
+
       if (currentTicketCount >= maxTicketsPerUser) {
         return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: `You have reached the maximum number of open tickets (${maxTicketsPerUser}).\n\nPlease close your existing tickets before creating a new one.\n\n**Current Tickets:** ${currentTicketCount}/${maxTicketsPerUser}` });
       }
-      
-      const modal = new ModalBuilder()
-        .setCustomId('create_ticket_modal')
-        .setTitle('Create a Ticket');
 
-      const reasonInput = new TextInputBuilder()
-        .setCustomId('reason')
-        .setLabel('Why are you creating this ticket?')
-        .setStyle(TextInputStyle.Paragraph)
-        .setPlaceholder('Describe your issue...')
-        .setRequired(true)
-        .setMaxLength(1000);
+      const { StringSelectMenuBuilder, EmbedBuilder, ActionRowBuilder: RowBuilder } = await import('discord.js');
+      const menu = new StringSelectMenuBuilder()
+        .setCustomId('purchase_category')
+        .setPlaceholder('Choose what you want to purchase')
+        .addOptions(
+          { label: 'Fortnite', value: 'Fortnite', emoji: '🎮', description: 'Fortnite purchases' },
+          { label: 'Spotify', value: 'Spotify', emoji: '🎵', description: 'Spotify purchases' },
+          { label: 'Discord', value: 'Discord', emoji: '💬', description: 'Discord purchases' }
+        );
 
-      const actionRow = new ActionRowBuilder().addComponents(reasonInput);
-      modal.addComponents(actionRow);
-
-      await interaction.showModal(modal);
+      await interaction.reply({
+        embeds: [new EmbedBuilder()
+          .setTitle('🛒 Choose a Purchase Category')
+          .setDescription('Select Fortnite, Spotify, or Discord to continue with your purchase ticket.')
+          .setColor('#00D9E8')],
+        components: [new RowBuilder().addComponents(menu)],
+        ephemeral: true
+      });
     } catch (error) {
-      logger.error('Error creating ticket modal:', error);
+      logger.error('Error starting purchase ticket:', error);
       if (!interaction.replied && !interaction.deferred) {
-        await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Could not open ticket creation form.' });
+        await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'Could not start purchase ticket creation.' });
       }
     }
   }
 };
-
 const createTicketModalHandler = {
   name: 'create_ticket_modal',
   async execute(interaction, client) {
