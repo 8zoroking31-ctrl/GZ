@@ -79,11 +79,19 @@ async function persistPanelMessageId(client, guildId, guildConfig, messageId) {
     }
 }
 
-function buildPanelEmbed(config) {
-    return new EmbedBuilder()
-        .setTitle('Support Tickets')
-        .setDescription(config.ticketPanelMessage || 'Click the button below to create a support ticket.')
-        .setColor(getColor('info'));
+function buildPanelEmbed(config, client = null) {
+    const embed = new EmbedBuilder()
+        .setTitle('🎫 Support Center')
+        .setDescription(`${config.ticketPanelMessage || 'Click the button below to create a support ticket.'}\n\n**Need help?** Press the button below and our team will get back to you as soon as possible.`)
+        .setColor('#5865F2')
+        .setFooter({ text: "SUPPORT CENTER • We're here to help" });
+
+    if (client?.user) {
+        embed.setThumbnail(client.user.displayAvatarURL({ extension: 'png', size: 256 }));
+    }
+
+    embed.setImage('https://placehold.co/1200x300/5865F2/FFFFFF.png?text=SUPPORT+TICKETS');
+    return embed;
 }
 
 function buildPanelButtonRow(config) {
@@ -107,7 +115,7 @@ async function repostTicketPanel(client, guild, guildConfig, guildId) {
     }
 
     const sentPanel = await channel.send({
-        embeds: [buildPanelEmbed(guildConfig)],
+        embeds: [buildPanelEmbed(guildConfig, client)],
         components: [buildPanelButtonRow(guildConfig)],
     });
 
@@ -148,9 +156,10 @@ function buildDashboardEmbed(config, guild, panelStatus = null, ticketStats = nu
         : '`No ratings yet`';
 
     return new EmbedBuilder()
-        .setTitle('🎫 Ticket System Dashboard')
-        .setDescription(`Manage ticket system settings for **${guild.name}**.\nSelect an option below to modify a setting.`)
-        .setColor(getColor('info'))
+        .setTitle('🎫 Support Center Dashboard')
+        .setDescription(`Manage the ticket system for **${guild.name}**.\nChoose a setting below to customize your support experience.`)
+        .setColor('#5865F2')
+        .setThumbnail(guild.client.user.displayAvatarURL({ extension: 'png', size: 256 }))
         .addFields(
             { name: 'Panel Status', value: panelStatusValue, inline: false },
             { name: 'Panel Channel', value: panelChannel, inline: true },
@@ -170,7 +179,7 @@ function buildDashboardEmbed(config, guild, panelStatus = null, ticketStats = nu
             { name: 'Avg Close Time', value: avgCloseTime, inline: true },
             { name: 'Feedback Rating', value: feedbackSummary, inline: true },
         )
-        .setFooter({ text: 'Select an option below • Dashboard closes after 10 minutes of inactivity' })
+        .setFooter({ text: 'SUPPORT CENTER • Select an option below • Closes after 10 minutes of inactivity' })
         .setTimestamp();
 }
 
@@ -245,7 +254,7 @@ async function updateLivePanel(client, guild, config, guildId) {
         if (!panelStatus.exists || !panelStatus.message) return false;
 
         await panelStatus.message.edit({
-            embeds: [buildPanelEmbed(config)],
+            embeds: [buildPanelEmbed(config, client)],
             components: [buildPanelButtonRow(config)],
         });
         return true;
@@ -271,6 +280,8 @@ export default {
             }
 
             const panelStatus = await getTicketPanelStatus(client, interaction.guild, guildConfig);
+            // Keep the existing panel in sync with the current embed design.
+            await updateLivePanel(client, interaction.guild, guildConfig, guildId);
             if (panelStatus.recoveredId) {
                 await persistPanelMessageId(client, guildId, guildConfig, panelStatus.recoveredId);
             }
