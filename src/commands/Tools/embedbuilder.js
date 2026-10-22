@@ -259,13 +259,14 @@ async function handleSetColor(selectInteraction, rootInteraction, state) {
         .setCustomId('eb_color_pick')
         .setPlaceholder('Choose a color...')
         .addOptions(
-            COLOR_PRESETS.map(c =>
-                new StringSelectMenuOptionBuilder()
+            COLOR_PRESETS.map(c => {
+                const option = new StringSelectMenuOptionBuilder()
                     .setLabel(c.label)
                     .setValue(c.value)
-                    .setEmoji(c.emoji)
-                    .setDescription(c.value !== '__custom__' ? c.value : 'Enter your own #RRGGBB value'),
-            ),
+                    .setDescription(c.value !== '__custom__' ? c.value : 'Enter your own #RRGGBB value');
+                if (c.emoji) option.setEmoji(c.emoji);
+                return option;
+            }),
         );
 
     await selectInteraction.followUp({
@@ -1127,6 +1128,9 @@ export default {
                             await ci.deferUpdate();
                     }
                 } catch (error) {
+                    // A component can expire while a user is interacting with an old dashboard.
+                    // Ignore Discord's expected stale/already-acknowledged interaction errors.
+                    if (error?.code === 10062 || error?.code === 40060) return;
                     logger.error('Error in embedbuilder collector:', error);
                     const msg =
                         error instanceof TitanBotError
