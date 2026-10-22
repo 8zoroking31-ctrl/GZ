@@ -132,8 +132,8 @@ export default {
         const dmOnClose = interaction.options.getBoolean("dm_on_close") !== false;
 
         const setupEmbed = createEmbed({
-            title: "🎫 Support Tickets",
-            description: `${panelMessage}\n\nClick the button below and our team will help you as soon as possible.`,
+            title: "🎫 Support Center",
+            description: `${panelMessage}\n\n**Need help?** Click the button below and our team will get back to you as soon as possible.`,
             color: "#5865F2",
             thumbnail: client.user.displayAvatarURL({
                 extension: "png",
@@ -141,7 +141,7 @@ export default {
             }),
             image: "https://placehold.co/1200x300/5865F2/FFFFFF.png?text=SUPPORT+TICKETS",
             footer: {
-                text: "Support Center • We're here to help"
+                text: "SUPPORT CENTER • We're here to help"
             }
         });
 
